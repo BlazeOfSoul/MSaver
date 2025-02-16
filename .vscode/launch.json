@@ -1,0 +1,41 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Development: MSaver.server",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build MSaver.server",
+            "program": "${workspaceFolder}/server/bin/Debug/net8.0/server.dll",
+            "args": [],
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(http?://\\S+)",
+                "uriFormat": "%s/swagger"
+            },
+            "cwd": "${workspaceFolder}/server/",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "brokeredServicePipeName": "undefined"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Development: MSaver.UI",
+            "preLaunchTask": "ng serve",
+            "postDebugTask": "terminate running task",
+            "url": "http://localhost:4200/",
+            "webRoot": "${workspaceFolder}/client"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Development: Server/Client",
+            "configurations": ["Development: MSaver.server", "Development: MSaver.UI"],
+            "stopAll": true
+        }
+    ]
+}

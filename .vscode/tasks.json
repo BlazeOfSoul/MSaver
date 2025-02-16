@@ -1,0 +1,66 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build MSaver.server",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}/server/server.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "isBuildCommand": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "ng serve",
+            "options": {
+                "cwd": "${workspaceFolder}\\client"
+            },
+            "type": "shell",
+            "command": "ng",
+            "args": ["serve"],
+            "isBackground": true,
+            "presentation": {
+                "focus": true,
+                "panel": "dedicated"
+            },
+            "group": {
+                "kind": "none",
+                "isDefault": true
+            },
+            "problemMatcher": {
+                "owner": "typescript",
+                "source": "ts",
+                "applyTo": "closedDocuments",
+                "fileLocation": ["relative", "${cwd}"],
+                "pattern": "$tsc",
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": {
+                        "regexp": "(.*?)"
+                    },
+                    "endsPattern": {
+                        "regexp": "Application bundle generation complete."
+                    }
+                }
+            }
+        },
+        {
+            "label": "terminate running task",
+            "command": "echo ${input:terminate}",
+            "type": "shell",
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "terminate",
+            "type": "command",
+            "command": "workbench.action.tasks.terminate",
+            "args": "ng serve"
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "shardulm94.trailing-spaces",
+    "streetsidesoftware.code-spell-checker-russian",
+    "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "ms-dotnettools.csharp",
+    "ms-dotnettools.csdevkit",
+    "formulahendry.auto-rename-tag",
+    "ms-dotnettools.vscode-dotnet-runtime",
+    "ms-dotnettools.vscodeintellicode-csharp"
+  ]
+}

@@ -1,0 +1,26 @@
+<p-toolbar
+    [style]="{
+        'background-image':
+            'linear-gradient(to bottom, var(--primary-300),  var(--primary-600), var(--primary-800), var(--gray-900))',
+        padding: '5px',
+        'border-radius': '0',
+        border: 'none'
+    }"
+>
+    <ng-template pTemplate="start">
+        <p class="ml-4 text-3xl font-bold cursor-pointer" (click)="goHome()">MSaver</p>
+
+        <p-tabMenu [model]="items" class="ml-8">
+            <ng-template pTemplate="item" let-item>
+                <a
+                    pRipple
+                    class="flex align-items-center p-menuitem-link"
+                    (click)="navigateTo(item.routerLink)"
+                >
+                    <span [class]="item.icon"></span>
+                    <span class="ml-2">{{ item.label }}</span>
+                </a>
+            </ng-template>
+        </p-tabMenu>
+    </ng-template>
+</p-toolbar>

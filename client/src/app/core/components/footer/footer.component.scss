@@ -1,0 +1,28 @@
+:host {
+    width: 100%;
+    background-color: var(--background-color);
+    height: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    box-shadow: inset 0px 1px 10px -3px rgba(0, 0, 0, 0.5);
+    border-top: 1px solid var(--gray-600);
+}
+
+:host p {
+    margin: 0;
+}
+
+.flex .pi {
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.flex .pi:hover {
+    color: var(--primary-color);
+}
+
+.icon-link {
+    color: inherit;
+}

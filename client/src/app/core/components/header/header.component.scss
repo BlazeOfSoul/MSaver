@@ -1,0 +1,14 @@
+.logotype {
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+
+:host ::ng-deep .p-menuitem-link {
+    background-color: transparent;
+    border-radius: 0;
+    color: white;
+}
+
+:host ::ng-deep .p-menuitem-link:hover {
+    color: var(--primary-200);
+}
