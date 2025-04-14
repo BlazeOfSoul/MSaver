@@ -1,0 +1,52 @@
+<div class="auth-container">
+    <div class="login-left">
+        <p-card class="login-card">
+            <h2>Вход в аккаунт MSaver</h2>
+            <p class="subtitle">Пожалуйста, используйте логин и пароль</p>
+
+            <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="login-form">
+                <input
+                    id="username"
+                    type="text"
+                    pInputText
+                    [(ngModel)]="username"
+                    name="username"
+                    required
+                    placeholder="Логин"
+                />
+
+                <div class="full-width-wrapper">
+                    <p-password
+                        id="password"
+                        [(ngModel)]="password"
+                        name="password"
+                        [feedback]="false"
+                        toggleMask="true"
+                        inputStyleClass="w-full"
+                        required
+                        placeholder="Пароль"
+                    ></p-password>
+                </div>
+
+                <button
+                    type="submit"
+                    pButton
+                    label="Войти"
+                    [disabled]="!loginForm.form.valid"
+                    class="p-button-success w-full"
+                ></button>
+            </form>
+        </p-card>
+    </div>
+
+    <div class="login-right">
+        <h2>Впервые здесь?</h2>
+        <p>Создайте аккаунт и получите доступ к новым возможностям!</p>
+        <button
+            pButton
+            label="Создать аккаунт"
+            class="p-button-outlined white-button"
+            (click)="goToRegister()"
+        ></button>
+    </div>
+</div>
