@@ -1,0 +1,77 @@
+.register-container {
+    display: flex;
+    height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+
+    .register-left {
+        flex: 2;
+        background: linear-gradient(135deg, var(--primary-color), var(--blue-400));
+        color: var(--primary-color-text);
+        padding: 4rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            max-width: 300px;
+        }
+
+        .white-button {
+            color: var(--primary-color-text);
+            border: 2px solid var(--primary-color-text);
+            border-radius: 2rem;
+            padding: 0.75rem 2rem;
+
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+    }
+
+    .register-card {
+        width: 100%;
+        max-width: 750px;
+        padding: 2rem;
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+        }
+
+        .register-form {
+            display: flex;
+            flex-direction: column;
+
+            > * {
+                margin-bottom: 1.5rem;
+            }
+        }
+    }
+
+    .register-right {
+        flex: 3;
+        padding: 4rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--surface-card);
+    }
+}
+
+.full-width-wrapper ::ng-deep .p-password {
+    width: 100%;
+}

@@ -1,1 +1,67 @@
-<p>register works!</p>
+<div class="register-container">
+    <div class="register-left">
+        <h2>Уже есть аккаунт?</h2>
+        <p>Войдите в него и продолжите увлекательное путешествие в нашем сервисе!</p>
+        <button
+            pButton
+            label="Создать аккаунт"
+            class="p-button-outlined white-button"
+            (click)="goToLogin()"
+        ></button>
+    </div>
+
+    <div class="register-right">
+        <p-card class="register-card">
+            <h2>Регистрация</h2>
+            <p class="subtitle">
+                Создать аккаунт очень просто, нужно всего лишь заполнить данную форму
+            </p>
+
+            <form (ngSubmit)="onRegister()" #registerForm="ngForm" class="register-form">
+                <input
+                    id="username"
+                    type="text"
+                    pInputText
+                    [(ngModel)]="username"
+                    name="username"
+                    required
+                    placeholder="Логин"
+                />
+
+                <div class="full-width-wrapper">
+                    <p-password
+                        id="password"
+                        [(ngModel)]="password"
+                        name="password"
+                        [feedback]="false"
+                        toggleMask="true"
+                        inputStyleClass="w-full"
+                        required
+                        placeholder="Пароль"
+                    ></p-password>
+                </div>
+
+                <div class="full-width-wrapper">
+                    <p-password
+                        id="confirmPassword"
+                        [(ngModel)]="confirmPassword"
+                        name="confirmPassword"
+                        [feedback]="false"
+                        toggleMask="true"
+                        inputStyleClass="w-full"
+                        required
+                        placeholder="Подтвердите пароль"
+                    ></p-password>
+                </div>
+
+                <button
+                    type="submit"
+                    pButton
+                    label="Зарегистрироваться"
+                    [disabled]="!registerForm.form.valid"
+                    class="p-button-success w-full"
+                ></button>
+            </form>
+        </p-card>
+    </div>
+</div>
