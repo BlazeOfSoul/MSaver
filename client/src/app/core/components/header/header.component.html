@@ -8,4 +8,14 @@
     <ng-template pTemplate="start">
         <p class="ml-4 text-3xl font-bold cursor-pointer" (click)="goHome()">MSaver</p>
     </ng-template>
+
+    <ng-template pTemplate="end">
+        <p-button
+            label="Выйти"
+            severity="danger"
+            class="mr-2"
+            [rounded]="true"
+            (click)="logout()"
+        />
+    </ng-template>
 </p-toolbar>

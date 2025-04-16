@@ -4,9 +4,10 @@
         <p>Войдите в него и продолжите увлекательное путешествие в нашем сервисе!</p>
         <button
             pButton
-            label="Создать аккаунт"
+            label="Войти в аккаунт"
             class="p-button-outlined white-button"
             (click)="goToLogin()"
+            [rounded]="true"
         ></button>
     </div>
 
@@ -25,7 +26,18 @@
                     [(ngModel)]="username"
                     name="username"
                     required
-                    placeholder="Логин"
+                    placeholder="Имя пользователя"
+                />
+
+                <input
+                    id="email"
+                    type="email"
+                    pInputText
+                    [(ngModel)]="email"
+                    name="email"
+                    required
+                    placeholder="Email"
+                    email
                 />
 
                 <div class="full-width-wrapper">
@@ -58,6 +70,7 @@
                     type="submit"
                     pButton
                     label="Зарегистрироваться"
+                    [rounded]="true"
                     [disabled]="!registerForm.form.valid"
                     class="p-button-success w-full"
                 ></button>

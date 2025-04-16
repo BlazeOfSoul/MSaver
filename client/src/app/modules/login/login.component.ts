@@ -15,18 +15,22 @@ import { AuthService } from '../../core/services/auth.service';
     styleUrl: './login.component.scss',
 })
 export class LoginComponent {
-    username = '';
+    email = '';
     password = '';
+    errorMessage = '';
 
     constructor(private authService: AuthService, private router: Router) {}
 
     onLogin() {
-        const success = this.authService.login(this.username, this.password);
-        if (success) {
-            this.router.navigate(['/home']);
-        } else {
-            alert('Login failed');
-        }
+        this.errorMessage = '';
+        this.authService.login(this.email, this.password).subscribe({
+            next: () => {
+                this.router.navigate(['/home']);
+            },
+            error: () => {
+                this.errorMessage = 'Неверный email или пароль';
+            },
+        });
     }
 
     goToRegister() {

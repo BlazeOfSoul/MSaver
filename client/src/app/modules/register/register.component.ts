@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,10 +16,11 @@ import { PasswordModule } from 'primeng/password';
 })
 export class RegisterComponent {
     username = '';
+    email = '';
     password = '';
     confirmPassword = '';
 
-    constructor(private router: Router) {}
+    constructor(private router: Router, private http: HttpClient) {}
 
     onRegister() {
         if (this.password !== this.confirmPassword) {
@@ -26,13 +28,21 @@ export class RegisterComponent {
             return;
         }
 
-        const success = true;
-        // const success = this.authService.register(this.username, this.password);
-        if (success) {
-            this.router.navigate(['/login']);
-        } else {
-            alert('Ошибка регистрации');
-        }
+        const user = {
+            username: this.username,
+            email: this.email,
+            password: this.password,
+        };
+
+        this.http.post('http://localhost:5000/api/Auth/register', user).subscribe({
+            next: () => {
+                this.router.navigate(['/login']);
+            },
+            error: (err) => {
+                console.error(err);
+                alert('Ошибка при регистрации');
+            },
+        });
     }
 
     goToLogin() {

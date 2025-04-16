@@ -2,17 +2,17 @@
     <div class="login-left">
         <p-card class="login-card">
             <h2>Вход в аккаунт MSaver</h2>
-            <p class="subtitle">Пожалуйста, используйте логин и пароль</p>
+            <p class="subtitle">Пожалуйста, используйте почту и пароль</p>
 
             <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="login-form">
                 <input
-                    id="username"
+                    id="email"
                     type="text"
                     pInputText
-                    [(ngModel)]="username"
-                    name="username"
+                    [(ngModel)]="email"
+                    name="email"
                     required
-                    placeholder="Логин"
+                    placeholder="Email"
                 />
 
                 <div class="full-width-wrapper">
@@ -32,6 +32,7 @@
                     type="submit"
                     pButton
                     label="Войти"
+                    [rounded]="true"
                     [disabled]="!loginForm.form.valid"
                     class="p-button-success w-full"
                 ></button>
@@ -46,6 +47,7 @@
             pButton
             label="Создать аккаунт"
             class="p-button-outlined white-button"
+            [rounded]="true"
             (click)="goToRegister()"
         ></button>
     </div>
