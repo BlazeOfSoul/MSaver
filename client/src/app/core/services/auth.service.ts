@@ -1,37 +1,39 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, map, tap, throwError } from 'rxjs';
+import { environment } from '../../../environment';
 import { LoginResponse } from '../models/login.model';
+import { RegisterRequest } from '../models/register.model';
 
 @Injectable({
     providedIn: 'root',
 })
 export class AuthService {
-    //TODO: Take out
-    private apiUrl = 'http://localhost:5000';
+    private apiUrl = environment.apiUrl;
 
     constructor(private http: HttpClient) {}
 
     isLoggedIn(): boolean {
-        if (typeof window !== 'undefined' && window.localStorage) {
-            return !!localStorage.getItem('token');
-        }
-        return false;
+        return typeof window !== 'undefined' && !!localStorage.getItem('token');
     }
 
     login(email: string, password: string): Observable<void> {
+        return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, password }).pipe(
+            tap((response) => {
+                localStorage.setItem('token', response.token);
+            }),
+            map(() => {}),
+            catchError((error) => {
+                console.error('Login failed', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    register(data: RegisterRequest): Observable<void> {
         return this.http
-            .post<LoginResponse>(`${this.apiUrl}/api/auth/login`, { email, password })
-            .pipe(
-                tap((response) => {
-                    localStorage.setItem('token', response.token);
-                }),
-                map(() => {}), // Возвращаем void
-                catchError((error) => {
-                    console.error('Login failed', error);
-                    return throwError(() => error);
-                })
-            );
+            .post<LoginResponse>(`${this.apiUrl}/auth/register`, data)
+            .pipe(map(() => {}));
     }
 
     logout(): void {
