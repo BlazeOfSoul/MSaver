@@ -1,1 +1,27 @@
-<div class="flex flex-column align-items-center justify-content-center min-h-screen"></div>
+<div class="flex flex-column align-items-center mt-6 min-h-screen">
+    <h2 class="mb-4 font-bold">Добрый день, {{ user.username }}</h2>
+
+    <div class="summary-container">
+        <app-summary-card
+            title="Доходы"
+            [value]="10000"
+            backgroundColor="rgba(0, 128, 0, 0.2)"
+            textColor="#005500"
+        ></app-summary-card>
+
+        <app-summary-card
+            title="Баланс"
+            [value]="15000"
+            backgroundColor="rgba(255, 215, 0, 0.3)"
+            textColor="#b8860b"
+            [scale]="1.3"
+        ></app-summary-card>
+
+        <app-summary-card
+            title="Расходы"
+            [value]="5000"
+            backgroundColor="rgba(255, 0, 0, 0.2)"
+            textColor="#990000"
+        ></app-summary-card>
+    </div>
+</div>

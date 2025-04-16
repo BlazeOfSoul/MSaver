@@ -1,0 +1,26 @@
+.value-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3.5rem;
+    font-weight: bold;
+}
+
+:host ::ng-deep .p-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+    border-radius: 1rem;
+    cursor: pointer;
+    transform: scale(var(--card-scale, 1));
+
+    &:hover {
+        transform: scale(calc(var(--card-scale, 1) * 1.05));
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.card-header {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding-top: 10%;
+}

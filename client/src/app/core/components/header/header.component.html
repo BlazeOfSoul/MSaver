@@ -1,20 +1,22 @@
 <p-toolbar
     [style]="{
-        padding: '5px',
+        padding: '0px',
         'border-radius': '0',
-
     }"
 >
     <ng-template pTemplate="start">
-        <p class="ml-4 text-3xl font-bold cursor-pointer" (click)="goHome()">MSaver</p>
+        <i class="ml-4 pi pi-wallet" style="font-size: 2rem"></i>
+        <p class="ml-2 text-3xl font-bold cursor-pointer" (click)="goHome()">MSaver</p>
     </ng-template>
 
     <ng-template pTemplate="end">
         <p-button
+            class="mr-4"
             label="Выйти"
             severity="danger"
-            class="mr-2"
+            [outlined]="true"
             [rounded]="true"
+            size="small"
             (click)="logout()"
         />
     </ng-template>

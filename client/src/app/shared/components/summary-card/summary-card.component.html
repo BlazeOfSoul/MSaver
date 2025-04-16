@@ -1,0 +1,18 @@
+<p-card
+    [style]="{
+        background: backgroundColor,
+        transform: 'scale(' + scale + ')',
+        width: '300px',
+        color: textColor
+    }"
+>
+    <ng-template pTemplate="header">
+        <div class="card-header">
+            {{ title }}
+        </div>
+    </ng-template>
+
+    <div class="value-content p-5">
+        {{ value }}
+    </div>
+</p-card>
