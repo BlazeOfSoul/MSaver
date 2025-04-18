@@ -39,4 +39,30 @@ export class AuthService {
     logout(): void {
         localStorage.removeItem('token');
     }
+
+    getToken(): string | null {
+        return localStorage.getItem('token');
+    }
+
+    private decodeBase64Utf8(base64: string): string {
+        const binary = atob(base64);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    }
+
+    getUsernameFromToken(): string | null {
+        const token = this.getToken();
+        if (!token) return null;
+
+        try {
+            const payload = token.split('.')[1];
+            const decodedPayload = this.decodeBase64Utf8(payload);
+            const tokenData = JSON.parse(decodedPayload);
+
+            return tokenData['unique_name'] || null;
+        } catch (e) {
+            console.error('Ошибка при декодировании токена', e);
+            return null;
+        }
+    }
 }

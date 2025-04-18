@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { AuthService } from '../../core/services/auth.service';
 import { SummaryCardComponent } from '../../shared/components/summary-card/summary-card.component';
 
 @Component({
@@ -11,11 +12,20 @@ import { SummaryCardComponent } from '../../shared/components/summary-card/summa
 })
 export class HomeComponent {
     user = {
-        username: 'Юзер',
+        username: '',
     };
 
     monthName = 'апрель';
     income = 2500;
     balance = 1000;
     expenses = 1500;
+
+    constructor(private authService: AuthService) {}
+
+    ngOnInit() {
+        const currentUsername = this.authService.getUsernameFromToken();
+        if (currentUsername) {
+            this.user.username = currentUsername;
+        }
+    }
 }
