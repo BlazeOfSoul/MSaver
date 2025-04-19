@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using MSaver.Api.Models;
+using server.Models;
 
-namespace MSaver.Api.Data;
+namespace server.Data;
 
 public class ApplicationDbContext : DbContext
 {

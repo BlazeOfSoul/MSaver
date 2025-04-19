@@ -1,4 +1,4 @@
-namespace MSaver.Api.Services;
+namespace server.Domain.Interfaces;
 
 public interface IJwtTokenGenerator
 {

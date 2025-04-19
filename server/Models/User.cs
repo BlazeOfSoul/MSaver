@@ -1,4 +1,4 @@
-namespace MSaver.Api.Models;
+namespace server.Models;
 
 public class User
 {

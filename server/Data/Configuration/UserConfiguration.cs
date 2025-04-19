@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using MSaver.Api.Models;
+using server.Models;
 
-namespace MSaver.Api.Data.Configuration;
+namespace server.Data.Configuration;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {

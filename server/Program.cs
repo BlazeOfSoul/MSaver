@@ -1,12 +1,15 @@
-using MSaver.Api.Data;
-using MSaver.Api.Repositories;
-using MSaver.Api.Services;
+using server.Data;
+using server.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using server.Domain.Services;
+using server.Domain.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -23,12 +26,13 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
+
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly())
 );
-
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 var app = builder.Build();
 

@@ -1,9 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using MSaver.Api.Features.Auth.Login;
-using MSaver.Api.Features.Auth.Register;
+using server.Features.Auth.Login;
+using server.Features.Auth.Register;
 
-namespace MSaver.Api.Controllers;
+namespace server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

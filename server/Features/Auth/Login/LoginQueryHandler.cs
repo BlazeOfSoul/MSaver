@@ -1,12 +1,11 @@
 using MediatR;
 
 using Microsoft.AspNetCore.Identity;
+using server.Domain.Interfaces;
+using server.Models;
+using server.Repositories;
 
-using MSaver.Api.Models;
-using MSaver.Api.Repositories;
-using MSaver.Api.Services;
-
-namespace MSaver.Api.Features.Auth.Login;
+namespace server.Features.Auth.Login;
 
 public class LoginQueryHandler : IRequestHandler<LoginQuery, LoginResponse>
 {

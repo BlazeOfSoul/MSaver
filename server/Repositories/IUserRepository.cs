@@ -1,6 +1,6 @@
-using MSaver.Api.Models;
+using server.Models;
 
-namespace MSaver.Api.Repositories;
+namespace server.Repositories;
 
 public interface IUserRepository
 {

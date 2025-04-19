@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using MSaver.Api.Data;
-using MSaver.Api.Models;
+using server.Data;
+using server.Models;
 
-namespace MSaver.Api.Repositories;
+namespace server.Repositories;
 
 public class UserRepository : IUserRepository
 {

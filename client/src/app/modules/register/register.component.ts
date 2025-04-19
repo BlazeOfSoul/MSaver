@@ -6,7 +6,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
-import { RegisterRequest } from '../../core/models/register.model';
+import { RegisterRequest } from '../../core/models/auth/register-request.model';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 

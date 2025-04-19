@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, map, tap, throwError } from 'rxjs';
 import { environment } from '../../../environment';
-import { LoginResponse } from '../models/login.model';
-import { RegisterRequest } from '../models/register.model';
+import { LoginResponse } from '../models/auth/login-response.model';
+import { RegisterRequest } from '../models/auth/register-request.model';
 
 @Injectable({
     providedIn: 'root',

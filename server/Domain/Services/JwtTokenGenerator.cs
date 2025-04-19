@@ -2,8 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using server.Domain.Interfaces;
 
-namespace MSaver.Api.Services;
+namespace server.Domain.Services;
 
 public class JwtTokenGenerator : IJwtTokenGenerator
 {

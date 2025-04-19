@@ -1,4 +1,4 @@
-namespace MSaver.Api.Features.Auth.Register;
+namespace server.Features.Auth.Register;
 
 public record RegisterResponse(
     Guid Id,
