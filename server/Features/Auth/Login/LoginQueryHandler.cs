@@ -3,7 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using server.Domain.Interfaces;
 using server.Models;
-using server.Repositories;
+using server.Repositories.Interfaces;
 
 namespace server.Features.Auth.Login;
 

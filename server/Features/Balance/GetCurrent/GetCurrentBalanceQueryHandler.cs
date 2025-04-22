@@ -1,0 +1,24 @@
+﻿using MediatR;
+
+using server.Repositories.Interfaces;
+
+namespace server.Features.Balance.GetCurrent;
+
+public class GetCurrentBalanceQueryHandler : IRequestHandler<GetCurrentBalanceQuery, GetCurrentBalanceResponse>
+{
+    private readonly IMonthlyBalanceRepository _balanceRepository;
+
+    public GetCurrentBalanceQueryHandler(IMonthlyBalanceRepository balanceRepository)
+    {
+        _balanceRepository = balanceRepository;
+    }
+
+    public async Task<GetCurrentBalanceResponse> Handle(GetCurrentBalanceQuery request, CancellationToken cancellationToken)
+    {
+        var balance = await _balanceRepository.GetCurrentByUserIdAsync(request.UserId);
+        if (balance == null)
+            throw new Exception("Баланс не найден");
+
+        return new GetCurrentBalanceResponse(balance.IncomeTotal, balance.ExpenseTotal, balance.Balance);
+    }
+}
