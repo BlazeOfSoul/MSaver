@@ -14,6 +14,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { BalanceService } from '../../core/services/balance.service';
 import { CategoryService } from '../../core/services/category.service';
 import { ExchangeRateService } from '../../core/services/exchange-rate.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { TransactionService } from '../../core/services/transaction.service';
 import { SummaryCardComponent } from '../../shared/components/summary-card/summary-card.component';
 @Component({
     selector: 'app-home',
@@ -57,7 +59,9 @@ export class HomeComponent {
         private authService: AuthService,
         private exchangeRateService: ExchangeRateService,
         private balanceService: BalanceService,
-        private categoryService: CategoryService
+        private categoryService: CategoryService,
+        private transactionService: TransactionService,
+        private notificationService: NotificationService
     ) {}
 
     ngOnInit() {
@@ -101,7 +105,42 @@ export class HomeComponent {
         this.showTransactionDialog = true;
     }
 
-    submitTransaction() {}
+    submitTransaction() {
+        if (!this.selectedCategory || !this.transactionAmount) {
+            return;
+        }
+
+        const transaction = {
+            categoryId: this.selectedCategory.id,
+            amount: this.transactionAmount,
+            description: this.transactionDescription,
+            date: this.transactionDate,
+        };
+
+        this.transactionService.addTransaction(transaction).subscribe({
+            next: () => {
+                this.notificationService.showSuccess('Транзакция успешно добавлена!');
+                this.selectedCategory = null;
+                this.categoryType = null;
+                this.transactionDescription = '';
+                this.transactionAmount = null;
+                this.transactionDate = new Date();
+                this.showTransactionDialog = false;
+
+                this.balanceService.getCurrentBalance().subscribe({
+                    next: ({ incomeTotal, expenseTotal, balance }) => {
+                        this.income = incomeTotal;
+                        this.expenses = expenseTotal;
+                        this.balance = balance;
+                    },
+                });
+            },
+            error: (err) => {
+                this.notificationService.showError('Не удалось добавить транзакцию');
+                console.error('Ошибка при добавлении транзакции:', err);
+            },
+        });
+    }
 
     get filteredCategories(): Category[] {
         return this.categoryType !== null
