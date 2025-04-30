@@ -4,6 +4,7 @@ using System.Reflection;
 using server.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using server.Models.ExchangeRate.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.Configure<ExchangeRateSettings>(
+    builder.Configuration.GetSection("ExchangeRates"));
 
 builder.Services.AddCors(options =>
 {

@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+
 using server.Domain.Interfaces;
 using server.Features.ExchangeRates;
 using server.Models.ExchangeRate;
+using server.Models.ExchangeRate.Settings;
 
 namespace server.Domain.Services;
 
@@ -9,12 +12,17 @@ public class ExchangeRateService : IExchangeRateService
 {
     private readonly IMemoryCache _cache;
     private readonly HttpClient _httpClient;
+    private readonly ExchangeRateSettings _settings;
     private const string CacheKey = "exchange_rates";
 
-    public ExchangeRateService(IMemoryCache cache, HttpClient httpClient)
+    public ExchangeRateService(
+        IMemoryCache cache,
+        HttpClient httpClient,
+        IOptions<ExchangeRateSettings> settings)
     {
         _cache = cache;
         _httpClient = httpClient;
+        _settings = settings.Value;
     }
 
     public async Task<ExchangeRatesResponse> GetExchangeRatesAsync()
@@ -26,17 +34,17 @@ public class ExchangeRateService : IExchangeRateService
 
         try
         {
-            var usd = await _httpClient.GetFromJsonAsync<NbrbRate>("https://api.nbrb.by/exrates/rates/431");
-            var eur = await _httpClient.GetFromJsonAsync<NbrbRate>("https://api.nbrb.by/exrates/rates/451");
-            var rub = await _httpClient.GetFromJsonAsync<NbrbRate>("https://api.nbrb.by/exrates/rates/456");
+            var usd = await _httpClient.GetFromJsonAsync<NbrbRate>(_settings.NBRB.USD);
+            var eur = await _httpClient.GetFromJsonAsync<NbrbRate>(_settings.NBRB.EUR);
+            var rub = await _httpClient.GetFromJsonAsync<NbrbRate>(_settings.NBRB.RUB);
 
             if (usd == null || eur == null || rub == null)
             {
                 throw new Exception("Не удалось получить курсы валют от NBRB");
             }
 
-            var crypto = await _httpClient.GetFromJsonAsync<CoinGeckoResponse>(
-                "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
+
+            var crypto = await _httpClient.GetFromJsonAsync<CoinGeckoResponse>(_settings.CoinGecko);
 
             if (crypto == null)
             {
