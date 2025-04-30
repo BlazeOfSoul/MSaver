@@ -10,7 +10,7 @@ public class ApplicationDbContext : DbContext
         : base(options) { }
 
     public DbSet<User> Users => Set<User>();
-    public DbSet<MonthlyBalance> MonthlyBalances => Set<MonthlyBalance>();
+    public DbSet<Balance> Balances => Set<Balance>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
 

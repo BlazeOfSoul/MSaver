@@ -27,6 +27,29 @@ namespace server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Balances",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Year = table.Column<int>(type: "integer", nullable: false),
+                    Month = table.Column<int>(type: "integer", nullable: false),
+                    IncomeTotal = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    ExpenseTotal = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    ValueTotal = table.Column<decimal>(type: "numeric(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Balances", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Balances_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
                 {
@@ -42,29 +65,6 @@ namespace server.Migrations
                     table.PrimaryKey("PK_Categories", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Categories_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "MonthlyBalances",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Year = table.Column<int>(type: "integer", nullable: false),
-                    Month = table.Column<int>(type: "integer", nullable: false),
-                    IncomeTotal = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    ExpenseTotal = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Balance = table.Column<decimal>(type: "numeric(18,2)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MonthlyBalances", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_MonthlyBalances_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -101,15 +101,15 @@ namespace server.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Balances_UserId_Year_Month",
+                table: "Balances",
+                columns: new[] { "UserId", "Year", "Month" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Categories_UserId",
                 table: "Categories",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MonthlyBalances_UserId_Year_Month",
-                table: "MonthlyBalances",
-                columns: new[] { "UserId", "Year", "Month" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transactions_CategoryId",
@@ -138,7 +138,7 @@ namespace server.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "MonthlyBalances");
+                name: "Balances");
 
             migrationBuilder.DropTable(
                 name: "Transactions");

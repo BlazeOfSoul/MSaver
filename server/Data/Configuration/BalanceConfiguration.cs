@@ -5,11 +5,11 @@ using server.Models;
 
 namespace server.Data.Configuration;
 
-public class MonthlyBalanceConfiguration : IEntityTypeConfiguration<MonthlyBalance>
+public class BalanceConfiguration : IEntityTypeConfiguration<Balance>
 {
-    public void Configure(EntityTypeBuilder<MonthlyBalance> builder)
+    public void Configure(EntityTypeBuilder<Balance> builder)
     {
-        builder.ToTable("MonthlyBalances");
+        builder.ToTable("Balances");
 
         builder.HasKey(x => x.Id);
 
@@ -23,6 +23,6 @@ public class MonthlyBalanceConfiguration : IEntityTypeConfiguration<MonthlyBalan
 
         builder.Property(x => x.IncomeTotal).HasColumnType("numeric(18,2)");
         builder.Property(x => x.ExpenseTotal).HasColumnType("numeric(18,2)");
-        builder.Property(x => x.Balance).HasColumnType("numeric(18,2)");
+        builder.Property(x => x.ValueTotal).HasColumnType("numeric(18,2)");
     }
 }

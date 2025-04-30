@@ -12,7 +12,7 @@ using server.Data;
 namespace server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250419155403_InitialCreate")]
+    [Migration("20250430082426_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -95,14 +95,11 @@ namespace server.Migrations
                     b.ToTable("Transactions", (string)null);
                 });
 
-            modelBuilder.Entity("server.Models.MonthlyBalance", b =>
+            modelBuilder.Entity("server.Models.Balance", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("numeric(18,2)");
 
                     b.Property<decimal>("ExpenseTotal")
                         .HasColumnType("numeric(18,2)");
@@ -116,6 +113,9 @@ namespace server.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("ValueTotal")
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
@@ -124,7 +124,7 @@ namespace server.Migrations
                     b.HasIndex("UserId", "Year", "Month")
                         .IsUnique();
 
-                    b.ToTable("MonthlyBalances", (string)null);
+                    b.ToTable("Balances", (string)null);
                 });
 
             modelBuilder.Entity("server.Models.User", b =>
@@ -191,7 +191,7 @@ namespace server.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("server.Models.MonthlyBalance", b =>
+            modelBuilder.Entity("server.Models.Balance", b =>
                 {
                     b.HasOne("server.Models.User", "User")
                         .WithMany()

@@ -6,9 +6,9 @@ namespace server.Features.Balance.GetCurrent;
 
 public class GetCurrentBalanceQueryHandler : IRequestHandler<GetCurrentBalanceQuery, GetCurrentBalanceResponse>
 {
-    private readonly IMonthlyBalanceRepository _balanceRepository;
+    private readonly IBalanceRepository _balanceRepository;
 
-    public GetCurrentBalanceQueryHandler(IMonthlyBalanceRepository balanceRepository)
+    public GetCurrentBalanceQueryHandler(IBalanceRepository balanceRepository)
     {
         _balanceRepository = balanceRepository;
     }
@@ -19,6 +19,6 @@ public class GetCurrentBalanceQueryHandler : IRequestHandler<GetCurrentBalanceQu
         if (balance == null)
             throw new Exception("Баланс не найден");
 
-        return new GetCurrentBalanceResponse(balance.IncomeTotal, balance.ExpenseTotal, balance.Balance);
+        return new GetCurrentBalanceResponse(balance.IncomeTotal, balance.ExpenseTotal, balance.ValueTotal);
     }
 }

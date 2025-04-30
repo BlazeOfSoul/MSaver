@@ -1,6 +1,6 @@
 ﻿namespace server.Models;
 
-public class MonthlyBalance
+public class Balance
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
@@ -9,7 +9,7 @@ public class MonthlyBalance
 
     public decimal IncomeTotal { get; set; }
     public decimal ExpenseTotal { get; set; }
-    public decimal Balance { get; set; }
+    public decimal ValueTotal { get; set; }
 
     public User User { get; set; } = null!;
 }

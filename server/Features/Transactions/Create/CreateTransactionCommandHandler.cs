@@ -1,5 +1,4 @@
 ﻿using MediatR;
-
 using Microsoft.EntityFrameworkCore;
 using server.Models;
 using server.Models.Enums;
@@ -27,17 +26,16 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             throw new Exception("Категория не найдена");
 
         var now = request.Date;
-        var monthlyBalance = await _dbContext.MonthlyBalances
+        var balance = await _dbContext.Balances
             .FirstOrDefaultAsync(mb =>
                 mb.UserId == request.UserId &&
                 mb.Year == now.Year &&
                 mb.Month == now.Month,
                 cancellationToken);
 
-        if (monthlyBalance == null)
+        if (balance == null)
         {
-            // Создаем, если нет
-            monthlyBalance = new MonthlyBalance
+            balance = new Models.Balance
             {
                 Id = Guid.NewGuid(),
                 UserId = request.UserId,
@@ -45,12 +43,11 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                 Month = now.Month,
                 IncomeTotal = 0,
                 ExpenseTotal = 0,
-                Balance = 0
+                ValueTotal = 0
             };
-            _dbContext.MonthlyBalances.Add(monthlyBalance);
+            _dbContext.Balances.Add(balance);
         }
 
-        // Создаём транзакцию
         var transaction = new Transaction
         {
             Id = Guid.NewGuid(),
@@ -63,17 +60,16 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
 
         _dbContext.Transactions.Add(transaction);
 
-        // Обновляем месячный баланс
         if (category.Type == CategoryType.Income)
         {
-            monthlyBalance.IncomeTotal += request.Amount;
+            balance.IncomeTotal += request.Amount;
         }
         else
         {
-            monthlyBalance.ExpenseTotal += request.Amount;
+            balance.ExpenseTotal += request.Amount;
         }
 
-        monthlyBalance.Balance = monthlyBalance.IncomeTotal - monthlyBalance.ExpenseTotal;
+        balance.ValueTotal = balance.IncomeTotal - balance.ExpenseTotal;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

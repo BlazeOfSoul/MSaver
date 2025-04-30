@@ -12,7 +12,7 @@ public static class ServiceCollectionExtensions
         // Repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
-        services.AddScoped<IMonthlyBalanceRepository, MonthlyBalanceRepository>();
+        services.AddScoped<IBalanceRepository, BalanceRepository>();
 
         // Services
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

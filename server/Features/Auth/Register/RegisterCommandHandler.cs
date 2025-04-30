@@ -15,20 +15,20 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
     private readonly ApplicationDbContext _dbContext;
     private readonly IUserRepository _userRepository;
     private readonly ICategoryRepository _categoryRepository;
-    private readonly IMonthlyBalanceRepository _monthlyBalanceRepository;
+    private readonly IBalanceRepository _balanceRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
     public RegisterCommandHandler(
         ApplicationDbContext dbContext,
         IUserRepository userRepository,
         ICategoryRepository categoryRepository,
-        IMonthlyBalanceRepository monthlyBalanceRepository,
+        IBalanceRepository balanceRepository,
         IJwtTokenGenerator jwtTokenGenerator)
     {
         _dbContext = dbContext;
         _userRepository = userRepository;
         _categoryRepository = categoryRepository;
-        _monthlyBalanceRepository = monthlyBalanceRepository;
+        _balanceRepository = balanceRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
@@ -46,7 +46,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
             await _userRepository.AddAsync(user);
 
             await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
-            await CreateInitialMonthlyBalanceAsync(user.Id, cancellationToken);
+            await CreateInitialBalanceAsync(user.Id, cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
 
@@ -93,20 +93,20 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
         await _categoryRepository.AddRangeAsync(defaultCategories, cancellationToken);
     }
 
-    private async Task CreateInitialMonthlyBalanceAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task CreateInitialBalanceAsync(Guid userId, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
 
-        var monthlyBalance = new MonthlyBalance
+        var balance = new Models.Balance
         {
             UserId = userId,
             Year = now.Year,
             Month = now.Month,
             IncomeTotal = 0,
             ExpenseTotal = 0,
-            Balance = 0
+            ValueTotal = 0
         };
 
-        await _monthlyBalanceRepository.AddAsync(monthlyBalance, cancellationToken);
+        await _balanceRepository.AddAsync(balance, cancellationToken);
     }
 }

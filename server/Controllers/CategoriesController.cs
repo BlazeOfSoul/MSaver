@@ -1,10 +1,8 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using server.Extensions;
 using server.Features.Categories.GetCategories;
-using System.Security.Claims;
 
 namespace server.Controllers;
 

@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-using server.Models;
-
 namespace server.Data.Configuration;
 
 public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>

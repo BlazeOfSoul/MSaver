@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using server.Extensions;
 using server.Features.Transactions.Create;
 
-namespace MSaver.Api.Controllers;
+namespace server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -21,7 +21,6 @@ public class TransactionsController : ControllerBase
     public async Task<IActionResult> Create(CreateTransactionCommand command)
     {
         command.UserId = User.GetUserId();
-
         var id = await _mediator.Send(command);
         return Ok(id);
     }

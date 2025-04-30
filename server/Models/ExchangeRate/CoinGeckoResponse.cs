@@ -13,9 +13,3 @@ public class CoinGeckoResponse
     [JsonPropertyName("solana")]
     public CryptoRate Solana { get; set; }
 }
-
-public class CryptoRate
-{
-    [JsonPropertyName("usd")]
-    public decimal Usd { get; set; }
-}
