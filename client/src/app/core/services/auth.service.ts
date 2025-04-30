@@ -10,17 +10,19 @@ import { RegisterRequest } from '../models/auth/register-request.model';
 })
 export class AuthService {
     private apiUrl = environment.apiUrl;
+    private readonly tokenKey = 'token';
 
     constructor(private http: HttpClient) {}
 
     isLoggedIn(): boolean {
-        return typeof window !== 'undefined' && !!localStorage.getItem('token');
+        if (typeof window === 'undefined') return false;
+        return !!sessionStorage.getItem('token');
     }
 
     login(email: string, password: string): Observable<void> {
         return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, password }).pipe(
             tap((response) => {
-                localStorage.setItem('token', response.token);
+                sessionStorage.setItem(this.tokenKey, response.token);
             }),
             map(() => {}),
             catchError((error) => {
@@ -31,23 +33,24 @@ export class AuthService {
     }
 
     register(data: RegisterRequest): Observable<void> {
-        return this.http
-            .post<LoginResponse>(`${this.apiUrl}/auth/register`, data)
-            .pipe(map(() => {}));
+        return this.http.post<LoginResponse>(`${this.apiUrl}/auth/register`, data).pipe(
+            tap((response) => {
+                sessionStorage.setItem(this.tokenKey, response.token);
+            }),
+            map(() => {}),
+            catchError((error) => {
+                console.error('Registration failed', error);
+                return throwError(() => error);
+            })
+        );
     }
 
     logout(): void {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem(this.tokenKey);
     }
 
     getToken(): string | null {
-        return localStorage.getItem('token');
-    }
-
-    private decodeBase64Utf8(base64: string): string {
-        const binary = atob(base64);
-        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-        return new TextDecoder().decode(bytes);
+        return sessionStorage.getItem(this.tokenKey);
     }
 
     getUsernameFromToken(): string | null {
@@ -58,11 +61,16 @@ export class AuthService {
             const payload = token.split('.')[1];
             const decodedPayload = this.decodeBase64Utf8(payload);
             const tokenData = JSON.parse(decodedPayload);
-
             return tokenData['unique_name'] || null;
         } catch (e) {
             console.error('Ошибка при декодировании токена', e);
             return null;
         }
+    }
+
+    private decodeBase64Utf8(base64: string): string {
+        const binary = atob(base64);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
     }
 }
