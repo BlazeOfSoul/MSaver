@@ -1,9 +1,11 @@
-using server.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection;
-using server.Extensions;
 using Microsoft.IdentityModel.Tokens;
+
+using System.Reflection;
 using System.Text;
+
+using server.Extensions;
+using server.Data;
 using server.Models.ExchangeRate.Settings;
 
 var builder = WebApplication.CreateBuilder(args);

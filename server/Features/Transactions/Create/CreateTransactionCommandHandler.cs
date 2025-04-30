@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using server.Models;
 using server.Models.Enums;
 using server.Data;
 
