@@ -4,6 +4,7 @@ import { Observable, catchError, map, tap, throwError } from 'rxjs';
 import { environment } from '../../../environment';
 import { LoginResponse } from '../models/auth/login-response.model';
 import { RegisterRequest } from '../models/auth/register-request.model';
+import { StorageService } from './storage.service';
 
 @Injectable({
     providedIn: 'root',
@@ -12,17 +13,16 @@ export class AuthService {
     private apiUrl = environment.apiUrl;
     private readonly tokenKey = 'token';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private storage: StorageService) {}
 
     isLoggedIn(): boolean {
-        if (typeof window === 'undefined') return false;
-        return !!sessionStorage.getItem('token');
+        return !!this.storage.getItem(this.tokenKey);
     }
 
     login(email: string, password: string): Observable<void> {
         return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, password }).pipe(
             tap((response) => {
-                sessionStorage.setItem(this.tokenKey, response.token);
+                this.storage.setItem(this.tokenKey, response.token);
             }),
             map(() => {}),
             catchError((error) => {
@@ -35,7 +35,7 @@ export class AuthService {
     register(data: RegisterRequest): Observable<void> {
         return this.http.post<LoginResponse>(`${this.apiUrl}/auth/register`, data).pipe(
             tap((response) => {
-                sessionStorage.setItem(this.tokenKey, response.token);
+                this.storage.setItem(this.tokenKey, response.token);
             }),
             map(() => {}),
             catchError((error) => {
@@ -46,11 +46,11 @@ export class AuthService {
     }
 
     logout(): void {
-        sessionStorage.removeItem(this.tokenKey);
+        this.storage.removeItem(this.tokenKey);
     }
 
     getToken(): string | null {
-        return sessionStorage.getItem(this.tokenKey);
+        return this.storage.getItem(this.tokenKey);
     }
 
     getUsernameFromToken(): string | null {
