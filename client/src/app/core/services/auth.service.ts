@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, map, tap, throwError } from 'rxjs';
-import { environment } from '../../../environment';
+import { ApiEndpoints } from '../constants/api-endpoints';
 import { LoginResponse } from '../models/auth/login-response.model';
 import { RegisterRequest } from '../models/auth/register-request.model';
 import { StorageService } from './storage.service';
@@ -10,7 +10,6 @@ import { StorageService } from './storage.service';
     providedIn: 'root',
 })
 export class AuthService {
-    private apiUrl = environment.apiUrl;
     private readonly tokenKey = 'token';
 
     constructor(private http: HttpClient, private storage: StorageService) {}
@@ -20,7 +19,7 @@ export class AuthService {
     }
 
     login(email: string, password: string): Observable<void> {
-        return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, password }).pipe(
+        return this.http.post<LoginResponse>(ApiEndpoints.Auth.Login, { email, password }).pipe(
             tap((response) => {
                 this.storage.setItem(this.tokenKey, response.token);
             }),
@@ -33,7 +32,7 @@ export class AuthService {
     }
 
     register(data: RegisterRequest): Observable<void> {
-        return this.http.post<LoginResponse>(`${this.apiUrl}/auth/register`, data).pipe(
+        return this.http.post<LoginResponse>(ApiEndpoints.Auth.Register, data).pipe(
             tap((response) => {
                 this.storage.setItem(this.tokenKey, response.token);
             }),
