@@ -22,13 +22,13 @@ public class LoginQueryHandler : IRequestHandler<LoginQuery, LoginResponse>
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user == null)
-            throw new Exception("Неверный Email");
+            throw new Exception("РќРµРІРµСЂРЅС‹Р№ Email.");
 
         var passwordHasher = new PasswordHasher<User>();
         var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
         if (result == PasswordVerificationResult.Failed)
-            throw new Exception("Неверный пароль");
+            throw new Exception("РќРµРІРµСЂРЅС‹Р№ РїР°СЂРѕР»СЊ.");
 
         var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Username, user.Email);
 
