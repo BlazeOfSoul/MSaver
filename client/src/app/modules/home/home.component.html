@@ -11,93 +11,12 @@
         ></button>
     </div>
 
-    <!-- Диалог -->
-    <p-dialog
-        header="Добавить транзакцию"
-        [(visible)]="showTransactionDialog"
-        [modal]="true"
-        [closable]="true"
-        [draggable]="false"
-        [style]="{ width: '30rem', height: '38rem' }"
-    >
-        <div class="p-fluid">
-            <div class="field mb-3">
-                <label for="type">Тип транзакции</label>
-                <p-dropdown
-                    [options]="categoryTypes"
-                    [(ngModel)]="categoryType"
-                    placeholder="Выберите тип"
-                    id="type"
-                ></p-dropdown>
-            </div>
-
-            <!-- Категория -->
-            <div class="field mb-3">
-                <label for="category">Категория</label>
-                <p-dropdown
-                    [options]="filteredCategories"
-                    [(ngModel)]="selectedCategory"
-                    optionLabel="name"
-                    placeholder="Выберите категорию"
-                    [disabled]="categoryType === null || categoryType === undefined"
-                    id="category"
-                ></p-dropdown>
-            </div>
-
-            <div class="field mb-3">
-                <label for="date">Дата</label>
-                <p-calendar
-                    [(ngModel)]="transactionDate"
-                    inputId="date"
-                    dateFormat="dd.mm.yy"
-                    showIcon="true"
-                    [disabled]="!selectedCategory"
-                    appendTo="body"
-                ></p-calendar>
-            </div>
-
-            <div class="field mb-3">
-                <label for="amount">Сумма</label>
-                <p-inputNumber
-                    inputId="amount"
-                    mode="currency"
-                    currency="BYN"
-                    locale="en-US"
-                    [(ngModel)]="transactionAmount"
-                    [min]="0"
-                    [disabled]="!selectedCategory"
-                />
-            </div>
-
-            <div class="field mb-3">
-                <label for="description">Описание</label>
-                <input
-                    id="description"
-                    pInputText
-                    [(ngModel)]="transactionDescription"
-                    [disabled]="!selectedCategory"
-                />
-            </div>
-            <div class="flex justify-end mt-4">
-                <button
-                    pButton
-                    severity="danger"
-                    [outlined]="true"
-                    type="button"
-                    label="Отмена"
-                    class="p-button-text mr-2"
-                    (click)="showTransactionDialog = false"
-                ></button>
-                <button
-                    pButton
-                    type="button"
-                    label="Сохранить"
-                    (click)="submitTransaction()"
-                    [disabled]="!selectedCategory || !transactionAmount"
-                ></button>
-            </div>
-        </div>
-    </p-dialog>
+    <app-transaction-dialog
+        [(visible)]="isTransactionDialogVisible"
+        [categories]="categories"
+        (submit)="handleTransactionSubmit()"
+        (close)="handleTransactionDialogClose()"
+    />
 
     <div class="summary-container">
         <app-summary-card

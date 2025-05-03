@@ -19,3 +19,7 @@
         @extend .auth-form;
     }
 }
+
+.full-width-wrapper ::ng-deep .p-password {
+    width: 100%;
+}
