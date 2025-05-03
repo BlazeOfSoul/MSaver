@@ -6,6 +6,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
+import { NotificationMessages } from '../../core/constants/notification-messages';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 
@@ -33,7 +34,7 @@ export class LoginComponent {
                 this.router.navigate(['/home']);
             },
             error: () => {
-                this.notificationService.showError('Неверный email или пароль');
+                this.notificationService.showError(NotificationMessages.BadCredentials);
             },
         });
     }

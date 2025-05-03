@@ -6,6 +6,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
+import { NotificationMessages } from '../../core/constants/notification-messages';
 import { RegisterRequest } from '../../core/models/auth/register-request.model';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -31,7 +32,7 @@ export class RegisterComponent {
 
     onRegister() {
         if (this.password !== this.confirmPassword) {
-            this.notificationService.showError('Пароли не совпадают');
+            this.notificationService.showError(NotificationMessages.PasswordsNotMatch);
             return;
         }
 
@@ -43,7 +44,7 @@ export class RegisterComponent {
 
         this.authService.register(request).subscribe({
             next: () => this.router.navigate(['/login']),
-            error: () => this.notificationService.showError('Ошибка при регистрации'),
+            error: () => this.notificationService.showError(NotificationMessages.RegistrationError),
         });
     }
 

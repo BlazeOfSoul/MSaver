@@ -25,7 +25,6 @@ export class AuthService {
             }),
             map(() => {}),
             catchError((error) => {
-                console.error('Login failed', error);
                 return throwError(() => error);
             })
         );
@@ -38,7 +37,6 @@ export class AuthService {
             }),
             map(() => {}),
             catchError((error) => {
-                console.error('Registration failed', error);
                 return throwError(() => error);
             })
         );
@@ -62,7 +60,6 @@ export class AuthService {
             const tokenData = JSON.parse(decodedPayload);
             return tokenData['unique_name'] || null;
         } catch (e) {
-            console.error('Ошибка при декодировании токена', e);
             return null;
         }
     }

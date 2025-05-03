@@ -7,6 +7,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
+import { NotificationMessages } from '../../core/constants/notification-messages';
 import { CategoryType } from '../../core/enums/transaction-type.enum';
 import { Category } from '../../core/models/balance/category.model';
 import { Rate } from '../../core/models/exchange-rate/rate.model';
@@ -75,8 +76,8 @@ export class HomeComponent {
                 this.fiatRates = data.fiat;
                 this.cryptoRates = data.crypto;
             },
-            error: (err) => {
-                console.error('Ошибка при загрузке курсов:', err);
+            error: () => {
+                this.notificationService.showError(NotificationMessages.LoadRatesError);
             },
         });
 
@@ -86,8 +87,8 @@ export class HomeComponent {
                 this.expenses = expenseTotal;
                 this.balance = balance;
             },
-            error: (err) => {
-                console.error('Ошибка при получении баланса:', err);
+            error: () => {
+                this.notificationService.showError(NotificationMessages.LoadBalanceError);
             },
         });
 
@@ -95,8 +96,8 @@ export class HomeComponent {
             next: (data) => {
                 this.categories = data;
             },
-            error: (err) => {
-                console.error('Ошибка при загрузке категорий:', err);
+            error: () => {
+                this.notificationService.showError(NotificationMessages.LoadCategoriesError);
             },
         });
     }
@@ -119,7 +120,7 @@ export class HomeComponent {
 
         this.transactionService.addTransaction(transaction).subscribe({
             next: () => {
-                this.notificationService.showSuccess('Транзакция успешно добавлена!');
+                this.notificationService.showSuccess(NotificationMessages.TransactionSuccess);
                 this.selectedCategory = null;
                 this.categoryType = null;
                 this.transactionDescription = '';
@@ -135,9 +136,8 @@ export class HomeComponent {
                     },
                 });
             },
-            error: (err) => {
-                this.notificationService.showError('Не удалось добавить транзакцию');
-                console.error('Ошибка при добавлении транзакции:', err);
+            error: () => {
+                this.notificationService.showError(NotificationMessages.TransactionUnsuccess);
             },
         });
     }
