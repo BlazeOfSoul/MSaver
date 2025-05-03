@@ -1,4 +1,8 @@
 export const NotificationMessages = {
+    NotificationSuccessSummary: 'Успешно',
+    NotificationErrorSummary: 'Что-то пошло не так...',
+    NotificationInfoSummary: 'Информация',
+
     LoadRatesError: 'Ошибка при загрузке курсов.',
     LoadBalanceError: 'Ошибка при получении баланса.',
     LoadCategoriesError: 'Ошибка при загрузке категорий.',

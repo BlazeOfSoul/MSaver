@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MessageService } from 'primeng/api';
+import { NotificationMessages } from '../constants/notification-messages';
 
 @Injectable({
     providedIn: 'root',
@@ -7,18 +8,18 @@ import { MessageService } from 'primeng/api';
 export class NotificationService {
     constructor(private messageService: MessageService) {}
 
-    showError(message: string) {
+    showSuccess(message: string) {
         this.messageService.add({
-            severity: 'error',
-            summary: 'Что-то пошло не так...',
+            severity: 'success',
+            summary: NotificationMessages.NotificationSuccessSummary,
             detail: message,
         });
     }
 
-    showSuccess(message: string) {
+    showError(message: string) {
         this.messageService.add({
-            severity: 'success',
-            summary: 'Успешно',
+            severity: 'error',
+            summary: NotificationMessages.NotificationErrorSummary,
             detail: message,
         });
     }
@@ -26,7 +27,7 @@ export class NotificationService {
     showInfo(message: string) {
         this.messageService.add({
             severity: 'info',
-            summary: 'Информация',
+            summary: NotificationMessages.NotificationInfoSummary,
             detail: message,
         });
     }
