@@ -1,0 +1,43 @@
+<div class="exchange-rate-container">
+    <div class="exchange-table-block">
+        <div class="table-title">
+            <i class="pi pi-money-bill mr-2"></i>
+            Курсы валют
+        </div>
+        <p-table [value]="fiatRates" class="rate-table w-full" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Валюта</th>
+                    <th>Курс к BYN</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-rate>
+                <tr>
+                    <td>{{ rate.currency }}</td>
+                    <td>{{ rate.rateValue }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <div class="exchange-table-block">
+        <div class="table-title">
+            <i class="pi pi-bitcoin mr-2"></i>
+            Криптовалюты
+        </div>
+        <p-table [value]="cryptoRates" class="rate-table w-full" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Криптовалюта</th>
+                    <th>Курс к USD</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-crypto>
+                <tr>
+                    <td>{{ crypto.currency }}</td>
+                    <td>{{ crypto.rateValue }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>

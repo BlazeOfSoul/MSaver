@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
 import { NotificationMessages } from '../../core/constants/notification-messages';
 import { Category } from '../../core/models/balance/category.model';
 import { Rate } from '../../core/models/exchange-rate/rate.model';
@@ -9,12 +8,19 @@ import { BalanceService } from '../../core/services/balance.service';
 import { CategoryService } from '../../core/services/category.service';
 import { ExchangeRateService } from '../../core/services/exchange-rate.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ExchangeRatesComponent } from '../../shared/components/exchange-rates/exchange-rates.component';
 import { SummaryCardComponent } from '../../shared/components/summary-card/summary-card.component';
 import { TransactionDialogComponent } from '../../shared/components/transaction-dialog/transaction-dialog.component';
 @Component({
     selector: 'app-home',
     standalone: true,
-    imports: [ButtonModule, TableModule, SummaryCardComponent, TransactionDialogComponent],
+    imports: [
+        ButtonModule,
+
+        SummaryCardComponent,
+        TransactionDialogComponent,
+        ExchangeRatesComponent,
+    ],
     templateUrl: './home.component.html',
     styleUrl: './home.component.scss',
 })
