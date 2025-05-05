@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 
 using server.Domain.Interfaces;
 using server.Features.ExchangeRates;
+using server.Models.Constants;
 using server.Models.ExchangeRate;
 using server.Models.ExchangeRate.Settings;
 
@@ -40,7 +41,7 @@ public class ExchangeRateService : IExchangeRateService
 
             if (usd == null || eur == null || rub == null)
             {
-                throw new Exception("Не удалось получить курсы валют от NBRB");
+                throw new Exception(ErrorMessages.ExchangeRate.NbrbRateNotFound);
             }
 
 
@@ -48,7 +49,7 @@ public class ExchangeRateService : IExchangeRateService
 
             if (crypto == null)
             {
-                throw new Exception("Не удалось получить курсы криптовалют от CoinGecko");
+                throw new Exception(ErrorMessages.ExchangeRate.CoinGeckoNotFound);
             }
 
             var result = new ExchangeRatesResponse

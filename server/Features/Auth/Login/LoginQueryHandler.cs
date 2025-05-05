@@ -1,8 +1,9 @@
 using MediatR;
-
 using Microsoft.AspNetCore.Identity;
+
 using server.Domain.Interfaces;
 using server.Models;
+using server.Models.Constants;
 using server.Repositories.Interfaces;
 
 namespace server.Features.Auth.Login;
@@ -22,13 +23,13 @@ public class LoginQueryHandler : IRequestHandler<LoginQuery, LoginResponse>
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user == null)
-            throw new Exception("Неверный Email.");
+            throw new Exception(ErrorMessages.Auth.InvalidEmail);
 
         var passwordHasher = new PasswordHasher<User>();
         var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
         if (result == PasswordVerificationResult.Failed)
-            throw new Exception("Неверный пароль.");
+            throw new Exception(ErrorMessages.Auth.InvalidPassword);
 
         var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Username, user.Email);
 

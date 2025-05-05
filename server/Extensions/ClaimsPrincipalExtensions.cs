@@ -1,5 +1,7 @@
 ﻿using System.Security.Claims;
 
+using server.Models.Constants;
+
 namespace server.Extensions;
 
 public static class ClaimsPrincipalExtensions
@@ -10,7 +12,7 @@ public static class ClaimsPrincipalExtensions
 
         if (string.IsNullOrEmpty(userIdClaim))
         {
-            throw new Exception("User ID не найден в токене.");
+            throw new Exception(ErrorMessages.User.IdNotFound);
         }
 
         return Guid.Parse(userIdClaim);

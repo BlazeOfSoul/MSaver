@@ -1,5 +1,5 @@
 ﻿using MediatR;
-
+using server.Models.Constants;
 using server.Repositories.Interfaces;
 
 namespace server.Features.Balance.GetCurrent;
@@ -17,7 +17,7 @@ public class GetCurrentBalanceQueryHandler : IRequestHandler<GetCurrentBalanceQu
     {
         var balance = await _balanceRepository.GetCurrentByUserIdAsync(request.UserId);
         if (balance == null)
-            throw new Exception("Баланс не найден");
+            throw new Exception(ErrorMessages.Balance.NotFound);
 
         return new GetCurrentBalanceResponse(balance.IncomeTotal, balance.ExpenseTotal, balance.ValueTotal);
     }

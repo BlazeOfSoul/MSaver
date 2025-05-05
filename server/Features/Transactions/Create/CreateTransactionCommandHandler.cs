@@ -2,18 +2,17 @@
 using Microsoft.EntityFrameworkCore;
 using server.Models.Enums;
 using server.Data;
+using server.Models.Constants;
 
 namespace server.Features.Transactions.Create;
 
 public class CreateTransactionCommandHandler : IRequestHandler<CreateTransactionCommand, Guid>
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public CreateTransactionCommandHandler(ApplicationDbContext dbContext, IHttpContextAccessor httpContextAccessor)
+    public CreateTransactionCommandHandler(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
-        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Guid> Handle(CreateTransactionCommand request, CancellationToken cancellationToken)
@@ -22,7 +21,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             .FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.UserId == request.UserId, cancellationToken);
 
         if (category == null)
-            throw new Exception("Категория не найдена");
+            throw new Exception(ErrorMessages.Categories.NotFound);
 
         var now = request.Date;
         var balance = await _dbContext.Balances

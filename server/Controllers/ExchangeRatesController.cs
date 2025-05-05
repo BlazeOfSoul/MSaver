@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+
 using server.Features.ExchangeRates;
 
 namespace server.Controllers;

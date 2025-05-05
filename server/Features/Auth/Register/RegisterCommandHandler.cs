@@ -40,7 +40,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
         {
             var existingUser = await _userRepository.GetByEmailAsync(request.Email);
             if (existingUser != null)
-                throw new Exception("Пользователь с таким email уже существует.");
+                throw new Exception(ErrorMessages.Auth.RepeatedEmail);
 
             var user = CreateUser(request);
             await _userRepository.AddAsync(user);

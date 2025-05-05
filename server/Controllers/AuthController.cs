@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+
 using server.Features.Auth.Login;
 using server.Features.Auth.Register;
 
