@@ -1,31 +1,20 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { MenuItem } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
 import { MenubarModule } from 'primeng/menubar';
 import { TabMenuModule } from 'primeng/tabmenu';
 import { ToolbarModule } from 'primeng/toolbar';
+import { AuthService } from '../../services/auth.service'; // проверь путь
 
 @Component({
     selector: 'app-header',
     standalone: true,
-    imports: [ToolbarModule, MenubarModule, TabMenuModule],
+    imports: [ToolbarModule, MenubarModule, TabMenuModule, ButtonModule],
     templateUrl: './header.component.html',
     styleUrl: './header.component.scss',
 })
 export class HeaderComponent {
-    constructor(private router: Router) {}
-
-    items: MenuItem[] | undefined;
-
-    ngOnInit() {
-        this.items = [
-            {
-                label: 'Главная',
-                icon: 'pi pi-home',
-                routerLink: '/home',
-            },
-        ];
-    }
+    constructor(private router: Router, private authService: AuthService) {}
 
     goHome() {
         this.navigateTo('/home');
@@ -33,5 +22,14 @@ export class HeaderComponent {
 
     navigateTo(link: string) {
         this.router.navigate([link]);
+    }
+
+    logout() {
+        this.authService.logout();
+        this.router.navigate(['/login']);
+    }
+
+    isLoggedIn(): boolean {
+        return this.authService.isLoggedIn();
     }
 }
