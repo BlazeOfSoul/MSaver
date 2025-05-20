@@ -1,1 +1,93 @@
-<p>categories works!</p>
+<div class="grid mx-2 md:mx-4 lg:mx-6 mt-2">
+    <div class="col-12 flex justify-content-end mb-3">
+        <p-button label="Добавить категорию" (onClick)="addCategory()"> </p-button>
+    </div>
+
+    <div class="col-12 md:col-6 p-2">
+        <p-card header="Доходы">
+            <p-table [value]="incomeCategories" [scrollable]="true" scrollHeight="600px">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Название категории</th>
+                        <th style="width: 80px"></th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-category>
+                    <tr [ngStyle]="getRowStyle(category)">
+                        <td>
+                            <div class="flex align-items-center gap-3">
+                                <i class="pi pi-circle-fill" [style.color]="category.color"></i>
+                                <span class="text-lg">{{ category.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flex justify-content-end gap-2">
+                                <button
+                                    pButton
+                                    icon="pi pi-pencil"
+                                    class="p-button-rounded p-button-text p-button-sm"
+                                    (click)="editCategory(category)"
+                                ></button>
+                                <button
+                                    pButton
+                                    icon="pi pi-trash"
+                                    class="p-button-rounded p-button-text p-button-sm p-button-danger"
+                                    (click)="deleteCategory(category)"
+                                ></button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="2" class="py-3">Нет категорий доходов</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-card>
+    </div>
+
+    <div class="col-12 md:col-6 p-2">
+        <p-card header="Расходы">
+            <p-table [value]="expenseCategories" [scrollable]="true" scrollHeight="600px">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Название категории</th>
+                        <th style="width: 80px"></th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-category>
+                    <tr [ngStyle]="getRowStyle(category)">
+                        <td>
+                            <div class="flex align-items-center gap-3">
+                                <i class="pi pi-circle-fill" [style.color]="category.color"></i>
+                                <span class="text-lg">{{ category.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flex justify-content-end gap-2">
+                                <button
+                                    pButton
+                                    icon="pi pi-pencil"
+                                    class="p-button-rounded p-button-text p-button-sm"
+                                    (click)="editCategory(category)"
+                                ></button>
+                                <button
+                                    pButton
+                                    icon="pi pi-trash"
+                                    class="p-button-rounded p-button-text p-button-sm p-button-danger"
+                                    (click)="deleteCategory(category)"
+                                ></button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="2" class="py-3">Нет категорий расходов</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-card>
+    </div>
+</div>
