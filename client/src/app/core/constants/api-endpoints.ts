@@ -14,7 +14,7 @@ export const ApiEndpoints = {
         Create: `${API_BASE}/transactions`,
     },
     Categories: {
-        GetAll: `${API_BASE}/categories`,
+        Base: `${API_BASE}/categories`,
     },
     Balance: {
         Get: `${API_BASE}/Balance/current`,
