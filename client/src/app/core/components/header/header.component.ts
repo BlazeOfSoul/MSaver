@@ -20,6 +20,10 @@ export class HeaderComponent {
         this.navigateTo('/home');
     }
 
+    goCategories() {
+        this.navigateTo('/categories');
+    }
+
     navigateTo(link: string) {
         this.router.navigate([link]);
     }

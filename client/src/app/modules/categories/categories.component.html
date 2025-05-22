@@ -1,0 +1,87 @@
+<div class="grid mx-2 md:mx-4 lg:mx-6 mt-2">
+    <div class="col-12 flex justify-content-end mb-3">
+        <button
+            pButton
+            label="Добавить категорию"
+            icon="pi pi-plus"
+            (click)="openCreateDialog()"
+            class="mb-3"
+        ></button>
+    </div>
+
+    <div class="col-12 md:col-6 p-2">
+        <app-categories-table
+            [categories]="incomeCategories"
+            title="Доходы"
+            (edit)="openEditDialog($event)"
+            (delete)="deleteCategory($event)"
+        ></app-categories-table>
+    </div>
+
+    <div class="col-12 md:col-6 p-2">
+        <app-categories-table
+            [categories]="expenseCategories"
+            title="Расходы"
+            (edit)="openEditDialog($event)"
+            (delete)="deleteCategory($event)"
+        ></app-categories-table>
+    </div>
+</div>
+
+<p-dialog
+    [header]="isEditMode ? 'Редактировать категорию' : 'Создать категорию'"
+    [(visible)]="isDialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [style]="{ width: '25vw' }"
+    (onHide)="closeDialog()"
+>
+    <div class="p-fluid">
+        <div class="field mb-3">
+            <label for="name">Название</label>
+            <input id="name" pInputText [(ngModel)]="categoryName" />
+        </div>
+
+        <div class="field mb-3">
+            <label for="type">Тип</label>
+            <p-dropdown
+                id="type"
+                [options]="categoryTypeOptions"
+                [(ngModel)]="categoryType"
+                placeholder="Выберите тип"
+            ></p-dropdown>
+        </div>
+
+        <div class="field mb-3">
+            <label for="color">Цвет</label>
+            <p-colorPicker
+                class="ml-2"
+                [(ngModel)]="categoryColor"
+                id="color"
+                format="hex"
+                appendTo="body"
+            ></p-colorPicker>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <button
+                pButton
+                severity="danger"
+                class="p-button-text mr-2"
+                type="button"
+                label="Отмена"
+                (click)="closeDialog()"
+            ></button>
+            <button
+                pButton
+                type="button"
+                label="{{ isEditMode ? 'Сохранить' : 'Создать' }}"
+                (click)="saveCategory()"
+                [disabled]="
+                    !categoryName.trim() || categoryType === null || categoryType === undefined
+                "
+            ></button>
+        </div>
+    </div>
+</p-dialog>

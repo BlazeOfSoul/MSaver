@@ -1,0 +1,41 @@
+<p-card [header]="title" styleClass="h-full">
+    <p-table [value]="categories" [scrollable]="true" scrollHeight="600px">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Название категории</th>
+                <th style="width: 80px"></th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-category>
+            <tr [ngStyle]="getRowStyle(category)">
+                <td>
+                    <div class="flex align-items-center gap-3">
+                        <i class="pi pi-circle-fill" [style.color]="category.color"></i>
+                        <span class="text-lg">{{ category.name }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex justify-content-end gap-2">
+                        <button
+                            pButton
+                            icon="pi pi-pencil"
+                            class="p-button-rounded p-button-text p-button-sm"
+                            (click)="onEdit(category)"
+                        ></button>
+                        <button
+                            pButton
+                            icon="pi pi-trash"
+                            class="p-button-rounded p-button-text p-button-sm p-button-danger"
+                            (click)="onDelete(category)"
+                        ></button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="2" class="py-3">Нет категорий</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</p-card>

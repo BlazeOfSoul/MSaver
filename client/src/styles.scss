@@ -12,3 +12,11 @@ body {
     width: 100%;
     min-height: 100%;
 }
+
+.p-colorpicker-panel .p-colorpicker-color {
+    background: transparent url('assets/img/custom-color.png') no-repeat left top !important;
+}
+
+.p-colorpicker-panel .p-colorpicker-hue {
+    background: transparent url('assets/img/custom-hue.png') no-repeat left top !important;
+}

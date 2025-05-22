@@ -7,6 +7,11 @@
     <ng-template pTemplate="start">
         <i class="ml-4 pi pi-wallet" style="font-size: 2rem"></i>
         <p class="ml-2 text-3xl font-bold cursor-pointer" (click)="goHome()">MSaver</p>
+
+        <div class="flex gap-2 ml-6">
+            <p-button label="Баланс" severity="info" (click)="goHome()" />
+            <p-button label="Категории" severity="info" (click)="goCategories()" />
+        </div>
     </ng-template>
 
     <ng-template pTemplate="end">

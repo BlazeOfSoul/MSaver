@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { NotificationMessages } from '../../core/constants/notification-messages';
-import { Category } from '../../core/models/balance/category.model';
+import { Category } from '../../core/models/category/category.model';
 import { Rate } from '../../core/models/exchange-rate/rate.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BalanceService } from '../../core/services/balance.service';

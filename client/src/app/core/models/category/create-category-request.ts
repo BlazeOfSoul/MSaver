@@ -1,7 +1,7 @@
 import { CategoryType } from '../../enums/transaction-type.enum';
 
-export interface Category {
-    id: string;
+export interface CategoryCreateRequest {
     name: string;
     type: CategoryType;
+    color: string;
 }

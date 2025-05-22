@@ -7,8 +7,8 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { NotificationMessages } from '../../../core/constants/notification-messages';
 import { CategoryType } from '../../../core/enums/transaction-type.enum';
-import { Category } from '../../../core/models/balance/category.model';
 import { Transaction } from '../../../core/models/balance/transaction';
+import { Category } from '../../../core/models/category/category.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { TransactionService } from '../../../core/services/transaction.service';
 
