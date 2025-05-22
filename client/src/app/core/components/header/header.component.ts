@@ -24,6 +24,10 @@ export class HeaderComponent {
         this.navigateTo('/categories');
     }
 
+    goStatistics() {
+        this.navigateTo('/statistics');
+    }
+
     navigateTo(link: string) {
         this.router.navigate([link]);
     }

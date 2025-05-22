@@ -1,0 +1,19 @@
+<div class="flex flex-column align-items-center gap-3 mb-4">
+    <p-dropdown
+        [options]="months"
+        optionLabel="name"
+        [(ngModel)]="selectedMonthIndexLocal"
+        (ngModelChange)="onMonthChange($event)"
+        placeholder="Выберите месяц"
+        class="w-20rem"
+    ></p-dropdown>
+
+    <div style="width: 100%; max-width: 800px">
+        <p-chart
+            type="bar"
+            [data]="incomeChartDataByMonth[selectedMonthIndexLocal]"
+            [options]="chartOptions"
+            style="height: 400px"
+        ></p-chart>
+    </div>
+</div>
