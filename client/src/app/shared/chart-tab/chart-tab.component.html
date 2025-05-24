@@ -1,0 +1,15 @@
+<p-dropdown
+    [options]="months"
+    optionLabel="name"
+    [(ngModel)]="selectedMonth"
+    (onChange)="onMonthChange($event)"
+    placeholder="Выберите месяц"
+></p-dropdown>
+
+<p-chart
+    *ngIf="currentChartData"
+    type="bar"
+    [data]="currentChartData"
+    [options]="chartOptions"
+    style="height: 400px"
+></p-chart>

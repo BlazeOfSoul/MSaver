@@ -1,22 +1,18 @@
-<p-tabView [(activeIndex)]="activeTabIndex" class="statistics-tabs">
+<p-tabView [(activeIndex)]="activeTabIndex" class="tab-view">
     <p-tabPanel header="Доходы">
-        <app-income-chart-tab
+        <app-chart-tab
             [months]="months"
-            [incomeChartDataByMonth]="incomeChartDataByMonth"
-            [chartOptions]="chartOptions"
-            [selectedMonthIndex]="selectedMonthIndex"
+            [chartDataByMonth]="incomeChartDataByMonth"
             (selectedMonthIndexChange)="selectedMonthIndex = $event"
-        ></app-income-chart-tab>
+        ></app-chart-tab>
     </p-tabPanel>
 
     <p-tabPanel header="Расходы">
-        <app-expense-chart-tab
+        <app-chart-tab
             [months]="months"
-            [expenseChartDataByMonth]="expenseChartDataByMonth"
-            [chartOptions]="chartOptions"
-            [selectedMonthIndex]="selectedMonthIndex"
+            [chartDataByMonth]="expenseChartDataByMonth"
             (selectedMonthIndexChange)="selectedMonthIndex = $event"
-        ></app-expense-chart-tab>
+        ></app-chart-tab>
     </p-tabPanel>
 
     <p-tabPanel header="Итоги">

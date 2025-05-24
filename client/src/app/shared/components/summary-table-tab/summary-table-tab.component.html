@@ -1,39 +1,50 @@
-<div class="overflow-auto">
-    <table class="stats-table w-full text-sm">
-        <thead class="bg-primary text-white">
-            <tr>
-                <th class="text-left p-2">Категория</th>
-                <th *ngFor="let m of months" class="text-center p-2">{{ m.name }}</th>
-                <th class="text-center p-2">Среднее</th>
-                <th class="text-center p-2">Всего</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let category of getCategories()" class="hover:bg-gray-100">
-                <td class="p-2 font-medium">{{ category }}</td>
-                <td *ngFor="let m of months; let i = index" class="text-center p-2">
-                    {{
-              (incomeTableData[category]?.[i] ?? expenseTableData[category]?.[i] ?? 0)
-                | currency : 'BYN' : 'symbol' : '1.0-2'
-                    }}
-                </td>
-                <td class="text-center p-2 text-blue-600 font-semibold">
-                    {{ getCategoryAverage(category) | currency : 'BYN' : 'symbol' : '1.0-2' }}
-                </td>
-                <td class="text-center p-2 text-green-700 font-bold">
-                    {{ getCategoryTotal(category) | currency : 'BYN' : 'symbol' : '1.0-2' }}
-                </td>
-            </tr>
-            <tr class="bg-primary text-white font-bold">
-                <td class="p-2">Итого</td>
-                <td *ngFor="let m of months; let i = index" class="text-center p-2">
-                    {{ getMonthSum(i) | currency : 'BYN' : 'symbol' : '1.0-2' }}
-                </td>
-                <td class="text-center p-2">–</td>
-                <td class="text-center p-2">
-                    {{ getTotalSum() | currency : 'BYN' : 'symbol' : '1.0-2' }}
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+<p-dropdown
+    [options]="typeOptions"
+    [(ngModel)]="selectedType"
+    optionLabel="label"
+    optionValue="value"
+    styleClass="mb-3 sm:w-40"
+></p-dropdown>
+<p-table [value]="getCategories()" responsiveLayout="scroll" showGridlines size="small">
+    <ng-template pTemplate="header">
+        <tr class="custom-header">
+            <th>Категория</th>
+            <th *ngFor="let m of months" class="text-center">{{ m.name }}</th>
+            <th class="text-center">Среднее</th>
+            <th class="text-center">Всего</th>
+        </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-category>
+        <tr>
+            <td class="font-medium">{{ category }}</td>
+            <td *ngFor="let m of months; let i = index" class="text-center">
+                {{
+                    (incomeTableData[category]?.[i] ?? expenseTableData[category]?.[i] ?? 0)
+                        | currency: 'BYN ':'symbol':'1.0-2'
+                }}
+            </td>
+            <td class="text-center text-yellow-500 font-semibold">
+                {{ getCategoryAverage(category) | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+            </td>
+            <td class="text-center text-green-600 font-bold">
+                {{ getCategoryTotal(category) | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+            </td>
+        </tr>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <tr>
+            <td>Итого</td>
+            <td *ngFor="let m of months; let i = index" class="text-center">
+                {{ getMonthSum(i) | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+            </td>
+            <td class="text-center">
+                {{ getTotalAverage() | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+            </td>
+            <td class="text-center">
+                {{ getTotalSum() | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+            </td>
+        </tr>
+    </ng-template>
+</p-table>

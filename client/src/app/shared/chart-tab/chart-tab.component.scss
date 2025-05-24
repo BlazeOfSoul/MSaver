@@ -1,0 +1,11 @@
+.chart-container {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+}
+
+::ng-deep canvas {
+    height: 70vh !important;
+    width: 100% !important;
+    margin-top: 1rem;
+}

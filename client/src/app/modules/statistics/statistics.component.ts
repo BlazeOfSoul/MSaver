@@ -1,20 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { TabViewModule } from 'primeng/tabview';
-import { ExpenseChartTabComponent } from '../../shared/components/expense-chart-tab/expense-chart-tab.component';
-import { IncomeChartTabComponent } from '../../shared/components/income-chart-tab/income-chart-tab.component';
+import { ChartTabComponent } from '../../shared/chart-tab/chart-tab.component';
 import { SummaryTableTabComponent } from '../../shared/components/summary-table-tab/summary-table-tab.component';
 
 @Component({
     selector: 'app-statistics',
     standalone: true,
-    imports: [
-        CommonModule,
-        IncomeChartTabComponent,
-        ExpenseChartTabComponent,
-        SummaryTableTabComponent,
-        TabViewModule,
-    ],
+    imports: [CommonModule, ChartTabComponent, SummaryTableTabComponent, TabViewModule],
     templateUrl: './statistics.component.html',
     styleUrls: ['./statistics.component.scss'],
 })
@@ -39,41 +32,101 @@ export class StatisticsComponent {
 
     selectedMonthIndex = 0;
 
-    // Пример мок-данных для графиков (структура зависит от PrimeNG Chart)
-    incomeChartDataByMonth = this.months.map(() => ({
-        labels: ['Зарплата', 'Инвестиции', 'Подарки'],
-        datasets: [
-            {
-                label: 'Доходы',
-                backgroundColor: '#4caf50',
-                data: [1200, 300, 150],
-            },
-        ],
-    }));
+    incomeChartDataByMonth = [
+        {
+            labels: [
+                'Зарплата',
+                'Фриланс',
+                'Инвестиции',
+                'Сдача жилья',
+                'Кэшбэк',
+                'Продажа вещей',
+                'Подарки',
+                'Бонусы',
+                'Проценты по вкладу',
+                'Дивиденды',
+                'Возврат налогов',
+                'Пассивный доход',
+                'Премия',
+                'Подработка',
+                'Компенсация',
+                'Доход с YouTube',
+                'Реферальные',
+                'Крипта',
+                'Субсидии',
+                'Другое',
+            ],
+            datasets: [
+                {
+                    data: [
+                        1200, 800, 500, 400, 150, 200, 300, 250, 100, 180, 130, 220, 400, 350, 170,
+                        90, 160, 600, 140, 110,
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.1)',
+                        'rgba(54, 162, 235, 0.1)',
+                        'rgba(255, 206, 86, 0.1)',
+                        'rgba(75, 192, 192, 0.1)',
+                        'rgba(153, 102, 255, 0.1)',
+                        'rgba(255, 159, 64, 0.1)',
+                        'rgba(199, 199, 199, 0.1)',
+                        'rgba(255, 99, 255, 0.1)',
+                        'rgba(99, 255, 132, 0.1)',
+                        'rgba(255, 206, 186, 0.1)',
+                        'rgba(86, 255, 206, 0.1)',
+                        'rgba(192, 75, 192, 0.1)',
+                        'rgba(102, 153, 255, 0.1)',
+                        'rgba(159, 64, 255, 0.1)',
+                        'rgba(255, 99, 132, 0.1)',
+                        'rgba(64, 159, 255, 0.1)',
+                        'rgba(99, 132, 255, 0.1)',
+                        'rgba(132, 255, 99, 0.1)',
+                        'rgba(235, 64, 52, 0.1)',
+                        'rgba(255, 215, 0, 0.1)',
+                    ],
+                    borderColor: [
+                        '#ff6384',
+                        '#36a2eb',
+                        '#ffce56',
+                        '#4bc0c0',
+                        '#9966ff',
+                        '#ff9f40',
+                        '#c7c7c7',
+                        '#ff63ff',
+                        '#63ff84',
+                        '#ffceba',
+                        '#56ffce',
+                        '#c04bc0',
+                        '#6699ff',
+                        '#9f40ff',
+                        '#ff6384',
+                        '#409fff',
+                        '#6384ff',
+                        '#84ff63',
+                        '#eb4034',
+                        '#ffd700',
+                    ],
+                    borderWidth: 2,
+                },
+            ],
+        },
+    ];
 
     expenseChartDataByMonth = this.months.map(() => ({
         labels: ['Еда', 'Транспорт', 'Развлечения'],
         datasets: [
             {
                 label: 'Расходы',
-                backgroundColor: '#f44336',
-                data: [400, 200, 150],
+                data: [1000, 500, 400],
+                backgroundColor: ['rgba(255, 99, 132, 0.1)', 'rgba(54, 162, 235, 0.1)'],
+                borderColor: ['#ff6384', '#36a2eb'],
+                borderWidth: 2,
             },
         ],
     }));
 
-    chartOptions = {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true,
-            },
-        },
-    };
-
-    // Мок-данные для таблицы (ключ — категория, значение — массив по месяцам)
     incomeTableData: Record<string, number[]> = {
-        Зарплата: [1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200],
+        Зарплата: [1000, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200],
         Инвестиции: [300, 350, 400, 300, 250, 300, 350, 300, 400, 300, 350, 300],
     };
 

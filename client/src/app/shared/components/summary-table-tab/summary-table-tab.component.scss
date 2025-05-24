@@ -1,10 +1,11 @@
-.stats-table {
-    border-collapse: collapse;
-    th,
-    td {
-        border: 1px solid #ddd;
-    }
-    thead th {
-        background-color: var(--primary-color, #007ad9);
-    }
+::ng-deep th {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+:host ::ng-deep .p-datatabe-tfoot {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
 }
