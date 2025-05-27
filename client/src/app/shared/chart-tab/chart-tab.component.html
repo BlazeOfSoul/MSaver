@@ -1,15 +1,48 @@
-<p-dropdown
-    [options]="months"
-    optionLabel="name"
-    [(ngModel)]="selectedMonth"
-    (onChange)="onMonthChange($event)"
-    placeholder="Выберите месяц"
-></p-dropdown>
+<div class="dropdown-container p-d-flex p-ai-center p-mb-3">
+    <p-dropdown
+        [options]="months"
+        optionLabel="name"
+        [(ngModel)]="selectedMonth"
+        (onChange)="onMonthChange($event)"
+        placeholder="Выберите месяц"
+        [style]="{ width: '150px', marginRight: '1rem' }"
+    ></p-dropdown>
 
-<p-chart
-    *ngIf="currentChartData"
-    type="bar"
-    [data]="currentChartData"
-    [options]="chartOptions"
-    style="height: 400px"
-></p-chart>
+    <p-dropdown
+        [options]="years"
+        [(ngModel)]="selectedYear"
+        (onChange)="onYearChange($event)"
+        placeholder="Выберите год"
+        [style]="{ width: '120px' }"
+    ></p-dropdown>
+</div>
+
+<div class="chart-container" style="position: relative; height: 400px">
+    <ng-container *ngIf="currentChartData as chartData">
+        <p-chart
+            *ngIf="chartData.datasets && chartData.datasets.length > 0"
+            type="bar"
+            [data]="chartData"
+            [options]="chartOptions"
+            style="height: 100%"
+        ></p-chart>
+
+        <div
+            *ngIf="!chartData.datasets || chartData.datasets.length === 0"
+            class="flex align-items-center justify-content-center"
+            style="height: 70vh"
+        >
+            <i class="pi pi-info-circle text-6xl"></i>
+            <span class="text-4xl ml-2">Данные за выбранный месяц и год отсутствуют.</span>
+        </div>
+    </ng-container>
+
+    <div
+        *ngIf="!currentChartData"
+        class="flex align-items-center justify-content-center"
+        style="height: 70vh"
+    >
+        <i class="pi pi-info-circle text-6xl"></i>
+        <span class="text-4xl ml-2">Данные за выбранный месяц и год отсутствуют.</span>
+    </div>
+</div>

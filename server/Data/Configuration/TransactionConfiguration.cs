@@ -24,7 +24,6 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(x => x.Description).HasMaxLength(300);
-        builder.Property(x => x.CategoryName).IsRequired().HasMaxLength(100);
         builder.Property(x => x.Amount).HasColumnType("numeric(18,2)");
         builder.Property(x => x.Date).IsRequired();
     }

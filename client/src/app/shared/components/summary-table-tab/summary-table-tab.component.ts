@@ -12,9 +12,11 @@ import { TableModule } from 'primeng/table';
     styleUrls: ['./summary-table-tab.component.scss'],
 })
 export class SummaryTableTabComponent {
-    @Input() months: { name: string }[] = [];
-    @Input() incomeTableData: Record<string, number[]> = {};
-    @Input() expenseTableData: Record<string, number[]> = {};
+    @Input() months: { name: string; index: number }[] = [];
+    @Input() years: number[] = [];
+    @Input() incomeData: Record<string, number[]> = {};
+    @Input() expenseData: Record<string, number[]> = {};
+    @Input() selectedYear!: number;
 
     selectedType: 'income' | 'expense' = 'income';
 
@@ -25,30 +27,31 @@ export class SummaryTableTabComponent {
         ];
     }
 
+    get currentDataSnapshot(): Record<string, number[]> {
+        return this.selectedType === 'income' ? this.incomeData : this.expenseData;
+    }
+
     getCategories(): string[] {
-        const data = this.selectedType === 'income' ? this.incomeTableData : this.expenseTableData;
-        return Object.keys(data);
+        return Object.keys(this.currentDataSnapshot);
     }
 
     getMonthSum(index: number): number {
-        const data = this.selectedType === 'income' ? this.incomeTableData : this.expenseTableData;
         let sum = 0;
-        for (const key in data) sum += data[key][index] ?? 0;
+        for (const category of this.getCategories()) {
+            sum += this.currentDataSnapshot[category]?.[index] ?? 0;
+        }
         return sum;
     }
 
     getCategoryTotal(category: string): number {
-        const data = this.selectedType === 'income' ? this.incomeTableData : this.expenseTableData;
-        const values = data[category] ?? [];
+        const values = this.currentDataSnapshot[category] ?? [];
         return values.reduce((a, b) => a + b, 0);
     }
 
     getCategoryAverage(category: string): number {
-        const data = this.selectedType === 'income' ? this.incomeTableData : this.expenseTableData;
-        const all = data[category] ?? [];
-        const count = all.length;
-        if (count === 0) return 0;
-        return +(all.reduce((a, b) => a + b, 0) / count).toFixed(2);
+        const values = this.currentDataSnapshot[category] ?? [];
+        if (values.length === 0) return 0;
+        return +(values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
     }
 
     getTotalSum(): number {
@@ -59,5 +62,31 @@ export class SummaryTableTabComponent {
         const total = this.getTotalSum();
         const count = this.months.length;
         return count === 0 ? 0 : +(total / count).toFixed(2);
+    }
+
+    getFormattedValue(category: string, index: number): string {
+        const value = this.currentDataSnapshot[category]?.[index];
+        return value !== undefined && value !== null
+            ? new Intl.NumberFormat('ru-RU', {
+                  style: 'currency',
+                  currency: 'BYN',
+                  minimumFractionDigits: 2,
+              }).format(value)
+            : '-';
+    }
+
+    getFormattedNumber(value: number): string {
+        return new Intl.NumberFormat('ru-RU', {
+            style: 'currency',
+            currency: 'BYN',
+            minimumFractionDigits: 2,
+        }).format(value);
+    }
+
+    hasDataForSelectedYear(): boolean {
+        const data = this.currentDataSnapshot;
+        return Object.values(data).some((arr) =>
+            arr.some((val) => val !== undefined && val !== null)
+        );
     }
 }

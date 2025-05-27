@@ -1,11 +1,36 @@
-<p-dropdown
-    [options]="typeOptions"
-    [(ngModel)]="selectedType"
-    optionLabel="label"
-    optionValue="value"
-    styleClass="mb-3 sm:w-40"
-></p-dropdown>
-<p-table [value]="getCategories()" responsiveLayout="scroll" showGridlines size="small">
+<div class="dropdown-container flex gap-3 mb-4">
+    <p-dropdown
+        [options]="typeOptions"
+        [(ngModel)]="selectedType"
+        optionLabel="label"
+        optionValue="value"
+        [style]="{ width: '150px' }"
+    ></p-dropdown>
+
+    <p-dropdown
+        [options]="years"
+        [(ngModel)]="selectedYear"
+        placeholder="Год"
+        [style]="{ width: '120px' }"
+    ></p-dropdown>
+</div>
+
+<div
+    *ngIf="!hasDataForSelectedYear()"
+    class="flex align-items-center justify-content-center"
+    style="height: 65vh"
+>
+    <i class="pi pi-info-circle text-6xl"></i>
+    <span class="text-4xl ml-2">Данные за выбранный год отсутствуют.</span>
+</div>
+
+<p-table
+    *ngIf="hasDataForSelectedYear()"
+    [value]="getCategories()"
+    responsiveLayout="scroll"
+    showGridlines
+    size="small"
+>
     <ng-template pTemplate="header">
         <tr class="custom-header">
             <th>Категория</th>
@@ -19,16 +44,13 @@
         <tr>
             <td class="font-medium">{{ category }}</td>
             <td *ngFor="let m of months; let i = index" class="text-center">
-                {{
-                    (incomeTableData[category]?.[i] ?? expenseTableData[category]?.[i] ?? 0)
-                        | currency: 'BYN ':'symbol':'1.0-2'
-                }}
+                {{ getFormattedValue(category, i) }}
             </td>
             <td class="text-center text-yellow-500 font-semibold">
-                {{ getCategoryAverage(category) | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+                {{ getFormattedNumber(getCategoryAverage(category)) }}
             </td>
             <td class="text-center text-green-600 font-bold">
-                {{ getCategoryTotal(category) | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+                {{ getFormattedNumber(getCategoryTotal(category)) }}
             </td>
         </tr>
     </ng-template>
@@ -37,13 +59,13 @@
         <tr>
             <td>Итого</td>
             <td *ngFor="let m of months; let i = index" class="text-center">
-                {{ getMonthSum(i) | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+                {{ getFormattedNumber(getMonthSum(i)) }}
             </td>
             <td class="text-center">
-                {{ getTotalAverage() | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+                {{ getFormattedNumber(getTotalAverage()) }}
             </td>
             <td class="text-center">
-                {{ getTotalSum() | currency : 'BYN ' : 'symbol' : '1.0-2' }}
+                {{ getFormattedNumber(getTotalSum()) }}
             </td>
         </tr>
     </ng-template>
