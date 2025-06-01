@@ -1,32 +1,30 @@
 <p-tabView [(activeIndex)]="activeTabIndex">
     <p-tabPanel header="Доходы">
         <app-chart-tab
-            *ngIf="incomeChartDataForSelected"
-            [title]="'Доходы'"
-            [data]="incomeChartDataForSelected"
-            [months]="availableMonthsForSelectedYear"
-            [years]="statisticsData?.availableYears ?? []"
-            (selectedMonthIndexChange)="selectedMonthIndex = $event"
-            (selectedYearChange)="selectedYear = $event"
+            [chartDataByYearAndMonth]="incomeChartData"
+            [availableMonthsByYear]="availableMonthsByYear"
+            [availableYears]="availableYears"
         />
     </p-tabPanel>
     <p-tabPanel header="Расходы">
         <app-chart-tab
-            *ngIf="expenseChartDataForSelected"
-            [title]="'Расходы'"
-            [data]="expenseChartDataForSelected"
-            [months]="availableMonthsForSelectedYear"
-            [years]="statisticsData?.availableYears ?? []"
-            (selectedMonthIndexChange)="selectedMonthIndex = $event"
-            (selectedYearChange)="selectedYear = $event"
+            [chartDataByYearAndMonth]="expenseChartData"
+            [availableMonthsByYear]="availableMonthsByYear"
+            [availableYears]="availableYears"
         />
     </p-tabPanel>
-    <p-tabPanel header="Таблица">
+    <p-tabPanel header="Таблица годовых доходов">
         <app-summary-table-tab
-            *ngIf="statisticsData"
-            [incomeData]="incomeTableDataForSelected"
-            [expenseData]="expenseTableDataForSelected"
-            [months]="months"
+            [dataByYear]="incomeTableData"
+            [availableYears]="availableYears"
+            [availableMonthsByYear]="availableMonthsByYear"
+        />
+    </p-tabPanel>
+    <p-tabPanel header="Таблица годовых расходов">
+        <app-summary-table-tab
+            [dataByYear]="expenseTableData"
+            [availableYears]="availableYears"
+            [availableMonthsByYear]="availableMonthsByYear"
         />
     </p-tabPanel>
 </p-tabView>

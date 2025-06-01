@@ -14,27 +14,7 @@ import { SummaryTableTabComponent } from '../../shared/components/summary-table-
     styleUrls: ['./statistics.component.scss'],
 })
 export class StatisticsComponent implements OnInit {
-    tabs = ['Доходы', 'Расходы', 'Таблица'];
     activeTabIndex = 0;
-
-    months = [
-        { name: 'Январь', index: 0 },
-        { name: 'Февраль', index: 1 },
-        { name: 'Март', index: 2 },
-        { name: 'Апрель', index: 3 },
-        { name: 'Май', index: 4 },
-        { name: 'Июнь', index: 5 },
-        { name: 'Июль', index: 6 },
-        { name: 'Август', index: 7 },
-        { name: 'Сентябрь', index: 8 },
-        { name: 'Октябрь', index: 9 },
-        { name: 'Ноябрь', index: 10 },
-        { name: 'Декабрь', index: 11 },
-    ];
-
-    selectedMonthIndex = new Date().getMonth();
-    selectedYear = new Date().getFullYear();
-
     statisticsData: StatisticsResponse | null = null;
 
     constructor(private transactionService: TransactionService) {}
@@ -45,35 +25,27 @@ export class StatisticsComponent implements OnInit {
         });
     }
 
-    get incomeChartDataForSelected(): any {
-        if (!this.statisticsData) return null;
-        return (
-            this.statisticsData.incomeChartDataByYear[this.selectedYear]?.[
-                this.selectedMonthIndex
-            ] ?? null
-        );
+    get availableYears(): number[] {
+        return this.statisticsData?.availableYears ?? [];
     }
 
-    get expenseChartDataForSelected(): any {
-        if (!this.statisticsData) return null;
-        return (
-            this.statisticsData.expenseChartDataByYear[this.selectedYear]?.[
-                this.selectedMonthIndex
-            ] ?? null
-        );
+    get incomeChartData(): Record<number, any> {
+        return this.statisticsData?.incomeChartDataByYear ?? {};
     }
 
-    get incomeTableDataForSelected(): Record<string, number[]> {
-        return this.statisticsData?.incomeTableData[this.selectedYear] ?? {};
+    get expenseChartData(): Record<number, any> {
+        return this.statisticsData?.expenseChartDataByYear ?? {};
     }
 
-    get expenseTableDataForSelected(): Record<string, number[]> {
-        return this.statisticsData?.expenseTableData[this.selectedYear] ?? {};
+    get incomeTableData(): Record<number, Record<string, Record<number, number>>> {
+        return this.statisticsData?.incomeTableData ?? {};
     }
 
-    get availableMonthsForSelectedYear(): { name: string; index: number }[] {
-        const availableIndexes =
-            this.statisticsData?.availableMonthsByYear[this.selectedYear] ?? [];
-        return this.months.filter((m) => availableIndexes.includes(m.index));
+    get expenseTableData(): Record<number, Record<string, Record<number, number>>> {
+        return this.statisticsData?.expenseTableData ?? {};
+    }
+
+    get availableMonthsByYear(): Record<number, number[]> {
+        return this.statisticsData?.availableMonthsByYear ?? {};
     }
 }

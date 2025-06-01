@@ -22,7 +22,6 @@ public class GetStatisticsQueryHandler : IRequestHandler<GetStatisticsQuery, Sta
             .ToListAsync(cancellationToken);
 
         var response = new StatisticsResponse();
-
         var yearsSet = new HashSet<int>();
         var monthsByYear = new Dictionary<int, HashSet<int>>();
 
@@ -41,7 +40,10 @@ public class GetStatisticsQueryHandler : IRequestHandler<GetStatisticsQuery, Sta
             var targetTable = isIncome ? response.IncomeTableData : response.ExpenseTableData;
 
             if (!targetChart.ContainsKey(year))
-                targetChart[year] = Enumerable.Range(0, 12).Select(_ => new ChartDataDto()).ToList();
+                targetChart[year] = new List<ChartDataDto>(new ChartDataDto[12]);
+
+            if (targetChart[year][month] == null)
+                targetChart[year][month] = new ChartDataDto();
 
             var chartMonth = targetChart[year][month];
             var categoryIndex = chartMonth.Labels.IndexOf(t.Category.Name);
@@ -56,10 +58,13 @@ public class GetStatisticsQueryHandler : IRequestHandler<GetStatisticsQuery, Sta
             }
 
             if (!targetTable.ContainsKey(year))
-                targetTable[year] = new Dictionary<string, decimal[]>();
+                targetTable[year] = new();
 
             if (!targetTable[year].ContainsKey(t.Category.Name))
-                targetTable[year][t.Category.Name] = new decimal[12];
+                targetTable[year][t.Category.Name] = new();
+
+            if (!targetTable[year][t.Category.Name].ContainsKey(month))
+                targetTable[year][t.Category.Name][month] = 0;
 
             targetTable[year][t.Category.Name][month] += t.Amount;
         }

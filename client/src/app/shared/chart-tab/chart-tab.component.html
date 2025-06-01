@@ -1,6 +1,6 @@
 <div class="dropdown-container p-d-flex p-ai-center p-mb-3">
     <p-dropdown
-        [options]="months"
+        [options]="monthOptions"
         optionLabel="name"
         [(ngModel)]="selectedMonth"
         (onChange)="onMonthChange($event)"
@@ -9,7 +9,7 @@
     ></p-dropdown>
 
     <p-dropdown
-        [options]="years"
+        [options]="yearOptions"
         [(ngModel)]="selectedYear"
         (onChange)="onYearChange($event)"
         placeholder="Выберите год"
@@ -18,7 +18,7 @@
 </div>
 
 <div class="chart-container" style="position: relative; height: 400px">
-    <ng-container *ngIf="currentChartData as chartData">
+    <ng-container *ngIf="chartDataToDisplay as chartData">
         <p-chart
             *ngIf="chartData.datasets && chartData.datasets.length > 0"
             type="bar"
@@ -33,16 +33,16 @@
             style="height: 70vh"
         >
             <i class="pi pi-info-circle text-6xl"></i>
-            <span class="text-4xl ml-2">Данные за выбранный месяц и год отсутствуют.</span>
+            <span class="text-4xl ml-2"> Данные за выбранный месяц и год отсутствуют. </span>
         </div>
     </ng-container>
 
     <div
-        *ngIf="!currentChartData"
+        *ngIf="!chartDataToDisplay"
         class="flex align-items-center justify-content-center"
         style="height: 70vh"
     >
         <i class="pi pi-info-circle text-6xl"></i>
-        <span class="text-4xl ml-2">Данные за выбранный месяц и год отсутствуют.</span>
+        <span class="text-4xl ml-2"> Данные не загружены. </span>
     </div>
 </div>

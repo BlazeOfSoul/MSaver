@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
@@ -11,71 +11,95 @@ import { TableModule } from 'primeng/table';
     templateUrl: './summary-table-tab.component.html',
     styleUrls: ['./summary-table-tab.component.scss'],
 })
-export class SummaryTableTabComponent {
-    @Input() months: { name: string; index: number }[] = [];
-    @Input() years: number[] = [];
-    @Input() incomeData: Record<string, number[]> = {};
-    @Input() expenseData: Record<string, number[]> = {};
-    @Input() selectedYear!: number;
+export class SummaryTableTabComponent implements OnInit, OnChanges {
+    @Input() dataByYear: Record<number, Record<string, Record<number, number>>> = {};
 
-    selectedType: 'income' | 'expense' = 'income';
+    @Input() availableYears: number[] = [];
 
-    get typeOptions() {
-        return [
-            { label: 'Доходы', value: 'income' },
-            { label: 'Расходы', value: 'expense' },
-        ];
+    @Input() availableMonthsByYear: Record<number, number[]> = {};
+
+    selectedYear!: number;
+
+    yearOptions: { label: string; value: number }[] = [];
+
+    ngOnInit(): void {
+        this.buildYearOptions();
     }
 
-    get currentDataSnapshot(): Record<string, number[]> {
-        return this.selectedType === 'income' ? this.incomeData : this.expenseData;
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['availableYears'] && !changes['availableYears'].firstChange) {
+            this.buildYearOptions();
+        }
+    }
+
+    private buildYearOptions(): void {
+        this.yearOptions = (this.availableYears ?? [])
+            .slice()
+            .sort((a, b) => b - a) // по убыванию
+            .map((y) => ({ label: y.toString(), value: y }));
+
+        const currentYear = new Date().getFullYear();
+        this.selectedYear = this.yearOptions.some((o) => o.value === currentYear)
+            ? currentYear
+            : this.yearOptions.length
+            ? this.yearOptions[0].value
+            : currentYear;
+    }
+
+    get months(): { name: string; index: number }[] {
+        const names = [
+            'Январь',
+            'Февраль',
+            'Март',
+            'Апрель',
+            'Май',
+            'Июнь',
+            'Июль',
+            'Август',
+            'Сентябрь',
+            'Октябрь',
+            'Ноябрь',
+            'Декабрь',
+        ];
+        const idx = this.availableMonthsByYear[this.selectedYear] ?? [];
+        return idx.map((i) => ({ name: names[i], index: i }));
+    }
+
+    get data(): Record<string, Record<number, number>> {
+        return this.dataByYear[this.selectedYear] ?? {};
     }
 
     getCategories(): string[] {
-        return Object.keys(this.currentDataSnapshot);
+        return Object.keys(this.data);
     }
 
-    getMonthSum(index: number): number {
-        let sum = 0;
-        for (const category of this.getCategories()) {
-            sum += this.currentDataSnapshot[category]?.[index] ?? 0;
-        }
-        return sum;
+    getMonthSum(monthIdx: number): number {
+        return this.getCategories().reduce(
+            (sum, cat) => sum + (this.data[cat]?.[monthIdx] ?? 0),
+            0
+        );
     }
 
-    getCategoryTotal(category: string): number {
-        const values = this.currentDataSnapshot[category] ?? [];
-        return values.reduce((a, b) => a + b, 0);
+    getCategoryTotal(cat: string): number {
+        return Object.values(this.data[cat] ?? {}).reduce((a, b) => a + b, 0);
     }
 
-    getCategoryAverage(category: string): number {
-        const values = this.currentDataSnapshot[category] ?? [];
-        if (values.length === 0) return 0;
-        return +(values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+    getCategoryAverage(cat: string): number {
+        const vals = Object.values(this.data[cat] ?? {});
+        return +(vals.reduce((a, b) => a + b, 0) / vals.length || 0).toFixed(2);
     }
 
     getTotalSum(): number {
-        return this.months.reduce((acc, _, i) => acc + this.getMonthSum(i), 0);
+        return this.months.reduce((acc, m) => acc + this.getMonthSum(m.index), 0);
     }
 
     getTotalAverage(): number {
         const total = this.getTotalSum();
         const count = this.months.length;
-        return count === 0 ? 0 : +(total / count).toFixed(2);
+        return count ? +(total / count).toFixed(2) : 0;
     }
 
-    getFormattedValue(category: string, index: number): string {
-        const value = this.currentDataSnapshot[category]?.[index];
-        return value !== undefined && value !== null
-            ? new Intl.NumberFormat('ru-RU', {
-                  style: 'currency',
-                  currency: 'BYN',
-                  minimumFractionDigits: 2,
-              }).format(value)
-            : '-';
-    }
-
-    getFormattedNumber(value: number): string {
+    private formatCurrency(value: number): string {
         return new Intl.NumberFormat('ru-RU', {
             style: 'currency',
             currency: 'BYN',
@@ -83,10 +107,21 @@ export class SummaryTableTabComponent {
         }).format(value);
     }
 
-    hasDataForSelectedYear(): boolean {
-        const data = this.currentDataSnapshot;
-        return Object.values(data).some((arr) =>
-            arr.some((val) => val !== undefined && val !== null)
+    getFormattedValue(cat: string, monthIdx: number): string {
+        const val = this.data[cat]?.[monthIdx];
+        return val != null ? this.formatCurrency(val) : '-';
+    }
+
+    getFormattedNumber(val: number): string {
+        return this.formatCurrency(val);
+    }
+
+    hasData(): boolean {
+        return Object.values(this.data).some((monthMap) =>
+            this.months.some((m) => {
+                const v = monthMap[m.index];
+                return v != null && v !== 0;
+            })
         );
     }
 }

@@ -1,31 +1,19 @@
 <div class="dropdown-container flex gap-3 mb-4">
     <p-dropdown
-        [options]="typeOptions"
-        [(ngModel)]="selectedType"
-        optionLabel="label"
-        optionValue="value"
-        [style]="{ width: '150px' }"
-    ></p-dropdown>
-
-    <p-dropdown
-        [options]="years"
+        [options]="yearOptions"
         [(ngModel)]="selectedYear"
         placeholder="Год"
         [style]="{ width: '120px' }"
     ></p-dropdown>
 </div>
 
-<div
-    *ngIf="!hasDataForSelectedYear()"
-    class="flex align-items-center justify-content-center"
-    style="height: 65vh"
->
+<div *ngIf="!hasData()" class="flex align-items-center justify-content-center" style="height: 65vh">
     <i class="pi pi-info-circle text-6xl"></i>
     <span class="text-4xl ml-2">Данные за выбранный год отсутствуют.</span>
 </div>
 
 <p-table
-    *ngIf="hasDataForSelectedYear()"
+    *ngIf="hasData()"
     [value]="getCategories()"
     responsiveLayout="scroll"
     showGridlines
@@ -43,8 +31,8 @@
     <ng-template pTemplate="body" let-category>
         <tr>
             <td class="font-medium">{{ category }}</td>
-            <td *ngFor="let m of months; let i = index" class="text-center">
-                {{ getFormattedValue(category, i) }}
+            <td *ngFor="let m of months" class="text-center">
+                {{ getFormattedValue(category, m.index) }}
             </td>
             <td class="text-center text-yellow-500 font-semibold">
                 {{ getFormattedNumber(getCategoryAverage(category)) }}
@@ -58,8 +46,8 @@
     <ng-template pTemplate="footer">
         <tr>
             <td>Итого</td>
-            <td *ngFor="let m of months; let i = index" class="text-center">
-                {{ getFormattedNumber(getMonthSum(i)) }}
+            <td *ngFor="let m of months" class="text-center">
+                {{ getFormattedNumber(getMonthSum(m.index)) }}
             </td>
             <td class="text-center">
                 {{ getFormattedNumber(getTotalAverage()) }}
