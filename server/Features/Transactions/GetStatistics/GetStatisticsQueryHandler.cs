@@ -51,11 +51,13 @@ public class GetStatisticsQueryHandler : IRequestHandler<GetStatisticsQuery, Sta
             {
                 chartMonth.Labels.Add(t.Category.Name);
                 chartMonth.Data.Add(t.Amount);
+                chartMonth.BackgroundColors.Add(t.Category.Color); 
             }
             else
             {
                 chartMonth.Data[categoryIndex] += t.Amount;
             }
+
 
             if (!targetTable.ContainsKey(year))
                 targetTable[year] = new();

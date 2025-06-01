@@ -85,8 +85,11 @@ export class SummaryTableTabComponent implements OnInit, OnChanges {
     }
 
     getCategoryAverage(cat: string): number {
-        const vals = Object.values(this.data[cat] ?? {});
-        return +(vals.reduce((a, b) => a + b, 0) / vals.length || 0).toFixed(2);
+        const categoryData = this.data[cat] ?? {};
+        const months = this.availableMonthsByYear[this.selectedYear] ?? [];
+        const vals = months.map((monthIdx) => categoryData[monthIdx] ?? 0);
+        const average = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+        return +average.toFixed(2);
     }
 
     getTotalSum(): number {
@@ -96,7 +99,7 @@ export class SummaryTableTabComponent implements OnInit, OnChanges {
     getTotalAverage(): number {
         const total = this.getTotalSum();
         const count = this.months.length;
-        return count ? +(total / count).toFixed(2) : 0;
+        return total / count;
     }
 
     private formatCurrency(value: number): string {

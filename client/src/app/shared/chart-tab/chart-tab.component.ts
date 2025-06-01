@@ -9,9 +9,10 @@ import {
     SimpleChanges,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type { ChartData } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { DropdownModule } from 'primeng/dropdown';
-import { ChartData } from '../../core/models/transaction/chart-data';
+import { ChartData as MyChartData } from '../../core/models/transaction/chart-data'; // Твой локальный тип для данных (переименовал в MyChartData чтобы не путать)
 
 @Component({
     selector: 'app-chart-tab',
@@ -23,7 +24,7 @@ import { ChartData } from '../../core/models/transaction/chart-data';
 export class ChartTabComponent implements OnInit, OnChanges {
     @Input() availableMonthsByYear: Record<number, number[]> = {};
     @Input() availableYears: number[] = [];
-    @Input() chartDataByYearAndMonth: Record<number, (ChartData | null)[]> = {};
+    @Input() chartDataByYearAndMonth: Record<number, (MyChartData | null)[]> = {};
 
     @Output() selectedMonthIndexChange = new EventEmitter<number>();
     @Output() selectedYearChange = new EventEmitter<number>();
@@ -44,10 +45,8 @@ export class ChartTabComponent implements OnInit, OnChanges {
         },
     };
 
-    chartDataToDisplay: {
-        labels: string[];
-        datasets: { label: string; data: number[]; backgroundColor: string }[];
-    } | null = null;
+    // Используем тип ChartData для бар-чарта
+    chartDataToDisplay: ChartData<'bar'> | null = null;
 
     private monthNames = [
         'Январь',
@@ -164,20 +163,44 @@ export class ChartTabComponent implements OnInit, OnChanges {
         const monthIndex = this.selectedMonth.index;
 
         if (!yearData || !yearData[monthIndex]) {
-            this.chartDataToDisplay = { labels: [], datasets: [] };
+            this.chartDataToDisplay = {
+                labels: [],
+                datasets: [],
+            };
             return;
         }
 
         const data = yearData[monthIndex];
+
         this.chartDataToDisplay = {
             labels: data.labels,
             datasets: [
                 {
-                    label: 'Категории',
+                    label: 'Сумма',
                     data: data.data,
-                    backgroundColor: '#42A5F5',
+                    backgroundColor: data.backgroundColors.map((c) => this.makeTransparent(c, 0.7)),
+                    borderColor: data.backgroundColors,
+                    borderWidth: 1,
                 },
             ],
         };
+    }
+
+    private makeTransparent(hexColor: string, alpha: number): string {
+        return this.hexToRgba(hexColor, alpha);
+    }
+
+    private hexToRgba(hex: string, alpha: number): string {
+        const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+        hex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b);
+
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (!result) return hex;
+
+        const r = parseInt(result[1], 16);
+        const g = parseInt(result[2], 16);
+        const b = parseInt(result[3], 16);
+
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 }

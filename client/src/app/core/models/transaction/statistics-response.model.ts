@@ -1,6 +1,7 @@
 export interface ChartDataDto {
     labels: string[];
     data: number[];
+    backgroundColors: string[];
 }
 
 export interface StatisticsResponse {
