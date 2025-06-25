@@ -12,7 +12,8 @@ import { FormsModule } from '@angular/forms';
 import type { ChartData } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { DropdownModule } from 'primeng/dropdown';
-import { ChartData as MyChartData } from '../../core/models/transaction/chart-data'; // Твой локальный тип для данных (переименовал в MyChartData чтобы не путать)
+import { monthNames } from '../../core/constants/monthNames';
+import { ChartData as MyChartData } from '../../core/models/transaction/chart-data';
 
 @Component({
     selector: 'app-chart-tab',
@@ -45,23 +46,7 @@ export class ChartTabComponent implements OnInit, OnChanges {
         },
     };
 
-    // Используем тип ChartData для бар-чарта
     chartDataToDisplay: ChartData<'bar'> | null = null;
-
-    private monthNames = [
-        'Январь',
-        'Февраль',
-        'Март',
-        'Апрель',
-        'Май',
-        'Июнь',
-        'Июль',
-        'Август',
-        'Сентябрь',
-        'Октябрь',
-        'Ноябрь',
-        'Декабрь',
-    ];
 
     ngOnInit() {
         this.buildYearOptions();
@@ -104,7 +89,7 @@ export class ChartTabComponent implements OnInit, OnChanges {
         if (this.selectedYear !== null && this.availableMonthsByYear[this.selectedYear]) {
             this.monthOptions = this.availableMonthsByYear[this.selectedYear]
                 .map((idx) => ({
-                    name: this.monthNames[idx],
+                    name: monthNames[idx],
                     index: idx,
                 }))
                 .sort((a, b) => a.index - b.index);

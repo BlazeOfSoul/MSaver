@@ -1,12 +1,8 @@
-export interface ChartDataDto {
-    labels: string[];
-    data: number[];
-    backgroundColors: string[];
-}
+import { ChartData } from './chart-data';
 
 export interface StatisticsResponse {
-    incomeChartDataByYear: Record<number, ChartDataDto[]>;
-    expenseChartDataByYear: Record<number, ChartDataDto[]>;
+    incomeChartDataByYear: Record<number, ChartData[]>;
+    expenseChartDataByYear: Record<number, ChartData[]>;
     incomeTableData: Record<number, Record<string, number[]>>;
     expenseTableData: Record<number, Record<string, number[]>>;
     availableYears: number[];

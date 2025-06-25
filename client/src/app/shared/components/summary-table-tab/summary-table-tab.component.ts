@@ -3,6 +3,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
+import { monthNames } from '../../../core/constants/monthNames';
 
 @Component({
     selector: 'app-summary-table-tab',
@@ -47,22 +48,8 @@ export class SummaryTableTabComponent implements OnInit, OnChanges {
     }
 
     get months(): { name: string; index: number }[] {
-        const names = [
-            'Январь',
-            'Февраль',
-            'Март',
-            'Апрель',
-            'Май',
-            'Июнь',
-            'Июль',
-            'Август',
-            'Сентябрь',
-            'Октябрь',
-            'Ноябрь',
-            'Декабрь',
-        ];
         const idx = this.availableMonthsByYear[this.selectedYear] ?? [];
-        return idx.map((i) => ({ name: names[i], index: i }));
+        return idx.map((i) => ({ name: monthNames[i], index: i }));
     }
 
     get data(): Record<string, Record<number, number>> {
