@@ -1,22 +1,151 @@
 @use '../../shared/styles/auth-layout.scss' as *;
 
-.auth-container {
-    @extend .auth-container;
+.auth-background {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--blue-400));
 }
 
-.login-left {
-    @extend .auth-side-left;
+.auth-card-split {
+    display: flex;
+    flex-direction: row;
+    width: 1080px;
+    height: 580px;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    background-color: white;
 }
 
-.login-right {
-    @extend .auth-side-right;
+.auth-card-left {
+    width: 50%;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .left-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+
+        .brand-icon {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .brand-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+    }
+
+    h2 {
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        color: var(--gray-600);
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .form-footer {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .register-note {
+        text-align: center;
+
+        a {
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+    }
 }
 
-.login-card {
-    @extend .auth-card;
+.auth-card-right {
+    width: 50%;
+    background: linear-gradient(180deg, var(--primary-color), var(--blue-500));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
 
-    .login-form {
-        @extend .auth-form;
+    .right-content {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .big-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-text {
+            font-size: 1.2rem;
+            line-height: 1.4;
+            margin-bottom: 0.5rem;
+        }
+
+        .description {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            max-width: 300px;
+        }
+
+        .features {
+            display: flex;
+            gap: 1rem;
+
+            .feature-glass-card {
+                width: 120px;
+                height: 110px;
+                border-radius: 1rem;
+                backdrop-filter: blur(8px);
+                background-color: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                font-size: 0.85rem;
+
+                .feature-icon {
+                    font-size: 1.4rem;
+                    margin-bottom: 0.3rem;
+                }
+            }
+
+            .feature-glass-card:hover {
+                transform: scale(1.05);
+                transition: transform 0.2s ease;
+                background-color: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.3);
+                cursor: default;
+            }
+        }
     }
 }
 

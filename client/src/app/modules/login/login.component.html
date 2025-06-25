@@ -1,23 +1,34 @@
-<div class="auth-container">
-    <p-toast />
-    <div class="login-left">
-        <p-card class="login-card">
-            <h2>Вход в аккаунт MSaver</h2>
-            <p class="subtitle">Пожалуйста, используйте почту и пароль</p>
+<div class="auth-background">
+    <div class="auth-card-split">
+        <!-- Левая часть: форма -->
+        <div class="auth-card-left">
+            <div class="left-header">
+                <i class="pi pi-wallet brand-icon"></i>
+                <h1 class="brand-title">MSaver</h1>
+            </div>
 
-            <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="login-form">
-                <input
-                    id="email"
-                    type="text"
-                    pInputText
-                    [(ngModel)]="email"
-                    name="email"
-                    required
-                    placeholder="Email"
-                />
+            <h2>Вход в аккаунт</h2>
+            <p class="subtitle">Пожалуйста, введите почту и пароль</p>
 
-                <div class="full-width-wrapper">
+            <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="auth-form">
+                <span class="p-input-icon-left w-full">
+                    <i class="pi pi-envelope"></i>
+                    <input
+                        id="email"
+                        type="text"
+                        pInputText
+                        [(ngModel)]="email"
+                        name="email"
+                        required
+                        placeholder="Email"
+                        class="w-full"
+                    />
+                </span>
+
+                <span class="p-input-icon-left w-full">
+                    <i class="pi pi-lock"></i>
                     <p-password
+                        class="full-width-wrapper"
                         id="password"
                         [(ngModel)]="password"
                         name="password"
@@ -27,29 +38,57 @@
                         required
                         placeholder="Пароль"
                     ></p-password>
-                </div>
+                </span>
 
                 <button
                     type="submit"
                     pButton
                     label="Войти"
-                    [rounded]="true"
                     [disabled]="!loginForm.form.valid"
                     class="p-button-success w-full"
                 ></button>
             </form>
-        </p-card>
-    </div>
 
-    <div class="login-right">
-        <h2>Впервые здесь?</h2>
-        <p>Создайте аккаунт и получите доступ к новым возможностям!</p>
-        <button
-            pButton
-            label="Создать аккаунт"
-            class="p-button-outlined white-button"
-            [rounded]="true"
-            (click)="goToRegister()"
-        ></button>
+            <p class="register-note text-center text-sm">
+                Нет аккаунта?
+                <a (click)="goToRegister()">Зарегистрироваться</a>
+            </p>
+        </div>
+
+        <div class="auth-card-right">
+            <div class="right-content">
+                <i class="pi pi-wallet big-icon"></i>
+                <h1>Добро пожаловать обратно!</h1>
+                <p class="description">
+                    Управляйте доходами и расходами, просматривайте статистику и достигайте
+                    финансовых целей.
+                </p>
+
+                <div class="features">
+                    <div class="feature-glass-card">
+                        <i class="pi pi-chart-line feature-icon mb-3"></i>
+                        <span>Аналитика</span>
+                    </div>
+                    <div class="feature-glass-card">
+                        <i class="pi pi-dollar feature-icon mb-3"></i>
+                        <span>Транзакции</span>
+                    </div>
+                    <div class="feature-glass-card">
+                        <i class="pi pi-calendar feature-icon mb-3"></i>
+                        <span>Сбережения</span>
+                    </div>
+                </div>
+
+                <button
+                    icon="pi pi-user-plus"
+                    [rounded]="true"
+                    severity="success"
+                    class="p-button-outlined white-button mt-5"
+                    pButton
+                    label="Создать аккаунт"
+                    (click)="goToRegister()"
+                ></button>
+            </div>
+        </div>
     </div>
 </div>
