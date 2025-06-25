@@ -8,10 +8,11 @@ export const ApiEndpoints = {
         Register: `${API_BASE}/auth/register`,
     },
     ExchangeRates: {
-        Get: `${API_BASE}/exchangeRates`,
+        Base: `${API_BASE}/exchangeRates`,
     },
     Transactions: {
-        Create: `${API_BASE}/transactions`,
+        Base: `${API_BASE}/transactions`,
+        Statistics: `${API_BASE}/transactions/statistics`,
     },
     Categories: {
         Base: `${API_BASE}/categories`,

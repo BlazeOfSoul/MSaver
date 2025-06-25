@@ -1,0 +1,60 @@
+<div class="dropdown-container flex gap-3 mb-4">
+    <p-dropdown
+        [options]="yearOptions"
+        [(ngModel)]="selectedYear"
+        placeholder="Год"
+        [style]="{ width: '120px' }"
+    ></p-dropdown>
+</div>
+
+<div *ngIf="!hasData()" class="flex align-items-center justify-content-center" style="height: 65vh">
+    <i class="pi pi-info-circle text-6xl"></i>
+    <span class="text-4xl ml-2">Данные за выбранный год отсутствуют.</span>
+</div>
+
+<p-table
+    *ngIf="hasData()"
+    [value]="getCategories()"
+    responsiveLayout="scroll"
+    showGridlines
+    size="small"
+>
+    <ng-template pTemplate="header">
+        <tr class="custom-header">
+            <th>Категория</th>
+            <th *ngFor="let m of months" class="text-center">{{ m.name }}</th>
+            <th class="text-center">Среднее</th>
+            <th class="text-center">Всего</th>
+        </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-category>
+        <tr>
+            <td class="font-medium">{{ category }}</td>
+            <td *ngFor="let m of months" class="text-center">
+                {{ getFormattedValue(category, m.index) }}
+            </td>
+            <td class="text-center text-yellow-500 font-semibold">
+                {{ getFormattedNumber(getCategoryAverage(category)) }}
+            </td>
+            <td class="text-center text-green-600 font-bold">
+                {{ getFormattedNumber(getCategoryTotal(category)) }}
+            </td>
+        </tr>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <tr>
+            <td>Итого</td>
+            <td *ngFor="let m of months" class="text-center">
+                {{ getFormattedNumber(getMonthSum(m.index)) }}
+            </td>
+            <td class="text-center">
+                {{ getFormattedNumber(getTotalAverage()) }}
+            </td>
+            <td class="text-center">
+                {{ getFormattedNumber(getTotalSum()) }}
+            </td>
+        </tr>
+    </ng-template>
+</p-table>

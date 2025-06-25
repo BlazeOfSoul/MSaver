@@ -12,8 +12,8 @@ using server.Data;
 namespace server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250430082426_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250527090442_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -69,11 +69,6 @@ namespace server.Migrations
 
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("CategoryName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");

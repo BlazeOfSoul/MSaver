@@ -1,0 +1,11 @@
+::ng-deep th {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+:host ::ng-deep .p-datatabe-tfoot {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}

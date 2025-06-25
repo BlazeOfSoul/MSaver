@@ -8,6 +8,6 @@ export class ExchangeRateService {
     constructor(private http: HttpClient) {}
 
     getRates() {
-        return this.http.get<ExchangeRatesResponse>(ApiEndpoints.ExchangeRates.Get);
+        return this.http.get<ExchangeRatesResponse>(ApiEndpoints.ExchangeRates.Base);
     }
 }

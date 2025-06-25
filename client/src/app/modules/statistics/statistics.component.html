@@ -1,0 +1,30 @@
+<p-tabView [(activeIndex)]="activeTabIndex">
+    <p-tabPanel header="Доходы">
+        <app-chart-tab
+            [chartDataByYearAndMonth]="incomeChartData"
+            [availableMonthsByYear]="availableMonthsByYear"
+            [availableYears]="availableYears"
+        />
+    </p-tabPanel>
+    <p-tabPanel header="Расходы">
+        <app-chart-tab
+            [chartDataByYearAndMonth]="expenseChartData"
+            [availableMonthsByYear]="availableMonthsByYear"
+            [availableYears]="availableYears"
+        />
+    </p-tabPanel>
+    <p-tabPanel header="Таблица годовых доходов">
+        <app-summary-table-tab
+            [dataByYear]="incomeTableData"
+            [availableYears]="availableYears"
+            [availableMonthsByYear]="availableMonthsByYear"
+        />
+    </p-tabPanel>
+    <p-tabPanel header="Таблица годовых расходов">
+        <app-summary-table-tab
+            [dataByYear]="expenseTableData"
+            [availableYears]="availableYears"
+            [availableMonthsByYear]="availableMonthsByYear"
+        />
+    </p-tabPanel>
+</p-tabView>

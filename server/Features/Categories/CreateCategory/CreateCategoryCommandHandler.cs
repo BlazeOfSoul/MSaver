@@ -38,5 +38,4 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
             Color = category.Color
         };
     }
-
 }
