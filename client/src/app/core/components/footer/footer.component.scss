@@ -9,19 +9,10 @@
     box-shadow: inset 0px 1px 5px -3px rgba(0, 0, 0, 0.5);
 }
 
-:host p {
-    margin: 0;
-}
-
-.flex .pi {
-    transition: color 0.3s ease;
-    cursor: pointer;
-}
-
-.flex .pi:hover {
-    color: var(--primary-color);
-}
-
-.icon-link {
-    color: inherit;
+.separator {
+    color: var(--gray-300);
+    user-select: none;
+    font-weight: 400;
+    font-size: 1.2rem;
+    line-height: 1;
 }
