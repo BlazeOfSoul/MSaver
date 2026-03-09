@@ -5,11 +5,17 @@ namespace server.Models.ExchangeRate;
 public class CoinGeckoResponse
 {
     [JsonPropertyName("bitcoin")]
-    public CryptoRate Bitcoin { get; set; }
+    public CoinPrice Bitcoin { get; set; }
 
     [JsonPropertyName("ethereum")]
-    public CryptoRate Ethereum { get; set; }
+    public CoinPrice Ethereum { get; set; }
 
     [JsonPropertyName("solana")]
-    public CryptoRate Solana { get; set; }
+    public CoinPrice Solana { get; set; }
+}
+
+public class CoinPrice
+{
+    [JsonPropertyName("usd")]
+    public decimal Usd { get; set; }
 }

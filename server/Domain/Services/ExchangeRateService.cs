@@ -28,10 +28,7 @@ public class ExchangeRateService : IExchangeRateService
 
     public async Task<ExchangeRatesResponse> GetExchangeRatesAsync()
     {
-        if (_cache.TryGetValue(CacheKey, out ExchangeRatesResponse cachedRates))
-        {
-            return cachedRates;
-        }
+        if (_cache.TryGetValue(CacheKey, out ExchangeRatesResponse cachedRates)) return cachedRates;
 
         try
         {
@@ -39,18 +36,11 @@ public class ExchangeRateService : IExchangeRateService
             var eur = await _httpClient.GetFromJsonAsync<NbrbRate>(_settings.NBRB.EUR);
             var rub = await _httpClient.GetFromJsonAsync<NbrbRate>(_settings.NBRB.RUB);
 
-            if (usd == null || eur == null || rub == null)
-            {
-                throw new Exception(ErrorMessages.ExchangeRate.NbrbRateNotFound);
-            }
+            if (usd == null || eur == null || rub == null) throw new Exception(ErrorMessages.ExchangeRate.NbrbRateNotFound);
 
+            // var crypto = await _httpClient.GetFromJsonAsync<CoinGeckoResponse>(_settings.CoinGecko);
 
-            var crypto = await _httpClient.GetFromJsonAsync<CoinGeckoResponse>(_settings.CoinGecko);
-
-            if (crypto == null)
-            {
-                throw new Exception(ErrorMessages.ExchangeRate.CoinGeckoNotFound);
-            }
+            // if (crypto == null) throw new Exception(ErrorMessages.ExchangeRate.CoinGeckoNotFound);
 
             var result = new ExchangeRatesResponse
             {
@@ -62,9 +52,9 @@ public class ExchangeRateService : IExchangeRateService
                 },
                 Crypto = new List<Rate>
                 {
-                    new("Bitcoin (BTC)", crypto.Bitcoin.Usd),
-                    new("Ethereum (ETH)", crypto.Ethereum.Usd),
-                    new("Solana (SOL)", crypto.Solana.Usd),
+                    new("Bitcoin (BTC)", 1),
+                    new("Ethereum (ETH)", 1),
+                    new("Solana (SOL)", 1),
                 }
             };
 
