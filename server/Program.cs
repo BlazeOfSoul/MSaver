@@ -1,12 +1,10 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-
-using System.Reflection;
-using System.Text;
-
-using server.Extensions;
-using server.Data;
-using server.Models.ExchangeRate.Settings;
+using server.Infrastructure.DependencyInjection;
+using server.Infrastructure.Persistence;
+using server.Infrastructure.ExchangeRate.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,12 +32,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddApplicationServices();
 
-builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly())
-);
-
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -50,11 +45,9 @@ builder.Services.AddAuthentication("Bearer")
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]!)
-            )
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]!))
         };
     });
-
 
 var app = builder.Build();
 
@@ -65,9 +58,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
-app.UseCors("AllowFrontend");
 
 app.Run();
