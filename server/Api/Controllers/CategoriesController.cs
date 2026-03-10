@@ -23,20 +23,20 @@ public sealed class CategoriesController : ControllerBase
     public async Task<IActionResult> GetUserCategories(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var query = new GetCategoriesQuery(userId);
+        var request = new GetCategoriesRequest(userId);
 
-        var result = await _categoryService.GetCategoriesAsync(query, cancellationToken);
+        var result = await _categoryService.GetCategoriesAsync(request, cancellationToken);
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<ActionResult<CategoryDto>> CreateCategory(
-        [FromBody] CreateCategoryCommand command,
+    public async Task<ActionResult<CreateCategoryResponse>> CreateCategory(
+        [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        command.UserId = User.GetUserId();
+        request.UserId = User.GetUserId();
 
-        var createdCategory = await _categoryService.CreateCategoryAsync(command, cancellationToken);
+        var createdCategory = await _categoryService.CreateCategoryAsync(request, cancellationToken);
         return Ok(createdCategory);
     }
 
@@ -48,7 +48,7 @@ public sealed class CategoriesController : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var command = new UpdateCategoryCommand(
+        var command = new UpdateCategoryRequest(
             id,
             userId,
             request.Name,
@@ -64,7 +64,7 @@ public sealed class CategoriesController : ControllerBase
     public async Task<IActionResult> DeleteCategory(Guid id, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var command = new DeleteCategoryCommand(id, userId);
+        var command = new DeleteCategoryRequest(id, userId);
 
         var success = await _categoryService.DeleteCategoryAsync(command, cancellationToken);
 

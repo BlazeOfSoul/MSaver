@@ -19,7 +19,7 @@ public sealed class TransactionsController : ControllerBase
 
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] CreateTransactionCommand command,
+        [FromBody] CreateTransactionRequest command,
         CancellationToken cancellationToken)
     {
         command.UserId = User.GetUserId();
@@ -32,7 +32,7 @@ public sealed class TransactionsController : ControllerBase
     public async Task<IActionResult> GetStatistics(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var query = new GetStatisticsQuery(userId);
+        var query = new GetStatisticsRequest(userId);
 
         var result = await _transactionService.GetStatisticsAsync(query, cancellationToken);
         return Ok(result);

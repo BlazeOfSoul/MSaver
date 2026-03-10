@@ -19,7 +19,7 @@ public sealed class TransactionService : ITransactionService
     }
 
     public async Task<Guid> CreateAsync(
-        CreateTransactionCommand request,
+        CreateTransactionRequest request,
         CancellationToken cancellationToken = default)
     {
         var category = await _dbContext.Categories
@@ -86,7 +86,7 @@ public sealed class TransactionService : ITransactionService
     }
 
     public async Task<StatisticsResponse> GetStatisticsAsync(
-        GetStatisticsQuery query,
+        GetStatisticsRequest query,
         CancellationToken cancellationToken = default)
     {
         var transactions = await _dbContext.Transactions

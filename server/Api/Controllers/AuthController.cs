@@ -17,14 +17,14 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest command, CancellationToken cancellationToken)
     {
         var result = await _authService.RegisterAsync(command, cancellationToken);
         return Ok(result);
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginQuery query, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login([FromBody] LoginRequest query, CancellationToken cancellationToken)
     {
         var response = await _authService.LoginAsync(query, cancellationToken);
         return Ok(response);

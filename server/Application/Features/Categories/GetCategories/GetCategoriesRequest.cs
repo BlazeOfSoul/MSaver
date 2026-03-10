@@ -1,3 +1,3 @@
 ﻿namespace server.Application.Features.Categories.GetCategories;
 
-public sealed record GetCategoriesQuery(Guid UserId);
+public sealed record GetCategoriesRequest(Guid UserId);

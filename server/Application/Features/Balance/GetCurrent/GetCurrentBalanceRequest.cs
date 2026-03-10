@@ -1,3 +1,3 @@
 ﻿namespace server.Application.Features.Balance.GetCurrent;
 
-public sealed record GetCurrentBalanceQuery(Guid UserId);
+public sealed record GetCurrentBalanceRequest(Guid UserId);

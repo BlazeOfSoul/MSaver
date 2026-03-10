@@ -1,3 +1,3 @@
 ﻿namespace server.Application.Features.Transactions.GetStatistics;
 
-public sealed record GetStatisticsQuery(Guid UserId);
+public sealed record GetStatisticsRequest(Guid UserId);

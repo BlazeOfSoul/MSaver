@@ -5,6 +5,6 @@ namespace server.Application.Services.Interfaces;
 
 public interface ITransactionService
 {
-    Task<Guid> CreateAsync(CreateTransactionCommand command, CancellationToken cancellationToken = default);
-    Task<StatisticsResponse> GetStatisticsAsync(GetStatisticsQuery query, CancellationToken cancellationToken = default);
+    Task<Guid> CreateAsync(CreateTransactionRequest command, CancellationToken cancellationToken = default);
+    Task<StatisticsResponse> GetStatisticsAsync(GetStatisticsRequest query, CancellationToken cancellationToken = default);
 }

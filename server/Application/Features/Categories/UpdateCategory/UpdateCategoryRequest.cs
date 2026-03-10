@@ -2,9 +2,9 @@
 
 namespace server.Application.Features.Categories.UpdateCategory;
 
-public sealed class UpdateCategoryRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public string Color { get; set; } = "#ffffff";
-    public CategoryType Type { get; set; }
-}
+public sealed record UpdateCategoryRequest(
+    Guid CategoryId,
+    Guid UserId,
+    string Name,
+    string Color,
+    CategoryType Type);

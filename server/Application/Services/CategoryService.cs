@@ -19,11 +19,11 @@ public sealed class CategoryService : ICategoryService
     }
 
     public async Task<IReadOnlyList<CategoryResponse>> GetCategoriesAsync(
-        GetCategoriesQuery query,
+        GetCategoriesRequest request,
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.Categories
-            .Where(c => c.UserId == query.UserId && !c.IsDeleted)
+            .Where(c => c.UserId == request.UserId && !c.IsDeleted)
             .Select(c => new CategoryResponse(
                 c.Id,
                 c.Name,
@@ -32,24 +32,24 @@ public sealed class CategoryService : ICategoryService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<CategoryDto> CreateCategoryAsync(
-        CreateCategoryCommand command,
+    public async Task<CreateCategoryResponse> CreateCategoryAsync(
+        CreateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
         var category = new Category
         {
             Id = Guid.NewGuid(),
-            UserId = command.UserId,
-            Name = command.Name,
-            Type = command.Type,
-            Color = command.Color,
+            UserId = request.UserId,
+            Name = request.Name,
+            Type = request.Type,
+            Color = request.Color,
             IsDeleted = false
         };
 
         _dbContext.Categories.Add(category);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return new CategoryDto
+        return new CreateCategoryResponse
         {
             Id = category.Id,
             Name = category.Name,
@@ -59,12 +59,14 @@ public sealed class CategoryService : ICategoryService
     }
 
     public async Task<bool> UpdateCategoryAsync(
-        UpdateCategoryCommand command,
+        UpdateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
         var category = await _dbContext.Categories
             .FirstOrDefaultAsync(
-                c => c.Id == command.CategoryId && c.UserId == command.UserId && !c.IsDeleted,
+                c => c.Id == request.CategoryId &&
+                     c.UserId == request.UserId &&
+                     !c.IsDeleted,
                 cancellationToken);
 
         if (category is null)
@@ -72,21 +74,22 @@ public sealed class CategoryService : ICategoryService
             return false;
         }
 
-        category.Name = command.Name;
-        category.Color = command.Color;
-        category.Type = command.Type;
+        category.Name = request.Name;
+        category.Color = request.Color;
+        category.Type = request.Type;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
 
     public async Task<bool> DeleteCategoryAsync(
-        DeleteCategoryCommand command,
+        DeleteCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
         var category = await _dbContext.Categories
             .FirstOrDefaultAsync(
-                c => c.Id == command.CategoryId && c.UserId == command.UserId,
+                c => c.Id == request.CategoryId &&
+                     c.UserId == request.UserId,
                 cancellationToken);
 
         if (category is null)

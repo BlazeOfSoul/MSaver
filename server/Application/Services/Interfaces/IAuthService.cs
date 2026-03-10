@@ -5,6 +5,6 @@ namespace server.Application.Services.Interfaces;
 
 public interface IAuthService
 {
-    Task<LoginResponse> LoginAsync(LoginQuery query, CancellationToken cancellationToken = default);
-    Task<RegisterResponse> RegisterAsync(RegisterCommand command, CancellationToken cancellationToken = default);
+    Task<LoginResponse> LoginAsync(LoginRequest query, CancellationToken cancellationToken = default);
+    Task<RegisterResponse> RegisterAsync(RegisterRequest command, CancellationToken cancellationToken = default);
 }

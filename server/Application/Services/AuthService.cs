@@ -35,7 +35,7 @@ public sealed class AuthService : IAuthService
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<LoginResponse> LoginAsync(LoginQuery query, CancellationToken cancellationToken = default)
+    public async Task<LoginResponse> LoginAsync(LoginRequest query, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByEmailAsync(query.Email, cancellationToken);
         if (user is null)
@@ -56,7 +56,7 @@ public sealed class AuthService : IAuthService
         return new LoginResponse(user.Id, user.Username, user.Email, token);
     }
 
-    public async Task<RegisterResponse> RegisterAsync(RegisterCommand command, CancellationToken cancellationToken = default)
+    public async Task<RegisterResponse> RegisterAsync(RegisterRequest command, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -86,7 +86,7 @@ public sealed class AuthService : IAuthService
         }
     }
 
-    private static User CreateUser(RegisterCommand request)
+    private static User CreateUser(RegisterRequest request)
     {
         var passwordHasher = new PasswordHasher<User>();
 

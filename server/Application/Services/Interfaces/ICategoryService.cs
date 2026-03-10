@@ -7,8 +7,19 @@ namespace server.Application.Services.Interfaces;
 
 public interface ICategoryService
 {
-    Task<IReadOnlyList<CategoryResponse>> GetCategoriesAsync(GetCategoriesQuery query, CancellationToken cancellationToken = default);
-    Task<CategoryDto> CreateCategoryAsync(CreateCategoryCommand command, CancellationToken cancellationToken = default);
-    Task<bool> UpdateCategoryAsync(UpdateCategoryCommand command, CancellationToken cancellationToken = default);
-    Task<bool> DeleteCategoryAsync(DeleteCategoryCommand command, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CategoryResponse>> GetCategoriesAsync(
+        GetCategoriesRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<CreateCategoryResponse> CreateCategoryAsync(
+        CreateCategoryRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> UpdateCategoryAsync(
+        UpdateCategoryRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteCategoryAsync(
+        DeleteCategoryRequest request,
+        CancellationToken cancellationToken = default);
 }
