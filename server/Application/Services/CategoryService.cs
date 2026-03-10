@@ -36,15 +36,11 @@ public sealed class CategoryService : ICategoryService
         CreateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
-        var category = new Category
-        {
-            Id = Guid.NewGuid(),
-            UserId = request.UserId,
-            Name = request.Name,
-            Type = request.Type,
-            Color = request.Color,
-            IsDeleted = false
-        };
+        var category = new Category(
+            request.UserId,
+            request.Name,
+            request.Type,
+            request.Color);
 
         _dbContext.Categories.Add(category);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -74,9 +70,7 @@ public sealed class CategoryService : ICategoryService
             return false;
         }
 
-        category.Name = request.Name;
-        category.Color = request.Color;
-        category.Type = request.Type;
+        category.Update(request.Name, request.Color, request.Type);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
@@ -97,7 +91,7 @@ public sealed class CategoryService : ICategoryService
             return false;
         }
 
-        category.IsDeleted = true;
+        category.SoftDelete();
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;

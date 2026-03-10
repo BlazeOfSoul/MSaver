@@ -5,10 +5,10 @@ using server.Application.Constants;
 using server.Application.Features.Auth.Login;
 using server.Application.Features.Auth.Register;
 using server.Application.Services.Interfaces;
+using server.Application.Abstractions.Services;
 using server.Domain.Constants;
 using server.Domain.Entities;
 using server.Domain.Enums;
-using server.Application.Abstractions.Services;
 using server.Infrastructure.Persistence;
 
 namespace server.Application.Services;
@@ -35,16 +35,18 @@ public sealed class AuthService : IAuthService
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<LoginResponse> LoginAsync(LoginRequest query, CancellationToken cancellationToken = default)
+    public async Task<LoginResponse> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByEmailAsync(query.Email, cancellationToken);
+        var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user is null)
         {
             throw new InvalidOperationException(ErrorMessages.Auth.InvalidEmail);
         }
 
         var passwordHasher = new PasswordHasher<User>();
-        var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, query.Password);
+        var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
         if (result == PasswordVerificationResult.Failed)
         {
@@ -56,19 +58,21 @@ public sealed class AuthService : IAuthService
         return new LoginResponse(user.Id, user.Username, user.Email, token);
     }
 
-    public async Task<RegisterResponse> RegisterAsync(RegisterRequest command, CancellationToken cancellationToken = default)
+    public async Task<RegisterResponse> RegisterAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            var existingUser = await _userRepository.GetByEmailAsync(command.Email, cancellationToken);
+            var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
             if (existingUser is not null)
             {
                 throw new InvalidOperationException(ErrorMessages.Auth.RepeatedEmail);
             }
 
-            var user = CreateUser(command);
+            var user = CreateUser(request);
             await _userRepository.AddAsync(user, cancellationToken);
 
             await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
@@ -90,31 +94,22 @@ public sealed class AuthService : IAuthService
     {
         var passwordHasher = new PasswordHasher<User>();
 
-        var user = new User
-        {
-            Username = request.Username,
-            Email = request.Email,
-            CreatedAt = DateTime.UtcNow
-        };
+        var user = new User(request.Username, request.Email, string.Empty);
+        var hash = passwordHasher.HashPassword(user, request.Password);
+        user.ChangePassword(hash);
 
-        user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
         return user;
     }
 
     private async Task CreateDefaultCategoriesAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var defaultCategories = DefaultCategories.Map.Select(kv =>
-        {
-            var (name, type, color) = kv.Value;
-            return new Category
+        var defaultCategories = DefaultCategories.Map
+            .Select(kv =>
             {
-                UserId = userId,
-                Name = name,
-                Type = type,
-                Color = color,
-                IsDeleted = false
-            };
-        }).ToList();
+                var (name, type, color) = kv.Value;
+                return new Category(userId, name, type, color);
+            })
+            .ToList();
 
         await _categoryRepository.AddRangeAsync(defaultCategories, cancellationToken);
     }
@@ -123,16 +118,7 @@ public sealed class AuthService : IAuthService
     {
         var now = DateTime.UtcNow;
 
-        var balance = new Balance
-        {
-            UserId = userId,
-            Year = now.Year,
-            Month = now.Month,
-            IncomeTotal = 0,
-            ExpenseTotal = 0,
-            ValueTotal = 0
-        };
-
+        var balance = new Balance(userId, now.Year, now.Month);
         await _balanceRepository.AddAsync(balance, cancellationToken);
     }
 }

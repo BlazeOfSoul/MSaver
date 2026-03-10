@@ -43,42 +43,27 @@ public sealed class TransactionService : ITransactionService
 
         if (balance is null)
         {
-            balance = new Balance
-            {
-                Id = Guid.NewGuid(),
-                UserId = request.UserId,
-                Year = now.Year,
-                Month = now.Month,
-                IncomeTotal = 0,
-                ExpenseTotal = 0,
-                ValueTotal = 0
-            };
-
+            balance = new Balance(request.UserId, now.Year, now.Month);
             _dbContext.Balances.Add(balance);
         }
 
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid(),
-            UserId = request.UserId,
-            CategoryId = request.CategoryId,
-            Description = request.Description,
-            Amount = request.Amount,
-            Date = request.Date
-        };
+        var transaction = new Transaction(
+            request.UserId,
+            request.CategoryId,
+            request.Amount,
+            request.Date,
+            request.Description);
 
         _dbContext.Transactions.Add(transaction);
 
         if (category.Type == CategoryType.Income)
         {
-            balance.IncomeTotal += request.Amount;
+            balance.ApplyIncome(request.Amount);
         }
         else
         {
-            balance.ExpenseTotal += request.Amount;
+            balance.ApplyExpense(request.Amount);
         }
-
-        balance.ValueTotal = balance.IncomeTotal - balance.ExpenseTotal;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -101,7 +86,7 @@ public sealed class TransactionService : ITransactionService
         foreach (var t in transactions)
         {
             var year = t.Date.Year;
-            var month = t.Date.Month - 1; // 0-based for charts
+            var month = t.Date.Month - 1;
 
             yearsSet.Add(year);
             if (!monthsByYear.ContainsKey(year))
@@ -116,12 +101,9 @@ public sealed class TransactionService : ITransactionService
 
             if (!targetChart.ContainsKey(year))
             {
-                targetChart[year] = new List<ChartDataDto?>(new ChartDataDto?[12]).Cast<ChartDataDto>().ToList();
-            }
-
-            if (targetChart[year][month] == null)
-            {
-                targetChart[year][month] = new ChartDataDto();
+                targetChart[year] = Enumerable.Range(0, 12)
+                    .Select(_ => new ChartDataDto())
+                    .ToList();
             }
 
             var chartMonth = targetChart[year][month];
