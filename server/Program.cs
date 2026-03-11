@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using server.Infrastructure.DependencyInjection;
 using server.Infrastructure.Persistence;
 using server.Infrastructure.ExchangeRate.Settings;
+using server.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +59,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseExceptionHandling();
 
 app.UseCors("AllowFrontend");
 

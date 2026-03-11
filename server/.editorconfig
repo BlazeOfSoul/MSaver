@@ -1,0 +1,31 @@
+root = true
+
+[*.cs]
+
+# Общие отступы/табуляция
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+# Максимальная длина строки
+max_line_length = 100
+csharp_prefer_braces = true:suggestion
+
+# Расстановка using
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+# Пробелы
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+
+# Скобки и переносы
+csharp_new_line_before_open_brace = all
+csharp_new_line_between_query_expression_clauses = true
+
+# Вертикальное форматирование аргументов/инициализаторов
+csharp_wrapping_keep_statements_on_single_line = false
+csharp_preserve_single_line_statements = false
+csharp_preserve_single_line_blocks = false

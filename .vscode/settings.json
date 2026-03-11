@@ -1,43 +1,62 @@
 {
-    "angular.view-engine": true,
-    "cSpell.language": "en,ru",
-    "files.exclude": {
-        "**/bin": true,
-        "**/obj": true,
-        "**/dist": true,
-        "**/node_modules": true
-    },
-    "editor.formatOnType": true,
-    "editor.formatOnSave": true,
-    "editor.formatOnPaste": true,
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": "always",
-        "source.fixAll": "always"
-    },
-    "files.autoSave": "onFocusChange",
-    "git.autofetch": true,
-    "git.ignoreRebaseWarning": true,
-    "search.defaultViewMode": "tree",
-    "scm.defaultViewMode": "tree",
-    "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
-    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "none",
-    "javascript.updateImportsOnFileMove.enabled": "always",
-    "angular.forceStrictTemplates": true,
-    "[html]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[scss]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "cSpell.fixSpellingWithRenameProvider": false
-    },
-    "[jsonc]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[javascript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "cSpell.words": ["primeng", "tabmenu"]
+  "cSpell.language": "en,ru",
+
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/dist": true,
+    "**/node_modules": true
+  },
+
+  // форматирование
+  "editor.formatOnType": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.useEditorConfig": true,
+
+  // общий форматтер по умолчанию (для всего, кроме overrides ниже)
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // C#
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp",
+    "editor.formatOnSave": true
+  },
+
+  // HTML / TS / JS / SCSS / JSON → Prettier
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "cSpell.fixSpellingWithRenameProvider": false
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // автофиксы
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always",
+    "source.fixAll": "always"
+  },
+
+  "files.autoSave": "onFocusChange",
+  "git.autofetch": true,
+  "git.ignoreRebaseWarning": true,
+  "search.defaultViewMode": "tree",
+  "scm.defaultViewMode": "tree",
+
+  "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
+  "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "none",
+
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+
+  "cSpell.words": ["primeng", "tabmenu"]
 }
