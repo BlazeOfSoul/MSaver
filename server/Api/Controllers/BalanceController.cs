@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using server.Api.Common;
 using server.Api.Extensions;
 using server.Application.Services.Interfaces;
 
 namespace server.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public sealed class BalanceController : ControllerBase
+public sealed class BalanceController : ApiControllerBase
 {
     private readonly IBalanceService _balanceService;
 
@@ -19,8 +19,8 @@ public sealed class BalanceController : ControllerBase
     public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var result = await _balanceService.GetCurrentAsync(userId, cancellationToken);
 
-        return Ok(result);
+        var result = await _balanceService.GetCurrentAsync(userId, cancellationToken);
+        return FromResult(result);
     }
 }

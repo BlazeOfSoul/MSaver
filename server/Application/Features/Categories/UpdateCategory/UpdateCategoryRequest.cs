@@ -3,7 +3,7 @@
 namespace server.Application.Features.Categories.UpdateCategory;
 
 public sealed record UpdateCategoryRequest(
-    Guid CategoryId,
+    Guid Id,
     Guid UserId,
     string Name,
     string Color,

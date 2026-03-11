@@ -2,8 +2,9 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using server.Application.Abstractions.Services;
-using server.Application.Constants;
+using server.Application.Common.Results;
 using server.Application.Features.ExchangeRates;
+using server.Domain.Errors;
 using server.Infrastructure.ExchangeRate.Models;
 using server.Infrastructure.ExchangeRate.Settings;
 
@@ -27,9 +28,11 @@ public sealed class ExchangeRateService : IExchangeRateService
         _settings = settings.Value;
     }
 
-    public async Task<ExchangeRatesResponse> GetExchangeRatesAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<ExchangeRatesResponse>> GetExchangeRatesAsync(
+        CancellationToken cancellationToken = default)
     {
-        if (_cache.TryGetValue(CacheKey, out ExchangeRatesResponse? cachedRates)) return cachedRates!;
+        if (_cache.TryGetValue(CacheKey, out ExchangeRatesResponse? cachedRates))
+            return Result<ExchangeRatesResponse>.Success(cachedRates!);
 
         var usd = await _httpClient.GetFromJsonAsync<NbrbRate>(_settings.Nbrb.Usd, cancellationToken);
         var eur = await _httpClient.GetFromJsonAsync<NbrbRate>(_settings.Nbrb.Eur, cancellationToken);
@@ -37,13 +40,13 @@ public sealed class ExchangeRateService : IExchangeRateService
 
         if (usd is null || eur is null || rub is null)
         {
-            throw new InvalidOperationException(ErrorMessages.ExchangeRate.NbrbRateNotFound);
+            return Result<ExchangeRatesResponse>.Failure(ExchangeRateDomainErrors.NbrbRateNotFound);
         }
 
         // var crypto = await _httpClient.GetFromJsonAsync<CoinGeckoResponse>(_settings.CoinGecko, cancellationToken);
         // if (crypto is null)
         // {
-        //     throw new InvalidOperationException(ErrorMessages.ExchangeRate.CoinGeckoNotFound);
+        //     return Result<ExchangeRatesResponse>.Failure(ExchangeRateDomainErrors.CoinGeckoNotFound);
         // }
 
         var result = new ExchangeRatesResponse
@@ -64,6 +67,6 @@ public sealed class ExchangeRateService : IExchangeRateService
 
         _cache.Set(CacheKey, result, TimeSpan.FromDays(1));
 
-        return result;
+        return Result<ExchangeRatesResponse>.Success(result);
     }
 }

@@ -1,3 +1,4 @@
+using server.Application.Common.Results;
 using server.Application.Features.Categories.CreateCategory;
 using server.Application.Features.Categories.DeleteCategory;
 using server.Application.Features.Categories.GetCategories;
@@ -7,19 +8,19 @@ namespace server.Application.Services.Interfaces;
 
 public interface ICategoryService
 {
-    Task<IReadOnlyList<CategoryResponse>> GetCategoriesAsync(
+    Task<Result<IReadOnlyList<CategoryResponse>>> GetCategoriesAsync(
         GetCategoriesRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<CreateCategoryResponse> CreateCategoryAsync(
+    Task<Result<CreateCategoryResponse>> CreateCategoryAsync(
         CreateCategoryRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<bool> UpdateCategoryAsync(
+    Task<Result> UpdateCategoryAsync(
         UpdateCategoryRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<bool> DeleteCategoryAsync(
+    Task<Result> DeleteCategoryAsync(
         DeleteCategoryRequest request,
         CancellationToken cancellationToken = default);
 }

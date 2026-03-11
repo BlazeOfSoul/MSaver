@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using server.Api.Common;
 using server.Api.Extensions;
 using server.Application.Services.Interfaces;
 using server.Application.Features.Categories.CreateCategory;
@@ -8,9 +9,8 @@ using server.Application.Features.Categories.UpdateCategory;
 
 namespace server.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public sealed class CategoriesController : ControllerBase
+public sealed class CategoriesController : ApiControllerBase
 {
     private readonly ICategoryService _categoryService;
 
@@ -26,18 +26,18 @@ public sealed class CategoriesController : ControllerBase
         var request = new GetCategoriesRequest(userId);
 
         var result = await _categoryService.GetCategoriesAsync(request, cancellationToken);
-        return Ok(result);
+        return FromResult(result);
     }
 
     [HttpPost]
-    public async Task<ActionResult<CreateCategoryResponse>> CreateCategory(
+    public async Task<IActionResult> CreateCategory(
         [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
         request.UserId = User.GetUserId();
 
-        var createdCategory = await _categoryService.CreateCategoryAsync(request, cancellationToken);
-        return Ok(createdCategory);
+        var result = await _categoryService.CreateCategoryAsync(request, cancellationToken);
+        return FromResult(result);
     }
 
     [HttpPut("{id:guid}")]
@@ -55,9 +55,8 @@ public sealed class CategoriesController : ControllerBase
             request.Color,
             request.Type);
 
-        var success = await _categoryService.UpdateCategoryAsync(command, cancellationToken);
-
-        return success ? NoContent() : NotFound();
+        var result = await _categoryService.UpdateCategoryAsync(command, cancellationToken);
+        return FromResult(result);
     }
 
     [HttpDelete("{id:guid}")]
@@ -66,8 +65,7 @@ public sealed class CategoriesController : ControllerBase
         var userId = User.GetUserId();
         var command = new DeleteCategoryRequest(id, userId);
 
-        var success = await _categoryService.DeleteCategoryAsync(command, cancellationToken);
-
-        return success ? NoContent() : NotFound();
+        var result = await _categoryService.DeleteCategoryAsync(command, cancellationToken);
+        return FromResult(result);
     }
 }

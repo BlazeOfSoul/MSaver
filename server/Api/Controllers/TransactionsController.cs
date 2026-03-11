@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using server.Api.Common;
 using server.Api.Extensions;
-using server.Application.Services.Interfaces;
 using server.Application.Features.Transactions.Create;
 using server.Application.Features.Transactions.GetStatistics;
+using server.Application.Services.Interfaces;
 
 namespace server.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public sealed class TransactionsController : ControllerBase
+public sealed class TransactionsController : ApiControllerBase
 {
     private readonly ITransactionService _transactionService;
 
@@ -19,22 +19,22 @@ public sealed class TransactionsController : ControllerBase
 
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] CreateTransactionRequest command,
+        [FromBody] CreateTransactionRequest request,
         CancellationToken cancellationToken)
     {
-        command.UserId = User.GetUserId();
+        request.UserId = User.GetUserId();
 
-        var id = await _transactionService.CreateAsync(command, cancellationToken);
-        return Ok(id);
+        var result = await _transactionService.CreateAsync(request, cancellationToken);
+        return FromResult(result);
     }
 
     [HttpGet("statistics")]
     public async Task<IActionResult> GetStatistics(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var query = new GetStatisticsRequest(userId);
+        var request = new GetStatisticsRequest(userId);
 
-        var result = await _transactionService.GetStatisticsAsync(query, cancellationToken);
-        return Ok(result);
+        var result = await _transactionService.GetStatisticsAsync(request, cancellationToken);
+        return FromResult(result);
     }
 }

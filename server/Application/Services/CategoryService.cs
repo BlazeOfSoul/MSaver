@@ -1,99 +1,115 @@
-using Microsoft.EntityFrameworkCore;
+using server.Application.Abstractions.Repositories;
+using server.Application.Common.Results;
 using server.Application.Features.Categories.CreateCategory;
 using server.Application.Features.Categories.DeleteCategory;
 using server.Application.Features.Categories.GetCategories;
 using server.Application.Features.Categories.UpdateCategory;
 using server.Application.Services.Interfaces;
+using server.Domain.Common;
 using server.Domain.Entities;
-using server.Infrastructure.Persistence;
+using server.Domain.Errors;
 
 namespace server.Application.Services;
 
 public sealed class CategoryService : ICategoryService
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ICategoryRepository _categoryRepository;
 
-    public CategoryService(ApplicationDbContext dbContext)
+    public CategoryService(ICategoryRepository categoryRepository)
     {
-        _dbContext = dbContext;
+        _categoryRepository = categoryRepository;
     }
 
-    public async Task<IReadOnlyList<CategoryResponse>> GetCategoriesAsync(
+    public async Task<Result<IReadOnlyList<CategoryResponse>>> GetCategoriesAsync(
         GetCategoriesRequest request,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Categories
-            .Where(c => c.UserId == request.UserId && !c.IsDeleted)
+        var categories = await _categoryRepository
+            .GetByUserIdAsync(request.UserId, cancellationToken);
+
+        var response = categories
+            .Where(c => !c.IsDeleted)
             .Select(c => new CategoryResponse(
                 c.Id,
                 c.Name,
                 c.Type,
                 c.Color))
-            .ToListAsync(cancellationToken);
+            .ToList()
+            .AsReadOnly();
+
+        return Result<IReadOnlyList<CategoryResponse>>.Success(response);
     }
 
-    public async Task<CreateCategoryResponse> CreateCategoryAsync(
+    public async Task<Result<CreateCategoryResponse>> CreateCategoryAsync(
         CreateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
-        var category = Category.Create(
-            request.UserId,
-            request.Name,
-            request.Type,
-            request.Color);
-
-        _dbContext.Categories.Add(category);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return new CreateCategoryResponse
+        try
         {
-            Id = category.Id,
-            Name = category.Name,
-            Type = category.Type,
-            Color = category.Color
-        };
+            var category = Category.Create(
+                request.UserId,
+                request.Name,
+                request.Type,
+                request.Color);
+
+            await _categoryRepository.AddAsync(category, cancellationToken);
+
+            var response = new CreateCategoryResponse(
+                category.Id,
+                category.Name,
+                category.Type,
+                category.Color);
+
+            return Result<CreateCategoryResponse>.Success(response);
+        }
+        catch (DomainException ex)
+        {
+            return Result<CreateCategoryResponse>.Failure(ex.Error);
+        }
     }
 
-    public async Task<bool> UpdateCategoryAsync(
+    public async Task<Result> UpdateCategoryAsync(
         UpdateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
-        var category = await _dbContext.Categories
-            .FirstOrDefaultAsync(
-                c => c.Id == request.CategoryId &&
-                     c.UserId == request.UserId &&
-                     !c.IsDeleted,
-                cancellationToken);
+        var category = await _categoryRepository
+            .GetByIdAsync(request.Id, cancellationToken);
 
-        if (category is null)
+        if (category is null || category.IsDeleted)
+            return Result.Failure(CategoryDomainErrors.NotFound);
+
+        if (category.UserId != request.UserId)
+            return Result.Failure(CategoryDomainErrors.AccessDenied);
+
+        try
         {
-            return false;
+            category.Update(request.Name, request.Color, request.Type);
+            await _categoryRepository.UpdateAsync(category, cancellationToken);
+
+            return Result.Success();
         }
-
-        category.Update(request.Name, request.Color, request.Type);
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return true;
+        catch (DomainException ex)
+        {
+            return Result.Failure(ex.Error);
+        }
     }
 
-    public async Task<bool> DeleteCategoryAsync(
+    public async Task<Result> DeleteCategoryAsync(
         DeleteCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
-        var category = await _dbContext.Categories
-            .FirstOrDefaultAsync(
-                c => c.Id == request.CategoryId &&
-                     c.UserId == request.UserId,
-                cancellationToken);
+        var category = await _categoryRepository
+            .GetByIdAsync(request.Id, cancellationToken);
 
-        if (category is null)
-        {
-            return false;
-        }
+        if (category is null || category.IsDeleted)
+            return Result.Failure(CategoryDomainErrors.NotFound);
+
+        if (category.UserId != request.UserId)
+            return Result.Failure(CategoryDomainErrors.AccessDenied);
 
         category.SoftDelete();
+        await _categoryRepository.UpdateAsync(category, cancellationToken);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return true;
+        return Result.Success();
     }
 }

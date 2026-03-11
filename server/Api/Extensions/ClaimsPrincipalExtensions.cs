@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
-using server.Application.Constants;
+using server.Domain.Common;
+using server.Domain.Errors;
 
 namespace server.Api.Extensions;
 
@@ -11,7 +12,7 @@ public static class ClaimsPrincipalExtensions
 
         if (string.IsNullOrWhiteSpace(userIdClaim))
         {
-            throw new InvalidOperationException(ErrorMessages.User.IdNotFound);
+            throw new DomainException(UserDomainErrors.IdNotFound);
         }
 
         return Guid.Parse(userIdClaim);

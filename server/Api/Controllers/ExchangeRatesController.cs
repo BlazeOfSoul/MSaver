@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using server.Api.Common;
 using server.Application.Abstractions.Services;
 
 namespace server.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public sealed class ExchangeRatesController : ControllerBase
+public sealed class ExchangeRatesController : ApiControllerBase
 {
     private readonly IExchangeRateService _exchangeRateService;
 
@@ -18,6 +18,6 @@ public sealed class ExchangeRatesController : ControllerBase
     public async Task<IActionResult> GetRates(CancellationToken cancellationToken)
     {
         var result = await _exchangeRateService.GetExchangeRatesAsync(cancellationToken);
-        return Ok(result);
+        return FromResult(result);
     }
 }

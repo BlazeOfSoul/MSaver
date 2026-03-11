@@ -1,14 +1,16 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using server.Application.Abstractions.Repositories;
-using server.Application.Constants;
+using server.Application.Common.Results;
 using server.Application.Features.Auth.Login;
 using server.Application.Features.Auth.Register;
 using server.Application.Services.Interfaces;
 using server.Application.Abstractions.Services;
+using server.Domain.Common;
 using server.Domain.Constants;
 using server.Domain.Entities;
 using server.Domain.Enums;
+using server.Domain.Errors;
 using server.Infrastructure.Persistence;
 
 namespace server.Application.Services;
@@ -35,42 +37,44 @@ public sealed class AuthService : IAuthService
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<LoginResponse> LoginAsync(
+    public async Task<Result<LoginResponse>> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user is null)
         {
-            throw new InvalidOperationException(ErrorMessages.Auth.InvalidEmail);
+            return Result<LoginResponse>.Failure(AuthDomainErrors.InvalidEmail);
         }
 
         var passwordHasher = new PasswordHasher<User>();
-        var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+        var verification = passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            request.Password);
 
-        if (result == PasswordVerificationResult.Failed)
+        if (verification == PasswordVerificationResult.Failed)
         {
-            throw new InvalidOperationException(ErrorMessages.Auth.InvalidPassword);
+            return Result<LoginResponse>.Failure(AuthDomainErrors.InvalidPassword);
         }
 
         var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Username, user.Email);
+        var response = new LoginResponse(user.Id, user.Username, user.Email, token);
 
-        return new LoginResponse(user.Id, user.Username, user.Email, token);
+        return Result<LoginResponse>.Success(response);
     }
 
-    public async Task<RegisterResponse> RegisterAsync(
+    public async Task<Result<RegisterResponse>> RegisterAsync(
         RegisterRequest request,
         CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database
+            .BeginTransactionAsync(cancellationToken);
 
         try
         {
             var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
-            if (existingUser is not null)
-            {
-                throw new InvalidOperationException(ErrorMessages.Auth.RepeatedEmail);
-            }
+            if (existingUser is not null) return Result<RegisterResponse>.Failure(AuthDomainErrors.RepeatedEmail);
 
             var user = CreateUser(request);
             await _userRepository.AddAsync(user, cancellationToken);
@@ -81,7 +85,14 @@ public sealed class AuthService : IAuthService
             await transaction.CommitAsync(cancellationToken);
 
             var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Username, user.Email);
-            return new RegisterResponse(user.Id, user.Username, user.Email, token);
+            var response = new RegisterResponse(user.Id, user.Username, user.Email, token);
+
+            return Result<RegisterResponse>.Success(response);
+        }
+        catch (DomainException ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return Result<RegisterResponse>.Failure(ex.Error);
         }
         catch
         {
@@ -95,6 +106,7 @@ public sealed class AuthService : IAuthService
         var passwordHasher = new PasswordHasher<User>();
 
         var user = User.Create(request.Username, request.Email, string.Empty);
+
         var hash = passwordHasher.HashPassword(user, request.Password);
         user.ChangePassword(hash);
 

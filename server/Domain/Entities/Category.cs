@@ -29,7 +29,7 @@ public sealed class Category : Entity
         string color)
     {
         if (userId == Guid.Empty)
-            throw new ArgumentException(CategoryErrors.UserIdRequired, nameof(userId));
+            throw new DomainException(CategoryDomainErrors.UserIdRequired);
 
         var category = new Category
         {
@@ -56,7 +56,7 @@ public sealed class Category : Entity
     private void SetName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(CategoryErrors.NameRequired, nameof(name));
+            throw new DomainException(CategoryDomainErrors.NameRequired);
 
         Name = name;
     }
@@ -64,7 +64,7 @@ public sealed class Category : Entity
     private void SetColor(string color)
     {
         if (string.IsNullOrWhiteSpace(color))
-            throw new ArgumentException(CategoryErrors.ColorRequired, nameof(color));
+            throw new DomainException(CategoryDomainErrors.ColorRequired);
 
         Color = color;
     }

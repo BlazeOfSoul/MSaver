@@ -17,21 +17,18 @@ public sealed class Balance : Entity
 
     public User User { get; private set; } = null!;
 
-    public static Balance Create(
-        Guid userId,
-        int year,
-        int month)
+    public static Balance Create(Guid userId, int year, int month)
     {
         if (userId == Guid.Empty)
-            throw new ArgumentException(BalanceErrors.UserIdRequired, nameof(userId));
+            throw new DomainException(BalanceDomainErrors.UserIdRequired);
 
         if (year < 2000 || year > 3000)
-            throw new ArgumentOutOfRangeException(nameof(year), BalanceErrors.InvalidYear);
+            throw new DomainException(BalanceDomainErrors.InvalidYear);
 
         if (month is < 1 or > 12)
-            throw new ArgumentOutOfRangeException(nameof(month), BalanceErrors.InvalidMonth);
+            throw new DomainException(BalanceDomainErrors.InvalidMonth);
 
-        return new()
+        return new Balance
         {
             UserId = userId,
             Year = year,
@@ -45,7 +42,7 @@ public sealed class Balance : Entity
     public void ApplyIncome(decimal amount)
     {
         if (amount < 0)
-            throw new ArgumentOutOfRangeException(nameof(amount), BalanceErrors.NegativeAmount);
+            throw new DomainException(BalanceDomainErrors.NegativeAmount);
 
         IncomeTotal += amount;
         RecalculateValue();
@@ -54,7 +51,7 @@ public sealed class Balance : Entity
     public void ApplyExpense(decimal amount)
     {
         if (amount < 0)
-            throw new ArgumentOutOfRangeException(nameof(amount), BalanceErrors.NegativeAmount);
+            throw new DomainException(BalanceDomainErrors.NegativeAmount);
 
         ExpenseTotal += amount;
         RecalculateValue();

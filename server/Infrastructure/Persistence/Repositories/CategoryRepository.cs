@@ -14,6 +14,12 @@ public sealed class CategoryRepository : ICategoryRepository
         _dbContext = dbContext;
     }
 
+    public async Task AddAsync(Category category, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.Categories.AddAsync(category, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task AddRangeAsync(IEnumerable<Category> categories, CancellationToken cancellationToken = default)
     {
         await _dbContext.Categories.AddRangeAsync(categories, cancellationToken);

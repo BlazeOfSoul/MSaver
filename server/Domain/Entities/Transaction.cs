@@ -28,15 +28,15 @@ public sealed class Transaction : Entity
         string description = "")
     {
         if (userId == Guid.Empty)
-            throw new ArgumentException(TransactionErrors.UserIdRequired, nameof(userId));
+            throw new DomainException(TransactionDomainErrors.UserIdRequired);
 
         if (categoryId == Guid.Empty)
-            throw new ArgumentException(TransactionErrors.CategoryIdRequired, nameof(categoryId));
+            throw new DomainException(TransactionDomainErrors.CategoryIdRequired);
 
         if (amount <= 0)
-            throw new ArgumentOutOfRangeException(nameof(amount), TransactionErrors.AmountMustBePositive);
+            throw new DomainException(TransactionDomainErrors.AmountMustBePositive);
 
-        return new()
+        return new Transaction
         {
             UserId = userId,
             CategoryId = categoryId,

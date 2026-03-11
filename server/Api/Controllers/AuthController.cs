@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
-using server.Application.Services.Interfaces;
+using server.Api.Common;
 using server.Application.Features.Auth.Login;
 using server.Application.Features.Auth.Register;
+using server.Application.Services.Interfaces;
 
 namespace server.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public sealed class AuthController : ControllerBase
+public sealed class AuthController : ApiControllerBase
 {
     private readonly IAuthService _authService;
 
@@ -17,16 +17,20 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest command, CancellationToken cancellationToken)
+    public async Task<IActionResult> Register(
+        [FromBody] RegisterRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _authService.RegisterAsync(command, cancellationToken);
-        return Ok(result);
+        var result = await _authService.RegisterAsync(request, cancellationToken);
+        return FromResult(result);
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest query, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequest request,
+        CancellationToken cancellationToken)
     {
-        var response = await _authService.LoginAsync(query, cancellationToken);
-        return Ok(response);
+        var result = await _authService.LoginAsync(request, cancellationToken);
+        return FromResult(result);
     }
 }
