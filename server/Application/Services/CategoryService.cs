@@ -36,7 +36,7 @@ public sealed class CategoryService : ICategoryService
         CreateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
-        var category = new Category(
+        var category = Category.Create(
             request.UserId,
             request.Name,
             request.Type,

@@ -94,7 +94,7 @@ public sealed class AuthService : IAuthService
     {
         var passwordHasher = new PasswordHasher<User>();
 
-        var user = new User(request.Username, request.Email, string.Empty);
+        var user = User.Create(request.Username, request.Email, string.Empty);
         var hash = passwordHasher.HashPassword(user, request.Password);
         user.ChangePassword(hash);
 
@@ -107,7 +107,7 @@ public sealed class AuthService : IAuthService
             .Select(kv =>
             {
                 var (name, type, color) = kv.Value;
-                return new Category(userId, name, type, color);
+                return Category.Create(userId, name, type, color);
             })
             .ToList();
 
@@ -118,7 +118,7 @@ public sealed class AuthService : IAuthService
     {
         var now = DateTime.UtcNow;
 
-        var balance = new Balance(userId, now.Year, now.Month);
+        var balance = Balance.Create(userId, now.Year, now.Month);
         await _balanceRepository.AddAsync(balance, cancellationToken);
     }
 }

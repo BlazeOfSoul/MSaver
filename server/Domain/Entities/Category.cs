@@ -8,30 +8,40 @@ public sealed class Category : Entity
 {
     private Category()
     {
-        Name = string.Empty;
-        Color = "#ffffff";
+        Name = null!;
+        Color = null!;
+        User = null!;
     }
 
     public Guid UserId { get; private set; }
 
-    public string Name { get; private set; } = string.Empty;
+    public string Name { get; private set; }
     public CategoryType Type { get; private set; }
-    public string Color { get; private set; } = "#ffffff";
+    public string Color { get; private set; }
     public bool IsDeleted { get; private set; }
 
-    public User User { get; private set; } = null!;
+    public User User { get; private set; }
 
-    public Category(Guid userId, string name, CategoryType type, string color)
+    public static Category Create(
+        Guid userId,
+        string name,
+        CategoryType type,
+        string color)
     {
         if (userId == Guid.Empty)
-            throw new ArgumentException(DomainErrors.Category.UserIdRequired, nameof(userId));
+            throw new ArgumentException(CategoryErrors.UserIdRequired, nameof(userId));
 
-        UserId = userId;
-        Type = type;
-        IsDeleted = false;
+        var category = new Category
+        {
+            UserId = userId,
+            Type = type,
+            IsDeleted = false
+        };
 
-        SetName(name);
-        SetColor(color);
+        category.SetName(name);
+        category.SetColor(color);
+
+        return category;
     }
 
     public void Update(string name, string color, CategoryType type)
@@ -46,7 +56,7 @@ public sealed class Category : Entity
     private void SetName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(DomainErrors.Category.NameRequired, nameof(name));
+            throw new ArgumentException(CategoryErrors.NameRequired, nameof(name));
 
         Name = name;
     }
@@ -54,7 +64,7 @@ public sealed class Category : Entity
     private void SetColor(string color)
     {
         if (string.IsNullOrWhiteSpace(color))
-            throw new ArgumentException(DomainErrors.Category.ColorRequired, nameof(color));
+            throw new ArgumentException(CategoryErrors.ColorRequired, nameof(color));
 
         Color = color;
     }

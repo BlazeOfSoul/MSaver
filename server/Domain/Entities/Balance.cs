@@ -17,29 +17,35 @@ public sealed class Balance : Entity
 
     public User User { get; private set; } = null!;
 
-    public Balance(Guid userId, int year, int month)
+    public static Balance Create(
+        Guid userId,
+        int year,
+        int month)
     {
         if (userId == Guid.Empty)
-            throw new ArgumentException(DomainErrors.Balance.UserIdRequired, nameof(userId));
+            throw new ArgumentException(BalanceErrors.UserIdRequired, nameof(userId));
 
         if (year < 2000 || year > 3000)
-            throw new ArgumentOutOfRangeException(nameof(year), DomainErrors.Balance.InvalidYear);
+            throw new ArgumentOutOfRangeException(nameof(year), BalanceErrors.InvalidYear);
 
         if (month is < 1 or > 12)
-            throw new ArgumentOutOfRangeException(nameof(month), DomainErrors.Balance.InvalidMonth);
+            throw new ArgumentOutOfRangeException(nameof(month), BalanceErrors.InvalidMonth);
 
-        UserId = userId;
-        Year = year;
-        Month = month;
-        IncomeTotal = 0;
-        ExpenseTotal = 0;
-        ValueTotal = 0;
+        return new()
+        {
+            UserId = userId,
+            Year = year,
+            Month = month,
+            IncomeTotal = 0,
+            ExpenseTotal = 0,
+            ValueTotal = 0
+        };
     }
 
     public void ApplyIncome(decimal amount)
     {
         if (amount < 0)
-            throw new ArgumentOutOfRangeException(nameof(amount), DomainErrors.Balance.NegativeAmount);
+            throw new ArgumentOutOfRangeException(nameof(amount), BalanceErrors.NegativeAmount);
 
         IncomeTotal += amount;
         RecalculateValue();
@@ -48,7 +54,7 @@ public sealed class Balance : Entity
     public void ApplyExpense(decimal amount)
     {
         if (amount < 0)
-            throw new ArgumentOutOfRangeException(nameof(amount), DomainErrors.Balance.NegativeAmount);
+            throw new ArgumentOutOfRangeException(nameof(amount), BalanceErrors.NegativeAmount);
 
         ExpenseTotal += amount;
         RecalculateValue();

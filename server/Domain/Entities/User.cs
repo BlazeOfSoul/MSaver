@@ -7,9 +7,9 @@ public sealed class User : Entity
 {
     private User()
     {
-        Username = string.Empty;
-        Email = string.Empty;
-        PasswordHash = string.Empty;
+        Username = null!;
+        Email = null!;
+        PasswordHash = null!;
         CreatedAt = DateTime.UtcNow;
     }
 
@@ -18,27 +18,33 @@ public sealed class User : Entity
     public string PasswordHash { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    public User(string username, string email, string passwordHash)
+    public static User Create(
+        string username,
+        string email,
+        string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(username))
-            throw new ArgumentException(DomainErrors.User.UsernameRequired, nameof(username));
+            throw new ArgumentException(UserErrors.UsernameRequired, nameof(username));
 
         if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException(DomainErrors.User.EmailRequired, nameof(email));
+            throw new ArgumentException(UserErrors.EmailRequired, nameof(email));
 
         if (string.IsNullOrWhiteSpace(passwordHash))
-            throw new ArgumentException(DomainErrors.User.PasswordHashRequired, nameof(passwordHash));
+            throw new ArgumentException(UserErrors.PasswordHashRequired, nameof(passwordHash));
 
-        Username = username;
-        Email = email;
-        PasswordHash = passwordHash;
-        CreatedAt = DateTime.UtcNow;
+        return new User
+        {
+            Username = username,
+            Email = email,
+            PasswordHash = passwordHash,
+            CreatedAt = DateTime.UtcNow
+        };
     }
 
     public void ChangePassword(string newPasswordHash)
     {
         if (string.IsNullOrWhiteSpace(newPasswordHash))
-            throw new ArgumentException(DomainErrors.User.PasswordHashRequired, nameof(newPasswordHash));
+            throw new ArgumentException(UserErrors.PasswordHashRequired, nameof(newPasswordHash));
 
         PasswordHash = newPasswordHash;
     }
@@ -46,7 +52,7 @@ public sealed class User : Entity
     public void ChangeEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException(DomainErrors.User.EmailRequired, nameof(email));
+            throw new ArgumentException(UserErrors.EmailRequired, nameof(email));
 
         Email = email;
     }
@@ -54,7 +60,7 @@ public sealed class User : Entity
     public void ChangeUsername(string username)
     {
         if (string.IsNullOrWhiteSpace(username))
-            throw new ArgumentException(DomainErrors.User.UsernameRequired, nameof(username));
+            throw new ArgumentException(UserErrors.UsernameRequired, nameof(username));
 
         Username = username;
     }

@@ -43,11 +43,15 @@ public sealed class TransactionService : ITransactionService
 
         if (balance is null)
         {
-            balance = new Balance(request.UserId, now.Year, now.Month);
+            balance = Balance.Create(
+                request.UserId,
+                now.Year,
+                now.Month);
+
             _dbContext.Balances.Add(balance);
         }
 
-        var transaction = new Transaction(
+        var transaction = Transaction.Create(
             request.UserId,
             request.CategoryId,
             request.Amount,

@@ -7,7 +7,7 @@ public sealed class Transaction : Entity
 {
     private Transaction()
     {
-        Description = string.Empty;
+        Description = null!;
     }
 
     public Guid UserId { get; private set; }
@@ -20,7 +20,7 @@ public sealed class Transaction : Entity
     public User User { get; private set; } = null!;
     public Category Category { get; private set; } = null!;
 
-    public Transaction(
+    public static Transaction Create(
         Guid userId,
         Guid categoryId,
         decimal amount,
@@ -28,19 +28,22 @@ public sealed class Transaction : Entity
         string description = "")
     {
         if (userId == Guid.Empty)
-            throw new ArgumentException(DomainErrors.Transaction.UserIdRequired, nameof(userId));
+            throw new ArgumentException(TransactionErrors.UserIdRequired, nameof(userId));
 
         if (categoryId == Guid.Empty)
-            throw new ArgumentException(DomainErrors.Transaction.CategoryIdRequired, nameof(categoryId));
+            throw new ArgumentException(TransactionErrors.CategoryIdRequired, nameof(categoryId));
 
         if (amount <= 0)
-            throw new ArgumentOutOfRangeException(nameof(amount), DomainErrors.Transaction.AmountMustBePositive);
+            throw new ArgumentOutOfRangeException(nameof(amount), TransactionErrors.AmountMustBePositive);
 
-        UserId = userId;
-        CategoryId = categoryId;
-        Amount = amount;
-        Date = date;
-        Description = description ?? string.Empty;
+        return new()
+        {
+            UserId = userId,
+            CategoryId = categoryId,
+            Amount = amount,
+            Date = date,
+            Description = description ?? string.Empty
+        };
     }
 
     public void ChangeDescription(string description)
