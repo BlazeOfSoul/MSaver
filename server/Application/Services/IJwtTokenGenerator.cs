@@ -2,5 +2,6 @@ namespace server.Application.Abstractions.Services;
 
 public interface IJwtTokenGenerator
 {
-    string GenerateToken(Guid userId, string username, string email);
+    string GenerateAccessToken(Guid userId, string username, string email);
+    (string token, DateTime expiresAt) GenerateRefreshToken(Guid userId, string username, string email);
 }

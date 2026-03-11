@@ -1,9 +1,9 @@
-﻿using System.Net.Http.Json;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using server.Application.Abstractions.Services;
+
 using server.Application.Common.Results;
 using server.Application.Features.ExchangeRates;
+using server.Application.Services.Interfaces;
 using server.Domain.Errors;
 using server.Infrastructure.ExchangeRate.Models;
 using server.Infrastructure.ExchangeRate.Settings;

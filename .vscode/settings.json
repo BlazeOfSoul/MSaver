@@ -12,10 +12,7 @@
   "editor.formatOnType": true,
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
-  "editor.useEditorConfig": true,
-
-  // общий форматтер по умолчанию (для всего, кроме overrides ниже)
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeLens": true,
 
   // C#
   "[csharp]": {
@@ -41,7 +38,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
-  // автофиксы
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always",
     "source.fixAll": "always"

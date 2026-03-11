@@ -24,4 +24,18 @@ public static class AuthDomainErrors
             "Auth.RepeatedEmail",
             "Пользователь с таким email уже существует.",
             "email");
+
+    public static readonly DomainError RefreshTokenInvalid =
+        new(
+            DomainErrorType.Validation,
+            "Auth.RefreshTokenInvalid",
+            "Недействительный refresh токен.",
+            "refreshToken");
+
+    public static readonly DomainError RefreshTokenExpired =
+        new(
+            DomainErrorType.Validation,
+            "Auth.RefreshTokenExpired",
+            "Срок действия refresh токена истёк.",
+            "refreshToken");
 }

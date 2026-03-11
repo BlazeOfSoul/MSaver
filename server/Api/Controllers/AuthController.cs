@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using server.Api.Common;
 using server.Application.Features.Auth.Login;
+using server.Application.Features.Auth.Refresh;
 using server.Application.Features.Auth.Register;
 using server.Application.Services.Interfaces;
 
@@ -17,6 +20,7 @@ public sealed class AuthController : ApiControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
@@ -26,11 +30,22 @@ public sealed class AuthController : ApiControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
     {
         var result = await _authService.LoginAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
+    [HttpPost("refresh")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Refresh(
+        [FromBody] RefreshTokenRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authService.RefreshAsync(request, cancellationToken);
         return FromResult(result);
     }
 }

@@ -31,4 +31,11 @@ public static class UserDomainErrors
             "User.IdNotFound",
             "Не удалось определить идентификатор пользователя.",
             null);
+
+    public static readonly DomainError UserIdRequired =
+        new(
+            DomainErrorType.Validation,
+            "User.UserIdRequired",
+            "Идентификатор пользователя обязателен.",
+            "userId");
 }

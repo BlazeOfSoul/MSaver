@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+
 using server.Api.Common;
 using server.Api.Extensions;
 using server.Application.Services.Interfaces;
@@ -6,9 +7,11 @@ using server.Application.Features.Categories.CreateCategory;
 using server.Application.Features.Categories.DeleteCategory;
 using server.Application.Features.Categories.GetCategories;
 using server.Application.Features.Categories.UpdateCategory;
+using Microsoft.AspNetCore.Authorization;
 
 namespace server.Api.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 public sealed class CategoriesController : ApiControllerBase
 {

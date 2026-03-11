@@ -4,4 +4,5 @@ public sealed record RegisterResponse(
     Guid Id,
     string Username,
     string Email,
-    string Token);
+    string AccessToken,
+    string RefreshToken);

@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 using server.Api.Common;
 using server.Api.Extensions;
 using server.Application.Services.Interfaces;
 
 namespace server.Api.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 public sealed class BalanceController : ApiControllerBase
 {

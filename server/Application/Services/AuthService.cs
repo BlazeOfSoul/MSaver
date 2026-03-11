@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
+
 using server.Application.Common.Results;
 using server.Application.Features.Auth.Login;
+using server.Application.Features.Auth.Refresh;
 using server.Application.Features.Auth.Register;
 using server.Application.Services.Interfaces;
 using server.Application.Abstractions.Services;
@@ -14,9 +16,12 @@ namespace server.Application.Services;
 
 public sealed class AuthService : IAuthService
 {
+    private const int MaxActiveRefreshTokensPerUser = 3;
+
     private readonly IUserRepository _userRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IBalanceRepository _balanceRepository;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -24,12 +29,14 @@ public sealed class AuthService : IAuthService
         IUserRepository userRepository,
         ICategoryRepository categoryRepository,
         IBalanceRepository balanceRepository,
+        IRefreshTokenRepository refreshTokenRepository,
         IJwtTokenGenerator jwtTokenGenerator,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _categoryRepository = categoryRepository;
         _balanceRepository = balanceRepository;
+        _refreshTokenRepository = refreshTokenRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
         _unitOfWork = unitOfWork;
     }
@@ -55,8 +62,25 @@ public sealed class AuthService : IAuthService
             return Result<LoginResponse>.Failure(AuthDomainErrors.InvalidPassword);
         }
 
-        var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Username, user.Email);
-        var response = new LoginResponse(user.Id, user.Username, user.Email, token);
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(
+            user.Id,
+            user.Username,
+            user.Email);
+
+        var (refreshTokenValue, refreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
+            user.Id,
+            user.Username,
+            user.Email);
+
+        await AddRefreshTokenAsync(user.Id, refreshTokenValue, refreshExpiresAt, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var response = new LoginResponse(
+            user.Id,
+            user.Username,
+            user.Email,
+            accessToken,
+            refreshTokenValue);
 
         return Result<LoginResponse>.Success(response);
     }
@@ -77,10 +101,26 @@ public sealed class AuthService : IAuthService
             await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
             await CreateInitialBalanceAsync(user.Id, cancellationToken);
 
+            var accessToken = _jwtTokenGenerator.GenerateAccessToken(
+                user.Id,
+                user.Username,
+                user.Email);
+
+            var (refreshTokenValue, refreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
+                user.Id,
+                user.Username,
+                user.Email);
+
+            await AddRefreshTokenAsync(user.Id, refreshTokenValue, refreshExpiresAt, cancellationToken);
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Username, user.Email);
-            var response = new RegisterResponse(user.Id, user.Username, user.Email, token);
+            var response = new RegisterResponse(
+                user.Id,
+                user.Username,
+                user.Email,
+                accessToken,
+                refreshTokenValue);
 
             return Result<RegisterResponse>.Success(response);
         }
@@ -88,6 +128,49 @@ public sealed class AuthService : IAuthService
         {
             return Result<RegisterResponse>.Failure(ex.Error);
         }
+    }
+
+    public async Task<Result<RefreshTokenResponse>> RefreshAsync(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var storedToken = await _refreshTokenRepository
+            .GetByTokenAsync(request.RefreshToken, cancellationToken);
+
+        if (storedToken is null)
+            return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.RefreshTokenInvalid);
+
+        if (storedToken.IsExpired)
+            return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.RefreshTokenExpired);
+
+        var user = await _userRepository.GetByIdAsync(storedToken.UserId, cancellationToken);
+        if (user is null)
+            return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.InvalidEmail);
+
+        await _refreshTokenRepository.RevokeAsync(storedToken, cancellationToken);
+
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(
+            user.Id,
+            user.Username,
+            user.Email);
+
+        var (newRefreshTokenValue, newRefreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
+            user.Id,
+            user.Username,
+            user.Email);
+
+        await AddRefreshTokenAsync(user.Id, newRefreshTokenValue, newRefreshExpiresAt, cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var response = new RefreshTokenResponse(
+            user.Id,
+            user.Username,
+            user.Email,
+            accessToken,
+            newRefreshTokenValue);
+
+        return Result<RefreshTokenResponse>.Success(response);
     }
 
     private static User CreateUser(RegisterRequest request)
@@ -121,5 +204,30 @@ public sealed class AuthService : IAuthService
 
         var balance = Balance.Create(userId, now.Year, now.Month);
         await _balanceRepository.AddAsync(balance, cancellationToken);
+    }
+
+    private async Task AddRefreshTokenAsync(
+        Guid userId,
+        string tokenValue,
+        DateTime expiresAt,
+        CancellationToken cancellationToken)
+    {
+        var existingTokens = await _refreshTokenRepository
+            .GetByUserIdAsync(userId, cancellationToken);
+
+        var activeTokens = existingTokens
+            .Where(t => !t.IsExpired)
+            .OrderBy(t => t.CreatedAt)
+            .ToList();
+
+        while (activeTokens.Count >= MaxActiveRefreshTokensPerUser)
+        {
+            var oldest = activeTokens[0];
+            await _refreshTokenRepository.RevokeAsync(oldest, cancellationToken);
+            activeTokens.RemoveAt(0);
+        }
+
+        var refreshEntity = RefreshToken.Create(userId, tokenValue, expiresAt);
+        await _refreshTokenRepository.AddAsync(refreshEntity, cancellationToken);
     }
 }

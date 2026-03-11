@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿
 using server.Application.Abstractions.Services;
 using server.Application.Services;
 using server.Application.Services.Interfaces;
@@ -17,8 +17,10 @@ public static class ServiceCollectionExtensions
         // Repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IBalanceRepository, BalanceRepository>();
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
 
         // Services
         services.AddScoped<IAuthService, AuthService>();
