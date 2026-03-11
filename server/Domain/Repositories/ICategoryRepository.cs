@@ -1,6 +1,6 @@
 ﻿using server.Domain.Entities;
 
-namespace server.Application.Abstractions.Repositories;
+namespace server.Domain.Repositories;
 
 public interface ICategoryRepository
 {

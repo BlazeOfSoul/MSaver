@@ -1,8 +1,8 @@
 using server.Application.Common.Results;
 using server.Application.Features.Balance.GetCurrent;
 using server.Application.Services.Interfaces;
-using server.Application.Abstractions.Repositories;
 using server.Domain.Errors;
+using server.Domain.Repositories;
 
 namespace server.Application.Services;
 

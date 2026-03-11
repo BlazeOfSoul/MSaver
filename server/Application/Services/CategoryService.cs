@@ -1,4 +1,3 @@
-using server.Application.Abstractions.Repositories;
 using server.Application.Common.Results;
 using server.Application.Features.Categories.CreateCategory;
 using server.Application.Features.Categories.DeleteCategory;
@@ -8,16 +7,21 @@ using server.Application.Services.Interfaces;
 using server.Domain.Common;
 using server.Domain.Entities;
 using server.Domain.Errors;
+using server.Domain.Repositories;
 
 namespace server.Application.Services;
 
 public sealed class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CategoryService(ICategoryRepository categoryRepository)
+    public CategoryService(
+        ICategoryRepository categoryRepository,
+        IUnitOfWork unitOfWork)
     {
         _categoryRepository = categoryRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<IReadOnlyList<CategoryResponse>>> GetCategoriesAsync(
@@ -53,6 +57,7 @@ public sealed class CategoryService : ICategoryService
                 request.Color);
 
             await _categoryRepository.AddAsync(category, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             var response = new CreateCategoryResponse(
                 category.Id,
@@ -85,6 +90,7 @@ public sealed class CategoryService : ICategoryService
         {
             category.Update(request.Name, request.Color, request.Type);
             await _categoryRepository.UpdateAsync(category, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }
@@ -109,6 +115,7 @@ public sealed class CategoryService : ICategoryService
 
         category.SoftDelete();
         await _categoryRepository.UpdateAsync(category, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }

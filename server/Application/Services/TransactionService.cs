@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using server.Application.Common.Results;
 using server.Application.Features.Transactions.Create;
 using server.Application.Features.Transactions.GetStatistics;
@@ -7,50 +6,50 @@ using server.Domain.Common;
 using server.Domain.Entities;
 using server.Domain.Enums;
 using server.Domain.Errors;
-using server.Infrastructure.Persistence;
+using server.Domain.Repositories;
 
 namespace server.Application.Services;
 
 public sealed class TransactionService : ITransactionService
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ICategoryRepository _categoryRepository;
+    private readonly IBalanceRepository _balanceRepository;
+    private readonly ITransactionRepository _transactionRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public TransactionService(ApplicationDbContext dbContext)
+    public TransactionService(
+        ICategoryRepository categoryRepository,
+        IBalanceRepository balanceRepository,
+        ITransactionRepository transactionRepository,
+        IUnitOfWork unitOfWork)
     {
-        _dbContext = dbContext;
+        _categoryRepository = categoryRepository;
+        _balanceRepository = balanceRepository;
+        _transactionRepository = transactionRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<Guid>> CreateAsync(
         CreateTransactionRequest request,
         CancellationToken cancellationToken = default)
     {
-        var category = await _dbContext.Categories
-            .FirstOrDefaultAsync(
-                c => c.Id == request.CategoryId && c.UserId == request.UserId,
-                cancellationToken);
+        var category = await _categoryRepository
+            .GetByIdAsync(request.CategoryId, cancellationToken);
 
-        if (category is null)
+        if (category is null || category.UserId != request.UserId)
         {
             return Result<Guid>.Failure(TransactionDomainErrors.CategoryNotFound);
         }
 
         var now = request.Date;
 
-        var balance = await _dbContext.Balances
-            .FirstOrDefaultAsync(
-                mb => mb.UserId == request.UserId &&
-                      mb.Year == now.Year &&
-                      mb.Month == now.Month,
-                cancellationToken);
+        var balance = await _balanceRepository
+            .GetByUserAndDateAsync(request.UserId, now.Year, now.Month, cancellationToken);
 
         if (balance is null)
         {
-            balance = Balance.Create(
-                request.UserId,
-                now.Year,
-                now.Month);
-
-            _dbContext.Balances.Add(balance);
+            balance = Balance.Create(request.UserId, now.Year, now.Month);
+            await _balanceRepository.AddAsync(balance, cancellationToken);
         }
 
         try
@@ -62,7 +61,7 @@ public sealed class TransactionService : ITransactionService
                 request.Date,
                 request.Description);
 
-            _dbContext.Transactions.Add(transaction);
+            await _transactionRepository.AddAsync(transaction, cancellationToken);
 
             if (category.Type == CategoryType.Income)
             {
@@ -73,7 +72,8 @@ public sealed class TransactionService : ITransactionService
                 balance.ApplyExpense(request.Amount);
             }
 
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _balanceRepository.UpdateAsync(balance, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result<Guid>.Success(transaction.Id);
         }
@@ -87,10 +87,8 @@ public sealed class TransactionService : ITransactionService
         GetStatisticsRequest query,
         CancellationToken cancellationToken = default)
     {
-        var transactions = await _dbContext.Transactions
-            .Include(t => t.Category)
-            .Where(t => t.UserId == query.UserId)
-            .ToListAsync(cancellationToken);
+        var transactions = await _transactionRepository
+            .GetByUserIdWithCategoryAsync(query.UserId, cancellationToken);
 
         var response = new StatisticsResponse();
         var yearsSet = new HashSet<int>();

@@ -1,10 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using server.Application.Abstractions.Repositories;
 using server.Application.Abstractions.Services;
 using server.Application.Services;
 using server.Application.Services.Interfaces;
+using server.Domain.Repositories;
 using server.Infrastructure.Auth;
 using server.Infrastructure.ExchangeRate;
+using server.Infrastructure.Persistence;
 using server.Infrastructure.Persistence.Repositories;
 
 namespace server.Infrastructure.DependencyInjection;
@@ -14,6 +15,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Repositories
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IBalanceRepository, BalanceRepository>();

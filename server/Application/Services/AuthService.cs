@@ -1,17 +1,16 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using server.Application.Abstractions.Repositories;
 using server.Application.Common.Results;
 using server.Application.Features.Auth.Login;
 using server.Application.Features.Auth.Register;
 using server.Application.Services.Interfaces;
 using server.Application.Abstractions.Services;
 using server.Domain.Common;
-using server.Domain.Constants;
 using server.Domain.Entities;
-using server.Domain.Enums;
 using server.Domain.Errors;
+using server.Domain.Repositories;
 using server.Infrastructure.Persistence;
+using server.Domain.Constants;
 
 namespace server.Application.Services;
 
@@ -22,19 +21,22 @@ public sealed class AuthService : IAuthService
     private readonly ICategoryRepository _categoryRepository;
     private readonly IBalanceRepository _balanceRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AuthService(
         ApplicationDbContext dbContext,
         IUserRepository userRepository,
         ICategoryRepository categoryRepository,
         IBalanceRepository balanceRepository,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IUnitOfWork unitOfWork)
     {
         _dbContext = dbContext;
         _userRepository = userRepository;
         _categoryRepository = categoryRepository;
         _balanceRepository = balanceRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<LoginResponse>> LoginAsync(
@@ -74,7 +76,8 @@ public sealed class AuthService : IAuthService
         try
         {
             var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
-            if (existingUser is not null) return Result<RegisterResponse>.Failure(AuthDomainErrors.RepeatedEmail);
+            if (existingUser is not null)
+                return Result<RegisterResponse>.Failure(AuthDomainErrors.RepeatedEmail);
 
             var user = CreateUser(request);
             await _userRepository.AddAsync(user, cancellationToken);
@@ -82,6 +85,7 @@ public sealed class AuthService : IAuthService
             await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
             await CreateInitialBalanceAsync(user.Id, cancellationToken);
 
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Username, user.Email);
