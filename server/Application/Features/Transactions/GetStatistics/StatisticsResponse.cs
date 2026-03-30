@@ -2,8 +2,8 @@
 
 public sealed class StatisticsResponse
 {
-    public Dictionary<int, List<ChartDataDto>> IncomeChartDataByYear { get; set; } = new();
-    public Dictionary<int, List<ChartDataDto>> ExpenseChartDataByYear { get; set; } = new();
+    public Dictionary<int, List<ChartDataItem>> IncomeChartDataByYear { get; set; } = new();
+    public Dictionary<int, List<ChartDataItem>> ExpenseChartDataByYear { get; set; } = new();
 
     public Dictionary<int, Dictionary<string, Dictionary<int, decimal>>> IncomeTableData { get; set; } = new();
     public Dictionary<int, Dictionary<string, Dictionary<int, decimal>>> ExpenseTableData { get; set; } = new();

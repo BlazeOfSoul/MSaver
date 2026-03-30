@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+
 using server.Api.Common;
 
 namespace server.Api.Extensions;

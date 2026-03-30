@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using server.Api.Common;
@@ -17,13 +19,19 @@ public sealed class CategoriesController : ApiControllerBase
 {
     private readonly ICategoryService _categoryService;
     private readonly ICurrentUserService _currentUser;
+    private readonly IValidator<CreateCategoryRequest> _createValidator;
+    private readonly IValidator<UpdateCategoryRequest> _updateValidator;
 
     public CategoriesController(
         ICategoryService categoryService,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IValidator<CreateCategoryRequest> createValidator,
+        IValidator<UpdateCategoryRequest> updateValidator)
     {
         _categoryService = categoryService;
         _currentUser = currentUser;
+        _createValidator = createValidator;
+        _updateValidator = updateValidator;
     }
 
     [HttpGet]
@@ -37,18 +45,21 @@ public sealed class CategoriesController : ApiControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateCategory(
+    public Task<IActionResult> CreateCategory(
         [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
         request.UserId = _currentUser.UserId;
 
-        var result = await _categoryService.CreateCategoryAsync(request, cancellationToken);
-        return FromResult(result);
+        return ValidateAndExecuteAsync<CreateCategoryRequest, CreateCategoryResponse>(
+            request,
+            _createValidator,
+            ct => _categoryService.CreateCategoryAsync(request, ct),
+            cancellationToken);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> UpdateCategory(
+    public Task<IActionResult> UpdateCategory(
         Guid id,
         [FromBody] UpdateCategoryRequest request,
         CancellationToken cancellationToken)
@@ -62,8 +73,11 @@ public sealed class CategoriesController : ApiControllerBase
             request.Color,
             request.Type);
 
-        var result = await _categoryService.UpdateCategoryAsync(command, cancellationToken);
-        return FromResult(result);
+        return ValidateAndExecuteAsync(
+            command,
+            _updateValidator,
+            ct => _categoryService.UpdateCategoryAsync(command, ct),
+            cancellationToken);
     }
 
     [HttpDelete("{id:guid}")]

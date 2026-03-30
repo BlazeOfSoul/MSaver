@@ -113,7 +113,7 @@ public sealed class TransactionService : ITransactionService
             if (!targetChart.ContainsKey(year))
             {
                 targetChart[year] = Enumerable.Range(0, 12)
-                    .Select(_ => new ChartDataDto())
+                    .Select(_ => new ChartDataItem())
                     .ToList();
             }
 

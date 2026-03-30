@@ -1,7 +1,9 @@
-﻿using server.Application.Abstractions.Auth;
+﻿using Microsoft.AspNetCore.Identity;
+
+using server.Application.Abstractions.Auth;
 using server.Application.Abstractions.Services;
 using server.Application.Services;
-
+using server.Domain.Entities;
 using server.Domain.Repositories;
 
 using server.Infrastructure.Auth;
@@ -33,6 +35,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
         // External
         services.AddHttpClient<IExchangeRateService, ExchangeRateService>();

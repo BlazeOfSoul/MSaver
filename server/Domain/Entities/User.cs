@@ -1,4 +1,3 @@
-// Domain/Entities/User.cs
 using server.Domain.Common;
 using server.Domain.Errors;
 
@@ -14,10 +13,22 @@ public sealed class User : Entity
         CreatedAt = DateTime.UtcNow;
     }
 
-    public string Username { get; private set; }
-    public string Email { get; private set; }
-    public string PasswordHash { get; private set; }
-    public DateTime CreatedAt { get; private set; }
+    public string Username
+    {
+        get; private set;
+    }
+    public string Email
+    {
+        get; private set;
+    }
+    public string PasswordHash
+    {
+        get; private set;
+    }
+    public DateTime CreatedAt
+    {
+        get; private set;
+    }
 
     public static User Create(string username, string email, string passwordHash)
     {

@@ -1,3 +1,5 @@
+using FluentValidation;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,39 +15,52 @@ namespace server.Api.Controllers;
 public sealed class AuthController : ApiControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IValidator<RegisterRequest> _registerValidator;
+    private readonly IValidator<LoginRequest> _loginValidator;
+    private readonly IValidator<RefreshTokenRequest> _refreshValidator;
 
-    public AuthController(IAuthService authService)
+    public AuthController(
+        IAuthService authService,
+        IValidator<RegisterRequest> registerValidator,
+        IValidator<LoginRequest> loginValidator,
+        IValidator<RefreshTokenRequest> refreshValidator)
     {
         _authService = authService;
+        _registerValidator = registerValidator;
+        _loginValidator = loginValidator;
+        _refreshValidator = refreshValidator;
     }
 
     [HttpPost("register")]
     [AllowAnonymous]
-    public async Task<IActionResult> Register(
+    public Task<IActionResult> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
-    {
-        var result = await _authService.RegisterAsync(request, cancellationToken);
-        return FromResult(result);
-    }
+        => ValidateAndExecuteAsync<RegisterRequest, RegisterResponse>(
+            request,
+            _registerValidator,
+            ct => _authService.RegisterAsync(request, ct),
+            cancellationToken);
 
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<IActionResult> Login(
+    public Task<IActionResult> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
-    {
-        var result = await _authService.LoginAsync(request, cancellationToken);
-        return FromResult(result);
-    }
+        => ValidateAndExecuteAsync<LoginRequest, LoginResponse>(
+            request,
+            _loginValidator,
+            ct => _authService.LoginAsync(request, ct),
+            cancellationToken);
 
     [HttpPost("refresh")]
     [AllowAnonymous]
-    public async Task<IActionResult> Refresh(
+    public Task<IActionResult> Refresh(
         [FromBody] RefreshTokenRequest request,
         CancellationToken cancellationToken)
-    {
-        var result = await _authService.RefreshAsync(request, cancellationToken);
-        return FromResult(result);
-    }
+        => ValidateAndExecuteAsync<RefreshTokenRequest, RefreshTokenResponse>(
+            request,
+            _refreshValidator,
+            ct => _authService.RefreshAsync(request, ct),
+            cancellationToken);
 }

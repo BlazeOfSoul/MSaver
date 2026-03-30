@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Identity;
 
+using server.Application.Abstractions.Auth;
+using server.Application.Abstractions.Services;
 using server.Application.Common.Results;
 using server.Application.Features.Auth.Login;
 using server.Application.Features.Auth.Refresh;
 using server.Application.Features.Auth.Register;
-using server.Application.Abstractions.Services;
-using server.Application.Abstractions.Auth;
 using server.Domain.Common;
+using server.Domain.Constants;
 using server.Domain.Entities;
 using server.Domain.Errors;
 using server.Domain.Repositories;
-using server.Domain.Constants;
 
 namespace server.Application.Services;
 
@@ -24,6 +24,7 @@ public sealed class AuthService : IAuthService
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPasswordHasher<User> _passwordHasher;
 
     public AuthService(
         IUserRepository userRepository,
@@ -31,7 +32,8 @@ public sealed class AuthService : IAuthService
         IBalanceRepository balanceRepository,
         IRefreshTokenRepository refreshTokenRepository,
         IJwtTokenGenerator jwtTokenGenerator,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IPasswordHasher<User> passwordHasher)
     {
         _userRepository = userRepository;
         _categoryRepository = categoryRepository;
@@ -39,6 +41,7 @@ public sealed class AuthService : IAuthService
         _refreshTokenRepository = refreshTokenRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
         _unitOfWork = unitOfWork;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<Result<LoginResponse>> LoginAsync(
@@ -47,20 +50,15 @@ public sealed class AuthService : IAuthService
     {
         var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user is null)
-        {
             return Result<LoginResponse>.Failure(AuthDomainErrors.InvalidEmail);
-        }
 
-        var passwordHasher = new PasswordHasher<User>();
-        var verification = passwordHasher.VerifyHashedPassword(
+        var verification = _passwordHasher.VerifyHashedPassword(
             user,
             user.PasswordHash,
             request.Password);
 
         if (verification == PasswordVerificationResult.Failed)
-        {
             return Result<LoginResponse>.Failure(AuthDomainErrors.InvalidPassword);
-        }
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(
             user.Id,
@@ -112,7 +110,6 @@ public sealed class AuthService : IAuthService
                 user.Email);
 
             await AddRefreshTokenAsync(user.Id, refreshTokenValue, refreshExpiresAt, cancellationToken);
-
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             var response = new RegisterResponse(
@@ -160,7 +157,6 @@ public sealed class AuthService : IAuthService
             user.Email);
 
         await AddRefreshTokenAsync(user.Id, newRefreshTokenValue, newRefreshExpiresAt, cancellationToken);
-
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var response = new RefreshTokenResponse(
@@ -173,15 +169,16 @@ public sealed class AuthService : IAuthService
         return Result<RefreshTokenResponse>.Success(response);
     }
 
-    private static User CreateUser(RegisterRequest request)
+    private User CreateUser(RegisterRequest request)
     {
-        var passwordHasher = new PasswordHasher<User>();
+        var tempUser = User.Create(
+            username: request.Username,
+            email: request.Email,
+            passwordHash: "temp");
 
-        var user = User.Create(request.Username, request.Email, string.Empty);
+        var hash = _passwordHasher.HashPassword(tempUser, request.Password);
 
-        var hash = passwordHasher.HashPassword(user, request.Password);
-        user.ChangePassword(hash);
-
+        var user = User.Create(request.Username, request.Email, hash);
         return user;
     }
 

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using server.Api.Common;
@@ -15,24 +17,30 @@ public sealed class TransactionsController : ApiControllerBase
 {
     private readonly ITransactionService _transactionService;
     private readonly ICurrentUserService _currentUser;
+    private readonly IValidator<CreateTransactionRequest> _createValidator;
 
     public TransactionsController(
         ITransactionService transactionService,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IValidator<CreateTransactionRequest> createValidator)
     {
         _transactionService = transactionService;
         _currentUser = currentUser;
+        _createValidator = createValidator;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(
+    public Task<IActionResult> Create(
         [FromBody] CreateTransactionRequest request,
         CancellationToken cancellationToken)
     {
         request.UserId = _currentUser.UserId;
 
-        var result = await _transactionService.CreateAsync(request, cancellationToken);
-        return FromResult(result);
+        return ValidateAndExecuteAsync<CreateTransactionRequest, Guid>(
+            request,
+            _createValidator,
+            ct => _transactionService.CreateAsync(request, ct),
+            cancellationToken);
     }
 
     [HttpGet("statistics")]

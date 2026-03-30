@@ -1,4 +1,8 @@
+using FluentValidation;
+using FluentValidation.Results;
+
 using Microsoft.AspNetCore.Mvc;
+
 using server.Application.Common.Results;
 using server.Domain.Common;
 
@@ -23,6 +27,58 @@ public abstract class ApiControllerBase : ControllerBase
         return ProblemFromError(result.Error!);
     }
 
+    protected async Task<IActionResult> ValidateAndExecuteAsync<TRequest>(
+        TRequest request,
+        IValidator<TRequest> validator,
+        Func<CancellationToken, Task<Result>> action,
+        CancellationToken cancellationToken)
+    {
+        ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            var error = MapValidationErrors(validationResult);
+            return ProblemFromError(error);
+        }
+
+        var result = await action(cancellationToken);
+        return FromResult(result);
+    }
+
+    protected async Task<IActionResult> ValidateAndExecuteAsync<TRequest, TResponse>(
+        TRequest request,
+        IValidator<TRequest> validator,
+        Func<CancellationToken, Task<Result<TResponse>>> action,
+        CancellationToken cancellationToken)
+    {
+        ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            var error = MapValidationErrors(validationResult);
+            return ProblemFromError(error);
+        }
+
+        var result = await action(cancellationToken);
+        return FromResult(result);
+    }
+
+    private static DomainError MapValidationErrors(ValidationResult validationResult)
+    {
+        var details = validationResult.Errors
+            .Select(e => new DomainValidationItem(
+                Field: e.PropertyName,
+                Code: e.ErrorCode,
+                Message: e.ErrorMessage))
+            .ToArray();
+
+        return DomainError.Validation(
+            code: "Validation.Failed",
+            message: "Обнаружены ошибки валидации.",
+            field: null,
+            details: details);
+    }
+
     private IActionResult ProblemFromError(DomainError error)
     {
         var statusCode = error.Type switch
@@ -38,7 +94,8 @@ public abstract class ApiControllerBase : ControllerBase
             code = error.Code,
             message = error.Message,
             type = error.Type.ToString(),
-            field = error.Field
+            field = error.Field,
+            details = error.Details
         };
 
         return StatusCode(statusCode, payload);
