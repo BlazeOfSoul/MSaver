@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 using server.Api.Common;
-using server.Api.Extensions;
-using server.Application.Services.Interfaces;
+using server.Application.Abstractions.Auth;
+using server.Application.Abstractions.Services;
 using server.Application.Features.Categories.CreateCategory;
 using server.Application.Features.Categories.DeleteCategory;
 using server.Application.Features.Categories.GetCategories;
 using server.Application.Features.Categories.UpdateCategory;
-using Microsoft.AspNetCore.Authorization;
 
 namespace server.Api.Controllers;
 
@@ -16,16 +16,20 @@ namespace server.Api.Controllers;
 public sealed class CategoriesController : ApiControllerBase
 {
     private readonly ICategoryService _categoryService;
+    private readonly ICurrentUserService _currentUser;
 
-    public CategoriesController(ICategoryService categoryService)
+    public CategoriesController(
+        ICategoryService categoryService,
+        ICurrentUserService currentUser)
     {
         _categoryService = categoryService;
+        _currentUser = currentUser;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetUserCategories(CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
+        var userId = _currentUser.UserId;
         var request = new GetCategoriesRequest(userId);
 
         var result = await _categoryService.GetCategoriesAsync(request, cancellationToken);
@@ -37,7 +41,7 @@ public sealed class CategoriesController : ApiControllerBase
         [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        request.UserId = User.GetUserId();
+        request.UserId = _currentUser.UserId;
 
         var result = await _categoryService.CreateCategoryAsync(request, cancellationToken);
         return FromResult(result);
@@ -49,7 +53,7 @@ public sealed class CategoriesController : ApiControllerBase
         [FromBody] UpdateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
+        var userId = _currentUser.UserId;
 
         var command = new UpdateCategoryRequest(
             id,
@@ -63,9 +67,11 @@ public sealed class CategoriesController : ApiControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteCategory(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteCategory(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
+        var userId = _currentUser.UserId;
         var command = new DeleteCategoryRequest(id, userId);
 
         var result = await _categoryService.DeleteCategoryAsync(command, cancellationToken);

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using server.Api.Common;
-using server.Application.Services.Interfaces;
+using server.Application.Abstractions.Services;
 
 namespace server.Api.Controllers;
 

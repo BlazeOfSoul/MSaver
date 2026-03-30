@@ -1,8 +1,9 @@
-﻿
-using server.Application.Abstractions.Auth;
-using server.Application.Services;
+﻿using server.Application.Abstractions.Auth;
 using server.Application.Abstractions.Services;
+using server.Application.Services;
+
 using server.Domain.Repositories;
+
 using server.Infrastructure.Auth;
 using server.Infrastructure.ExchangeRate;
 using server.Infrastructure.Persistence;
@@ -27,7 +28,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBalanceService, BalanceService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITransactionService, TransactionService>();
+
+        // Auth / current user
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        // External
         services.AddHttpClient<IExchangeRateService, ExchangeRateService>();
 
         return services;

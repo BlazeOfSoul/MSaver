@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using server.Api.Common;
+using server.Application.Abstractions.Services;
 using server.Application.Features.Auth.Login;
 using server.Application.Features.Auth.Refresh;
 using server.Application.Features.Auth.Register;
-using server.Application.Services.Interfaces;
 
 namespace server.Api.Controllers;
 

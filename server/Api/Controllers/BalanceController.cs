@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 
 using server.Api.Common;
-using server.Api.Extensions;
-using server.Application.Services.Interfaces;
+using server.Application.Abstractions.Auth;
+using server.Application.Abstractions.Services;
 
 namespace server.Api.Controllers;
 
@@ -12,16 +12,20 @@ namespace server.Api.Controllers;
 public sealed class BalanceController : ApiControllerBase
 {
     private readonly IBalanceService _balanceService;
+    private readonly ICurrentUserService _currentUser;
 
-    public BalanceController(IBalanceService balanceService)
+    public BalanceController(
+        IBalanceService balanceService,
+        ICurrentUserService currentUser)
     {
         _balanceService = balanceService;
+        _currentUser = currentUser;
     }
 
     [HttpGet("current")]
     public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
+        var userId = _currentUser.UserId;
 
         var result = await _balanceService.GetCurrentAsync(userId, cancellationToken);
         return FromResult(result);
