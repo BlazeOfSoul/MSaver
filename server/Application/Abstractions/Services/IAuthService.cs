@@ -3,7 +3,7 @@ using server.Application.Features.Auth.Login;
 using server.Application.Features.Auth.Refresh;
 using server.Application.Features.Auth.Register;
 
-namespace server.Application.Services.Interfaces;
+namespace server.Application.Abstractions.Services;
 
 public interface IAuthService
 {

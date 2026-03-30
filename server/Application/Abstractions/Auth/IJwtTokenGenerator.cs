@@ -1,4 +1,4 @@
-namespace server.Application.Abstractions.Services;
+namespace server.Application.Abstractions.Auth;
 
 public interface IJwtTokenGenerator
 {

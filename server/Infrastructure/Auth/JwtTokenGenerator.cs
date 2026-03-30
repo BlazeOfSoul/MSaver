@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-using server.Application.Abstractions.Services;
+using server.Application.Abstractions.Auth;
 
 namespace server.Infrastructure.Auth;
 

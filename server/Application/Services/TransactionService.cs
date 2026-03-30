@@ -1,7 +1,7 @@
 using server.Application.Common.Results;
 using server.Application.Features.Transactions.Create;
 using server.Application.Features.Transactions.GetStatistics;
-using server.Application.Services.Interfaces;
+using server.Application.Abstractions.Services;
 using server.Domain.Common;
 using server.Domain.Entities;
 using server.Domain.Enums;

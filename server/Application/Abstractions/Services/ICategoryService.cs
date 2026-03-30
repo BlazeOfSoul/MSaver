@@ -4,7 +4,7 @@ using server.Application.Features.Categories.DeleteCategory;
 using server.Application.Features.Categories.GetCategories;
 using server.Application.Features.Categories.UpdateCategory;
 
-namespace server.Application.Services.Interfaces;
+namespace server.Application.Abstractions.Services;
 
 public interface ICategoryService
 {

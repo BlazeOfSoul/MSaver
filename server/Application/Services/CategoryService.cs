@@ -3,7 +3,7 @@ using server.Application.Features.Categories.CreateCategory;
 using server.Application.Features.Categories.DeleteCategory;
 using server.Application.Features.Categories.GetCategories;
 using server.Application.Features.Categories.UpdateCategory;
-using server.Application.Services.Interfaces;
+using server.Application.Abstractions.Services;
 using server.Domain.Common;
 using server.Domain.Entities;
 using server.Domain.Errors;

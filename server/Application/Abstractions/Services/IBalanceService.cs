@@ -1,7 +1,7 @@
 using server.Application.Common.Results;
 using server.Application.Features.Balance.GetCurrent;
 
-namespace server.Application.Services.Interfaces;
+namespace server.Application.Abstractions.Services;
 
 public interface IBalanceService
 {

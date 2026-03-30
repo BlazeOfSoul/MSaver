@@ -1,7 +1,7 @@
 ﻿
-using server.Application.Abstractions.Services;
+using server.Application.Abstractions.Auth;
 using server.Application.Services;
-using server.Application.Services.Interfaces;
+using server.Application.Abstractions.Services;
 using server.Domain.Repositories;
 using server.Infrastructure.Auth;
 using server.Infrastructure.ExchangeRate;
