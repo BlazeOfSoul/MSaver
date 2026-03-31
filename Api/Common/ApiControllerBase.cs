@@ -75,7 +75,6 @@ public abstract class ApiControllerBase : ControllerBase
         return DomainError.Validation(
             code: "Validation.Failed",
             message: "Обнаружены ошибки валидации.",
-            field: null,
             details: details);
     }
 
@@ -89,13 +88,21 @@ public abstract class ApiControllerBase : ControllerBase
             _ => StatusCodes.Status500InternalServerError
         };
 
+        var details = error.Details is null
+            ? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            : error.Details
+                .Where(x => !string.IsNullOrWhiteSpace(x.Field))
+                .GroupBy(x => x.Field!)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.Message).Distinct().ToArray(),
+                    StringComparer.OrdinalIgnoreCase);
+
         var payload = new
         {
             code = error.Code,
             message = error.Message,
-            type = error.Type.ToString(),
-            field = error.Field,
-            details = error.Details
+            details
         };
 
         return StatusCode(statusCode, payload);

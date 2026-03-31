@@ -5,37 +5,30 @@ namespace MSaver.Domain.Errors;
 public static class CategoryDomainErrors
 {
     public static readonly DomainError NameRequired =
-        new(
-            DomainErrorType.Validation,
-            "Category.NameRequired",
-            "Название категории обязательно.",
-            "name");
+        DomainError.Validation(
+            code: "Category.NameRequired",
+            message: "Название категории обязательно.",
+            field: "name");
 
     public static readonly DomainError ColorRequired =
-        new(
-            DomainErrorType.Validation,
-            "Category.ColorRequired",
-            "Цвет категории обязателен.",
-            "color");
+        DomainError.Validation(
+            code: "Category.ColorRequired",
+            message: "Цвет категории обязателен.",
+            field: "color");
 
     public static readonly DomainError UserIdRequired =
-        new(
-            DomainErrorType.Validation,
-            "Category.UserIdRequired",
-            "Идентификатор пользователя обязателен.",
-            "userId");
+        DomainError.Validation(
+            code: "Category.UserIdRequired",
+            message: "Идентификатор пользователя обязателен.",
+            field: "userId");
 
     public static readonly DomainError NotFound =
-        new(
-            DomainErrorType.NotFound,
-            "Category.NotFound",
-            "Категория не найдена.",
-            null);
+        DomainError.NotFound(
+            code: "Category.NotFound",
+            message: "Категория не найдена.");
 
     public static readonly DomainError AccessDenied =
-        new(
-            DomainErrorType.Failure,
-            "Category.AccessDenied",
-            "Недостаточно прав для доступа к категории.",
-            null);
+        DomainError.Failure(
+            code: "Category.AccessDenied",
+            message: "Недостаточно прав для доступа к категории.");
 }

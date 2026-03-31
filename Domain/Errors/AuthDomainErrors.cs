@@ -5,37 +5,32 @@ namespace MSaver.Domain.Errors;
 public static class AuthDomainErrors
 {
     public static readonly DomainError InvalidEmail =
-        new(
-            DomainErrorType.Validation,
-            "Auth.InvalidEmail",
-            "Неверный email или пароль.",
-            "email");
+        DomainError.Validation(
+            code: "Auth.InvalidEmail",
+            message: "Неверный email или пароль.",
+            field: "email");
 
     public static readonly DomainError InvalidPassword =
-        new(
-            DomainErrorType.Validation,
-            "Auth.InvalidPassword",
-            "Неверный email или пароль.",
-            "password");
+        DomainError.Validation(
+            code: "Auth.InvalidPassword",
+            message: "Неверный email или пароль.",
+            field: "password");
 
     public static readonly DomainError RepeatedEmail =
-        new(
-            DomainErrorType.Conflict,
-            "Auth.RepeatedEmail",
-            "Пользователь с таким email уже существует.",
-            "email");
+        DomainError.Conflict(
+            code: "Auth.RepeatedEmail",
+            message: "Пользователь с таким email уже существует.",
+            field: "email");
 
     public static readonly DomainError RefreshTokenInvalid =
-        new(
-            DomainErrorType.Validation,
-            "Auth.RefreshTokenInvalid",
-            "Недействительный refresh токен.",
-            "refreshToken");
+        DomainError.Validation(
+            code: "Auth.RefreshTokenInvalid",
+            message: "Недействительный refresh токен.",
+            field: "refreshToken");
 
     public static readonly DomainError RefreshTokenExpired =
-        new(
-            DomainErrorType.Validation,
-            "Auth.RefreshTokenExpired",
-            "Срок действия refresh токена истёк.",
-            "refreshToken");
+        DomainError.Validation(
+            code: "Auth.RefreshTokenExpired",
+            message: "Срок действия refresh токена истёк.",
+            field: "refreshToken");
 }

@@ -5,37 +5,31 @@ namespace MSaver.Domain.Errors;
 public static class UserDomainErrors
 {
     public static readonly DomainError UsernameRequired =
-        new(
-            DomainErrorType.Validation,
-            "User.UsernameRequired",
-            "Имя пользователя обязательно.",
-            "username");
+        DomainError.Validation(
+            code: "User.UsernameRequired",
+            message: "Имя пользователя обязательно.",
+            field: "username");
 
     public static readonly DomainError EmailRequired =
-        new(
-            DomainErrorType.Validation,
-            "User.EmailRequired",
-            "Email обязателен.",
-            "email");
+        DomainError.Validation(
+            code: "User.EmailRequired",
+            message: "Email обязателен.",
+            field: "email");
 
     public static readonly DomainError PasswordHashRequired =
-        new(
-            DomainErrorType.Validation,
-            "User.PasswordHashRequired",
-            "Хеш пароля обязателен.",
-            "password");
+        DomainError.Validation(
+            code: "User.PasswordHashRequired",
+            message: "Хеш пароля обязателен.",
+            field: "password");
 
     public static readonly DomainError IdNotFound =
-        new(
-            DomainErrorType.Failure,
-            "User.IdNotFound",
-            "Не удалось определить идентификатор пользователя.",
-            null);
+        DomainError.Failure(
+            code: "User.IdNotFound",
+            message: "Не удалось определить идентификатор пользователя.");
 
     public static readonly DomainError UserIdRequired =
-        new(
-            DomainErrorType.Validation,
-            "User.UserIdRequired",
-            "Идентификатор пользователя обязателен.",
-            "userId");
+        DomainError.Validation(
+            code: "User.UserIdRequired",
+            message: "Идентификатор пользователя обязателен.",
+            field: "userId");
 }

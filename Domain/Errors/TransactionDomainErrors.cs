@@ -5,30 +5,25 @@ namespace MSaver.Domain.Errors;
 public static class TransactionDomainErrors
 {
     public static readonly DomainError UserIdRequired =
-        new(
-            DomainErrorType.Validation,
-            "Transaction.UserIdRequired",
-            "Идентификатор пользователя обязателен.",
-            "userId");
+        DomainError.Validation(
+            code: "Transaction.UserIdRequired",
+            message: "Идентификатор пользователя обязателен.",
+            field: "userId");
 
     public static readonly DomainError CategoryIdRequired =
-        new(
-            DomainErrorType.Validation,
-            "Transaction.CategoryIdRequired",
-            "Идентификатор категории обязателен.",
-            "categoryId");
+        DomainError.Validation(
+            code: "Transaction.CategoryIdRequired",
+            message: "Идентификатор категории обязателен.",
+            field: "categoryId");
 
     public static readonly DomainError AmountMustBePositive =
-        new(
-            DomainErrorType.Validation,
-            "Transaction.AmountMustBePositive",
-            "Сумма транзакции должна быть больше нуля.",
-            "amount");
+        DomainError.Validation(
+            code: "Transaction.AmountMustBePositive",
+            message: "Сумма транзакции должна быть больше нуля.",
+            field: "amount");
 
     public static readonly DomainError CategoryNotFound =
-        new(
-            DomainErrorType.NotFound,
-            "Transaction.CategoryNotFound",
-            "Категория не найдена.",
-            null);
+        DomainError.NotFound(
+            code: "Transaction.CategoryNotFound",
+            message: "Категория не найдена.");
 }

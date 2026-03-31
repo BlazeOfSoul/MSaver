@@ -8,13 +8,11 @@ public static class ExchangeRateDomainErrors
         new(
             DomainErrorType.Failure,
             "ExchangeRate.NbrbRateNotFound",
-            "Не удалось получить данные курсов НБРБ.",
-            null);
+            "Не удалось получить данные курсов НБРБ.");
 
     public static readonly DomainError CoinGeckoNotFound =
         new(
             DomainErrorType.Failure,
             "ExchangeRate.CoinGeckoNotFound",
-            "Не удалось получить данные с CoinGecko.",
-            null);
+            "Не удалось получить данные с CoinGecko.");
 }

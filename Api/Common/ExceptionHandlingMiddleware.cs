@@ -28,13 +28,11 @@ public sealed class ExceptionHandlingMiddleware
         catch (DomainException ex)
         {
             _logger.LogWarning(ex, "Domain exception occurred");
-
             await WriteDomainErrorAsync(context, ex.Error);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception occurred");
-
             await WriteUnexpectedErrorAsync(context);
         }
     }
@@ -52,12 +50,21 @@ public sealed class ExceptionHandlingMiddleware
             _ => StatusCodes.Status500InternalServerError
         };
 
+        var details = error.Details is null
+            ? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            : error.Details
+                .Where(x => !string.IsNullOrWhiteSpace(x.Field))
+                .GroupBy(x => x.Field!)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.Message).Distinct().ToArray(),
+                    StringComparer.OrdinalIgnoreCase);
+
         var payload = new
         {
             code = error.Code,
             message = error.Message,
-            type = error.Type.ToString(),
-            field = error.Field
+            details
         };
 
         var json = JsonSerializer.Serialize(payload);
@@ -78,8 +85,7 @@ public sealed class ExceptionHandlingMiddleware
         {
             code = "General.UnexpectedError",
             message = "Произошла непредвиденная ошибка. Попробуйте позже.",
-            type = DomainErrorType.Failure.ToString(),
-            field = (string?)null
+            details = new Dictionary<string, string[]>()
         };
 
         var json = JsonSerializer.Serialize(payload);
