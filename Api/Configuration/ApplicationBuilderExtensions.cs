@@ -15,17 +15,17 @@ public static class ApplicationBuilderExtensions
             app.UseSwaggerUI();
         }
 
-        // Return on prod
         // app.UseHttpsRedirection();
 
         app.UseExceptionHandling();
+
+        app.UseRouting();
 
         app.UseCors("AllowFrontend");
 
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.UseRouting();
         app.UseEndpoints(endpoints => endpoints.MapControllers());
 
         return app;
