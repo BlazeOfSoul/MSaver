@@ -30,5 +30,7 @@
   "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
   "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "none",
 
-  "cSpell.words": ["primeng", "tabmenu"]
+  "cSpell.words": ["primeng", "tabmenu"],
+
+  "sync-namespaces-dotnet.solutionOrProjectRelativePath": "./MSaver.csproj"
 }

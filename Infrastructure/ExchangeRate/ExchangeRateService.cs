@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
+using MSaver.Application.Abstractions.Services;
 using MSaver.Application.Common.Results;
 using MSaver.Application.Features.ExchangeRates;
-using MSaver.Application.Abstractions.Services;
 using MSaver.Domain.Errors;
 using MSaver.Infrastructure.ExchangeRate.Models;
 using MSaver.Infrastructure.ExchangeRate.Settings;

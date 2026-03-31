@@ -1,9 +1,9 @@
+using MSaver.Application.Abstractions.Services;
 using MSaver.Application.Common.Results;
 using MSaver.Application.Features.Categories.CreateCategory;
 using MSaver.Application.Features.Categories.DeleteCategory;
 using MSaver.Application.Features.Categories.GetCategories;
 using MSaver.Application.Features.Categories.UpdateCategory;
-using MSaver.Application.Abstractions.Services;
 using MSaver.Domain.Common;
 using MSaver.Domain.Entities;
 using MSaver.Domain.Errors;

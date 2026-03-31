@@ -8,11 +8,12 @@ using Microsoft.IdentityModel.Tokens;
 
 using MSaver.Api.Extensions;
 using MSaver.Application.Features.Auth.Register;
+using MSaver.Infrastructure;
 using MSaver.Infrastructure.DependencyInjection;
 using MSaver.Infrastructure.ExchangeRate.Settings;
 using MSaver.Infrastructure.Persistence;
 
-namespace MSaver.Api;
+namespace MSaver.Api.Configuration;
 
 public static class ServiceCollectionExtensions
 {

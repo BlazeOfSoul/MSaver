@@ -1,8 +1,8 @@
 using System.Text.Json;
 
-using MSaver.Domain.Common;
-
 using Microsoft.AspNetCore.Http;
+
+using MSaver.Domain.Common;
 
 namespace MSaver.Api.Common;
 

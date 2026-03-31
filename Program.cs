@@ -1,4 +1,4 @@
-using MSaver.Api;
+using MSaver.Api.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 

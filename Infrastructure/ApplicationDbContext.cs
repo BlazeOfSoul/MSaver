@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using MSaver.Domain.Entities;
 
-namespace MSaver.Infrastructure.Persistence;
+namespace MSaver.Infrastructure;
 
 public sealed class ApplicationDbContext : DbContext
 {

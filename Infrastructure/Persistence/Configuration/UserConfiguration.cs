@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using MSaver.Domain.Entities;
 
-namespace MSaver.Infrastructure.Persistence.Configurations;
+namespace MSaver.Infrastructure.Persistence.Configuration;
 
 public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {

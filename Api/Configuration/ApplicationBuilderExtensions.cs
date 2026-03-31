@@ -1,6 +1,6 @@
 using MSaver.Api.Extensions;
 
-namespace MSaver.Api;
+namespace MSaver.Api.Configuration;
 
 public static class ApplicationBuilderExtensions
 {

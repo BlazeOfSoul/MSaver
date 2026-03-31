@@ -1,6 +1,6 @@
+using MSaver.Application.Abstractions.Services;
 using MSaver.Application.Common.Results;
 using MSaver.Application.Features.Balance.GetCurrent;
-using MSaver.Application.Abstractions.Services;
 using MSaver.Domain.Errors;
 using MSaver.Domain.Repositories;
 
