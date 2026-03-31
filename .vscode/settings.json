@@ -3,39 +3,17 @@
 
   "files.exclude": {
     "**/bin": true,
-    "**/obj": true,
-    "**/dist": true,
-    "**/node_modules": true
+    "**/obj": true
   },
 
-  // форматирование
   "editor.formatOnType": true,
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
   "editor.codeLens": true,
 
-  // C#
   "[csharp]": {
     "editor.defaultFormatter": "ms-dotnettools.csharp",
     "editor.formatOnSave": true
-  },
-
-  // HTML / TS / JS / SCSS / JSON → Prettier
-  "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[scss]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "cSpell.fixSpellingWithRenameProvider": false
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
   "editor.codeActionsOnSave": {
@@ -51,8 +29,6 @@
 
   "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
   "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "none",
-
-  "js/ts.updateImportsOnFileMove.enabled": "always",
 
   "cSpell.words": ["primeng", "tabmenu"]
 }
