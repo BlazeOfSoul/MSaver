@@ -12,6 +12,16 @@ public sealed class TagRepository(ApplicationDbContext dbContext) : ITagReposito
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public async Task<Tag?> GetByIdWithCategoriesAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Tags
+            .Include(x => x.TagCategories)
+            .ThenInclude(x => x.Category)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<Tag>> GetAsync(
         Guid userId,
         CancellationToken cancellationToken = default)

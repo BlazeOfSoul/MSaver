@@ -16,11 +16,18 @@ public interface ICategoryRepository
         Guid id,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<Category>> GetByIdsAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsByNameAsync(
         Guid userId,
         string name,
         CancellationToken cancellationToken = default,
         Guid? excludeId = null);
 
-    Task UpdateAsync(Category category, CancellationToken cancellationToken = default);
+    Task UpdateAsync(
+        Category category,
+        CancellationToken cancellationToken = default);
 }

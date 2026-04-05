@@ -1,5 +1,3 @@
-namespace MSaver.Infrastructure.Persistence;
-
 public static class TableNames
 {
     public const string Users = "users";
@@ -11,4 +9,5 @@ public static class TableNames
     public const string Tags = "tags";
     public const string Transactions = "transactions";
     public const string TransactionTags = "transaction_tags";
+    public const string TagCategories = "tag_categories";
 }

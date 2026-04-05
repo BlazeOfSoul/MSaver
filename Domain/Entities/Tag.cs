@@ -3,6 +3,7 @@ namespace MSaver.Domain.Entities;
 public sealed class Tag : Entity
 {
     private readonly List<TransactionTag> _transactionTags = [];
+    private readonly List<TagCategory> _tagCategories = [];
 
     private Tag()
     {
@@ -19,6 +20,7 @@ public sealed class Tag : Entity
     public bool IsDeleted { get; private set; }
 
     public IReadOnlyCollection<TransactionTag> TransactionTags => _transactionTags;
+    public IReadOnlyCollection<TagCategory> TagCategories => _tagCategories;
 
     public static Tag Create(Guid userId, string name, string? color = null)
     {
@@ -60,6 +62,19 @@ public sealed class Tag : Entity
             throw new DomainException(TagDomainErrors.TagAlreadyActive);
 
         IsDeleted = false;
+    }
+
+    public void ReplaceCategories(IEnumerable<Guid> categoryIds)
+    {
+        if (IsDeleted)
+            throw new DomainException(TagDomainErrors.TagDeleted);
+
+        _tagCategories.Clear();
+
+        foreach (var categoryId in categoryIds.Distinct())
+        {
+            _tagCategories.Add(TagCategory.Create(Id, categoryId));
+        }
     }
 
     private void SetName(string name)

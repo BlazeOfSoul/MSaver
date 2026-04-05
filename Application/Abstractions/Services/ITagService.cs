@@ -1,3 +1,4 @@
+using MSaver.Application.Features.Tags.AssignCategories;
 using MSaver.Application.Features.Tags.Create;
 using MSaver.Application.Features.Tags.Get;
 using MSaver.Application.Features.Tags.Update;
@@ -19,5 +20,9 @@ public interface ITagService
         CancellationToken cancellationToken = default);
 
     Task<Result<GetTagsResponse>> GetAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<Result<Guid>> AssignCategoriesAsync(
+        AssignTagCategoriesRequest request,
         CancellationToken cancellationToken = default);
 }

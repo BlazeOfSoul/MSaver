@@ -6,6 +6,7 @@ public sealed class Category : Entity
 {
     private readonly List<Category> _children = [];
     private readonly List<Transaction> _transactions = [];
+    private readonly List<TagCategory> _tagCategories = [];
 
     private Category()
     {
@@ -33,6 +34,8 @@ public sealed class Category : Entity
     public IReadOnlyCollection<Category> Children => _children;
 
     public IReadOnlyCollection<Transaction> Transactions => _transactions;
+
+    public IReadOnlyCollection<TagCategory> TagCategories => _tagCategories;
 
     public static Category Create(
         Guid userId,

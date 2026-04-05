@@ -1,3 +1,4 @@
+using MSaver.Application.Features.Tags.AssignCategories;
 using MSaver.Application.Features.Tags.Create;
 using MSaver.Application.Features.Tags.Get;
 using MSaver.Application.Features.Tags.Update;
@@ -7,11 +8,13 @@ namespace MSaver.Application.Services;
 public sealed class TagService(
     IUserRepository userRepository,
     ITagRepository tagRepository,
+    ICategoryRepository categoryRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService) : ITagService
 {
     private readonly IUserRepository _userRepository = userRepository;
     private readonly ITagRepository _tagRepository = tagRepository;
+    private readonly ICategoryRepository _categoryRepository = categoryRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ICurrentUserService _currentUserService = currentUserService;
 
@@ -139,5 +142,50 @@ public sealed class TagService(
         {
             Items = items
         });
+    }
+
+    public async Task<Result<Guid>> AssignCategoriesAsync(
+        AssignTagCategoriesRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        var tag = await _tagRepository.GetByIdWithCategoriesAsync(request.TagId, cancellationToken);
+
+        if (tag is null)
+            return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
+
+        if (tag.UserId != userId)
+            return Result<Guid>.Failure(TagDomainErrors.AccessDenied);
+
+        if (tag.IsDeleted)
+            return Result<Guid>.Failure(TagDomainErrors.TagDeleted);
+
+        var categoryIds = request.CategoryIds
+            .Where(x => x != Guid.Empty)
+            .Distinct()
+            .ToArray();
+
+        var categories = await _categoryRepository.GetByIdsAsync(
+            userId,
+            categoryIds,
+            cancellationToken);
+
+        if (categories.Count != categoryIds.Length)
+            return Result<Guid>.Failure(CategoryDomainErrors.CategoryNotFound);
+
+        try
+        {
+            tag.ReplaceCategories(categoryIds);
+
+            await _tagRepository.UpdateAsync(tag, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return Result<Guid>.Success(tag.Id);
+        }
+        catch (DomainException ex)
+        {
+            return Result<Guid>.Failure(ex.Error);
+        }
     }
 }

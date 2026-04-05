@@ -2,7 +2,9 @@ namespace MSaver.Domain.Repositories;
 
 public interface ITagRepository
 {
-    Task<Tag?> GetByIdAsync(
+    Task<Tag?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<Tag?> GetByIdWithCategoriesAsync(
         Guid id,
         CancellationToken cancellationToken = default);
 
@@ -16,11 +18,7 @@ public interface ITagRepository
         CancellationToken cancellationToken = default,
         Guid? excludeId = null);
 
-    Task AddAsync(
-        Tag tag,
-        CancellationToken cancellationToken = default);
+    Task AddAsync(Tag tag, CancellationToken cancellationToken = default);
 
-    Task UpdateAsync(
-        Tag tag,
-        CancellationToken cancellationToken = default);
+    Task UpdateAsync(Tag tag, CancellationToken cancellationToken = default);
 }

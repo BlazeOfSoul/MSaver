@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
+using MSaver.Application.Features.Tags.AssignCategories;
 using MSaver.Application.Features.Tags.Create;
 using MSaver.Application.Features.Tags.Update;
 
@@ -12,11 +13,13 @@ namespace MSaver.Api.Controllers;
 public sealed class TagsController(
     ITagService tagService,
     IValidator<CreateTagRequest> createValidator,
-    IValidator<UpdateTagRequest> updateValidator) : ApiControllerBase
+    IValidator<UpdateTagRequest> updateValidator,
+    IValidator<AssignTagCategoriesRequest> assignTagCategoriesValidator) : ApiControllerBase
 {
     private readonly ITagService _tagService = tagService;
     private readonly IValidator<CreateTagRequest> _createValidator = createValidator;
     private readonly IValidator<UpdateTagRequest> _updateValidator = updateValidator;
+    private readonly IValidator<AssignTagCategoriesRequest> _assignTagCategoriesValidator = assignTagCategoriesValidator;
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
@@ -64,5 +67,20 @@ public sealed class TagsController(
     {
         var result = await _tagService.DeleteAsync(id, cancellationToken);
         return FromResult(result);
+    }
+
+    [HttpPut("{tagId:guid}/categories")]
+    public Task<IActionResult> AssignCategories(
+    Guid tagId,
+    [FromBody] AssignTagCategoriesRequest request,
+    CancellationToken cancellationToken)
+    {
+        request.TagId = tagId;
+
+        return ValidateAndExecuteAsync<AssignTagCategoriesRequest, Guid>(
+            request,
+            _assignTagCategoriesValidator,
+            ct => _tagService.AssignCategoriesAsync(request, ct),
+            cancellationToken);
     }
 }

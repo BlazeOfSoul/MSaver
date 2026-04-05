@@ -36,6 +36,19 @@ public sealed class CategoryRepository(ApplicationDbContext dbContext) : ICatego
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Category>> GetByIdsAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+            return [];
+
+        return await _dbContext.Categories
+            .Where(x => x.UserId == userId && ids.Contains(x.Id) && !x.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> ExistsByNameAsync(
         Guid userId,
         string name,

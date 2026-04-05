@@ -10,6 +10,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<TransactionTag> TransactionTags => Set<TransactionTag>();
+    public DbSet<TagCategory> TagCategories => Set<TagCategory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
