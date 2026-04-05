@@ -1,5 +1,3 @@
-using MSaver.Domain.Common;
-
 namespace MSaver.Domain.Errors;
 
 public static class TransactionDomainErrors
@@ -10,20 +8,86 @@ public static class TransactionDomainErrors
             message: "Идентификатор пользователя обязателен.",
             field: "userId");
 
+    public static readonly DomainError AccountIdRequired =
+        DomainError.Validation(
+            code: "Transaction.AccountIdRequired",
+            message: "Идентификатор счёта обязателен.",
+            field: "accountId");
+
     public static readonly DomainError CategoryIdRequired =
         DomainError.Validation(
             code: "Transaction.CategoryIdRequired",
             message: "Идентификатор категории обязателен.",
             field: "categoryId");
 
-    public static readonly DomainError AmountMustBePositive =
+    public static readonly DomainError CurrencyIdRequired =
         DomainError.Validation(
-            code: "Transaction.AmountMustBePositive",
-            message: "Сумма транзакции должна быть больше нуля.",
+            code: "Transaction.CurrencyIdRequired",
+            message: "Идентификатор валюты обязателен.",
+            field: "currencyId");
+
+    public static readonly DomainError BaseCurrencyIdRequired =
+        DomainError.Validation(
+            code: "Transaction.BaseCurrencyIdRequired",
+            message: "Идентификатор базовой валюты обязателен.",
+            field: "baseCurrencyId");
+
+    public static readonly DomainError AmountMustNotBeZero =
+        DomainError.Validation(
+            code: "Transaction.AmountMustNotBeZero",
+            message: "Сумма транзакции не может быть равна нулю.",
             field: "amount");
+
+    public static readonly DomainError AmountSignMismatchWithCategoryType =
+        DomainError.Validation(
+            code: "Transaction.AmountSignMismatchWithCategoryType",
+            message: "Знак суммы не соответствует типу категории.",
+            field: "amount");
+
+    public static readonly DomainError TransferIdRequired =
+        DomainError.Validation(
+            code: "Transaction.TransferIdRequired",
+            message: "Идентификатор перевода обязателен.",
+            field: "transferId");
+
+    public static readonly DomainError TransferRateMustBePositive =
+        DomainError.Validation(
+            code: "Transaction.TransferRateMustBePositive",
+            message: "Курс перевода должен быть больше нуля.",
+            field: "transferRate");
 
     public static readonly DomainError CategoryNotFound =
         DomainError.NotFound(
             code: "Transaction.CategoryNotFound",
             message: "Категория не найдена.");
+
+    public static readonly DomainError AccountNotFound =
+        DomainError.NotFound(
+            code: "Transaction.AccountNotFound",
+            message: "Счёт не найден.");
+
+    public static readonly DomainError CurrencyNotFound =
+        DomainError.NotFound(
+            code: "Transaction.CurrencyNotFound",
+            message: "Валюта не найдена.");
+
+    public static readonly DomainError BaseCurrencyNotFound =
+        DomainError.NotFound(
+            code: "Transaction.BaseCurrencyNotFound",
+            message: "Базовая валюта не найдена.");
+
+    public static readonly DomainError TransactionNotFound =
+        DomainError.NotFound(
+            code: "Transaction.TransactionNotFound",
+            message: "Транзакция не найдена.");
+
+    public static readonly DomainError TransferTransactionCannotBeEditedAsRegular =
+        DomainError.Validation(
+            code: "Transaction.TransferTransactionCannotBeEditedAsRegular",
+            message: "Транзакцию перевода нельзя редактировать как обычную операцию.");
+
+    public static readonly DomainError TransferTransactionCannotBeDeletedAsRegular =
+        DomainError.Validation(
+            code: "Transaction.TransferTransactionCannotBeDeletedAsRegular",
+            message: "Транзакцию перевода нельзя удалить как обычную операцию.");
 }

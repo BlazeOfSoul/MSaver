@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
-using MSaver.Application.Abstractions.Services;
 using MSaver.Application.Features.Auth.Login;
 using MSaver.Application.Features.Auth.Refresh;
 using MSaver.Application.Features.Auth.Register;
@@ -12,24 +11,16 @@ using MSaver.Application.Features.Auth.Register;
 namespace MSaver.Api.Controllers;
 
 [Route("api/[controller]")]
-public sealed class AuthController : ApiControllerBase
+public sealed class AuthController(
+    IAuthService authService,
+    IValidator<RegisterRequest> registerValidator,
+    IValidator<LoginRequest> loginValidator,
+    IValidator<RefreshTokenRequest> refreshValidator) : ApiControllerBase
 {
-    private readonly IAuthService _authService;
-    private readonly IValidator<RegisterRequest> _registerValidator;
-    private readonly IValidator<LoginRequest> _loginValidator;
-    private readonly IValidator<RefreshTokenRequest> _refreshValidator;
-
-    public AuthController(
-        IAuthService authService,
-        IValidator<RegisterRequest> registerValidator,
-        IValidator<LoginRequest> loginValidator,
-        IValidator<RefreshTokenRequest> refreshValidator)
-    {
-        _authService = authService;
-        _registerValidator = registerValidator;
-        _loginValidator = loginValidator;
-        _refreshValidator = refreshValidator;
-    }
+    private readonly IAuthService _authService = authService;
+    private readonly IValidator<RegisterRequest> _registerValidator = registerValidator;
+    private readonly IValidator<LoginRequest> _loginValidator = loginValidator;
+    private readonly IValidator<RefreshTokenRequest> _refreshValidator = refreshValidator;
 
     [HttpPost("register")]
     [AllowAnonymous]

@@ -9,18 +9,27 @@ public sealed class CreateTransactionRequestValidator : AbstractValidator<Create
     public CreateTransactionRequestValidator()
     {
         RuleFor(x => x.UserId)
-            .NotEmpty().WithMessage(ValidationMessages.Required);
+            .NotEmpty()
+            .WithMessage(ValidationMessages.InvalidId);
+
+        RuleFor(x => x.AccountId)
+            .NotEmpty()
+            .WithMessage(ValidationMessages.InvalidId);
 
         RuleFor(x => x.CategoryId)
-            .NotEmpty().WithMessage(ValidationMessages.Required);
+            .NotEmpty()
+            .WithMessage(ValidationMessages.InvalidId);
 
         RuleFor(x => x.Amount)
-            .GreaterThan(0).WithMessage(ValidationMessages.MustBePositive);
+            .NotEqual(0)
+            .WithMessage(ValidationMessages.MustNotBeZero);
 
         RuleFor(x => x.Date)
-            .NotEmpty().WithMessage(ValidationMessages.Required);
+            .NotEmpty()
+            .WithMessage(ValidationMessages.InvalidDate);
 
         RuleFor(x => x.Description)
-            .MaximumLength(200).WithMessage(ValidationMessages.MaxLength);
+            .MaximumLength(1000)
+            .WithMessage(ValidationMessages.MaxLength);
     }
 }

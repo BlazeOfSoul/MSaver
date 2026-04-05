@@ -2,6 +2,6 @@
 
 public enum CategoryType
 {
-    Income = 0,
-    Expense = 1
+    Debit = 1,
+    Credit = 2
 }

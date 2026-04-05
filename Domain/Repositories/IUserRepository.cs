@@ -1,5 +1,3 @@
-using MSaver.Domain.Entities;
-
 namespace MSaver.Domain.Repositories;
 
 public interface IUserRepository

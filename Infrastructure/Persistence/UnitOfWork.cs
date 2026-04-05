@@ -1,18 +1,11 @@
 using Microsoft.EntityFrameworkCore.Storage;
 
-using MSaver.Domain.Repositories;
-
 namespace MSaver.Infrastructure.Persistence;
 
-public sealed class UnitOfWork : IUnitOfWork, IAsyncDisposable
+public sealed class UnitOfWork(ApplicationDbContext dbContext) : IUnitOfWork, IAsyncDisposable
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ApplicationDbContext _dbContext = dbContext;
     private IDbContextTransaction? _currentTransaction;
-
-    public UnitOfWork(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
 
     public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
     {

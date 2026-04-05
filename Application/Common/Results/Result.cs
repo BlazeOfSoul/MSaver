@@ -1,5 +1,3 @@
-using MSaver.Domain.Common;
-
 namespace MSaver.Application.Common.Results;
 
 public class Result

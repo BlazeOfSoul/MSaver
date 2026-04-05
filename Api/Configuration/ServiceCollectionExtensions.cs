@@ -4,18 +4,12 @@ using System.Text.Json;
 using FluentValidation;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 
-using MSaver.Api.Extensions;
 using MSaver.Application.Features.Auth.Register;
 using MSaver.Infrastructure;
 using MSaver.Infrastructure.DependencyInjection;
-using MSaver.Infrastructure.ExchangeRate.Settings;
-using MSaver.Infrastructure.Persistence;
-
-using Swashbuckle.AspNetCore.Filters;
 
 namespace MSaver.Api.Configuration;
 
@@ -34,7 +28,6 @@ public static class ServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddEndpointsApiExplorer();
 
-        services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo
@@ -43,28 +36,43 @@ public static class ServiceCollectionExtensions
                 Version = "v1"
             });
 
-            c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "Standard Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+                Description = "Enter only the JWT token.",
                 Name = "Authorization",
                 In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
             });
 
-            c.OperationFilter<SecurityRequirementsOperationFilter>();
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
         });
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-        services.Configure<ExchangeRateSettings>(
-            configuration.GetSection("ExchangeRates"));
+        var frontendOrigin = configuration["Cors:FrontendOrigin"]
+            ?? throw new InvalidOperationException("Cors:FrontendOrigin configuration is missing.");
 
         services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend",
                 policy => policy
-                    .WithOrigins("http://localhost:4200")
+                    .WithOrigins(frontendOrigin)
                     .AllowAnyHeader()
                     .AllowAnyMethod());
         });

@@ -1,26 +1,25 @@
-using MSaver.Application.Common.Results;
-using MSaver.Application.Features.Categories.CreateCategory;
-using MSaver.Application.Features.Categories.DeleteCategory;
-using MSaver.Application.Features.Categories.GetCategories;
-using MSaver.Application.Features.Categories.UpdateCategory;
+using MSaver.Application.Features.Categories.Create;
+using MSaver.Application.Features.Categories.Delete;
+using MSaver.Application.Features.Categories.Get;
+using MSaver.Application.Features.Categories.Update;
 
 namespace MSaver.Application.Abstractions.Services;
 
 public interface ICategoryService
 {
-    Task<Result<IReadOnlyList<CategoryResponse>>> GetCategoriesAsync(
-        GetCategoriesRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<Result<CreateCategoryResponse>> CreateCategoryAsync(
+    Task<Result<CreateCategoryResponse>> CreateAsync(
         CreateCategoryRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<Result> UpdateCategoryAsync(
+    Task<Result<Guid>> UpdateAsync(
         UpdateCategoryRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<Result> DeleteCategoryAsync(
+    Task<Result<Guid>> DeleteAsync(
         DeleteCategoryRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<GetCategoriesResponse>> GetAsync(
+        GetCategoriesRequest request,
         CancellationToken cancellationToken = default);
 }

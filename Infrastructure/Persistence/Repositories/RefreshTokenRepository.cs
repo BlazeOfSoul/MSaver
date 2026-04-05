@@ -1,25 +1,15 @@
-using Microsoft.EntityFrameworkCore;
-
-using MSaver.Domain.Entities;
-using MSaver.Domain.Repositories;
-
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class RefreshTokenRepository : IRefreshTokenRepository
+public sealed class RefreshTokenRepository(ApplicationDbContext dbContext) : IRefreshTokenRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public RefreshTokenRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+    private readonly ApplicationDbContext _dbContext = dbContext;
 
     public async Task AddAsync(RefreshToken token, CancellationToken cancellationToken = default)
     {
         await _dbContext.Set<RefreshToken>().AddAsync(token, cancellationToken);
     }
 
-    public async Task<IEnumerable<RefreshToken>> GetByUserIdAsync(
+    public async Task<IEnumerable<RefreshToken>> GetAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {

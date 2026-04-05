@@ -3,9 +3,6 @@ using FluentValidation.Results;
 
 using Microsoft.AspNetCore.Mvc;
 
-using MSaver.Application.Common.Results;
-using MSaver.Domain.Common;
-
 namespace MSaver.Api.Common;
 
 [ApiController]

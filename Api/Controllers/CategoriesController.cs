@@ -4,48 +4,37 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
-using MSaver.Application.Abstractions.Auth;
-using MSaver.Application.Abstractions.Services;
-using MSaver.Application.Features.Categories.CreateCategory;
-using MSaver.Application.Features.Categories.DeleteCategory;
-using MSaver.Application.Features.Categories.GetCategories;
-using MSaver.Application.Features.Categories.UpdateCategory;
+using MSaver.Application.Features.Categories.Create;
+using MSaver.Application.Features.Categories.Delete;
+using MSaver.Application.Features.Categories.Get;
+using MSaver.Application.Features.Categories.Update;
 
 namespace MSaver.Api.Controllers;
 
 [Authorize]
 [Route("api/[controller]")]
-public sealed class CategoriesController : ApiControllerBase
+public sealed class CategoriesController(
+    ICategoryService categoryService,
+    ICurrentUserService currentUser,
+    IValidator<CreateCategoryRequest> createValidator,
+    IValidator<UpdateCategoryRequest> updateValidator) : ApiControllerBase
 {
-    private readonly ICategoryService _categoryService;
-    private readonly ICurrentUserService _currentUser;
-    private readonly IValidator<CreateCategoryRequest> _createValidator;
-    private readonly IValidator<UpdateCategoryRequest> _updateValidator;
-
-    public CategoriesController(
-        ICategoryService categoryService,
-        ICurrentUserService currentUser,
-        IValidator<CreateCategoryRequest> createValidator,
-        IValidator<UpdateCategoryRequest> updateValidator)
-    {
-        _categoryService = categoryService;
-        _currentUser = currentUser;
-        _createValidator = createValidator;
-        _updateValidator = updateValidator;
-    }
+    private readonly ICategoryService _categoryService = categoryService;
+    private readonly ICurrentUserService _currentUser = currentUser;
+    private readonly IValidator<CreateCategoryRequest> _createValidator = createValidator;
+    private readonly IValidator<UpdateCategoryRequest> _updateValidator = updateValidator;
 
     [HttpGet]
-    public async Task<IActionResult> GetUserCategories(CancellationToken cancellationToken)
+    public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var userId = _currentUser.UserId;
-        var request = new GetCategoriesRequest(userId);
+        var request = new GetCategoriesRequest(_currentUser.UserId);
 
-        var result = await _categoryService.GetCategoriesAsync(request, cancellationToken);
+        var result = await _categoryService.GetAsync(request, cancellationToken);
         return FromResult(result);
     }
 
     [HttpPost]
-    public Task<IActionResult> CreateCategory(
+    public Task<IActionResult> Create(
         [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
@@ -54,41 +43,38 @@ public sealed class CategoriesController : ApiControllerBase
         return ValidateAndExecuteAsync<CreateCategoryRequest, CreateCategoryResponse>(
             request,
             _createValidator,
-            ct => _categoryService.CreateCategoryAsync(request, ct),
+            ct => _categoryService.CreateAsync(request, ct),
             cancellationToken);
     }
 
     [HttpPut("{id:guid}")]
-    public Task<IActionResult> UpdateCategory(
+    public Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        var userId = _currentUser.UserId;
-
         var command = new UpdateCategoryRequest(
             id,
-            userId,
+            _currentUser.UserId,
             request.Name,
             request.Color,
             request.Type);
 
-        return ValidateAndExecuteAsync(
+        return ValidateAndExecuteAsync<UpdateCategoryRequest, Guid>(
             command,
             _updateValidator,
-            ct => _categoryService.UpdateCategoryAsync(command, ct),
+            ct => _categoryService.UpdateAsync(command, ct),
             cancellationToken);
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteCategory(
+    public async Task<IActionResult> Delete(
         Guid id,
         CancellationToken cancellationToken)
     {
-        var userId = _currentUser.UserId;
-        var command = new DeleteCategoryRequest(id, userId);
+        var command = new DeleteCategoryRequest(id, _currentUser.UserId);
 
-        var result = await _categoryService.DeleteCategoryAsync(command, cancellationToken);
+        var result = await _categoryService.DeleteAsync(command, cancellationToken);
         return FromResult(result);
     }
 }

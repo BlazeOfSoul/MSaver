@@ -1,0 +1,25 @@
+using MSaver.Application.Features.Tags.Create;
+using MSaver.Application.Features.Tags.Delete;
+using MSaver.Application.Features.Tags.Get;
+using MSaver.Application.Features.Tags.Update;
+
+namespace MSaver.Application.Abstractions.Services;
+
+public interface ITagService
+{
+    Task<Result<CreateTagResponse>> CreateAsync(
+        CreateTagRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<Guid>> UpdateAsync(
+        UpdateTagRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<Guid>> DeleteAsync(
+        DeleteTagRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<GetTagsResponse>> GetAsync(
+        GetTagsRequest request,
+        CancellationToken cancellationToken = default);
+}

@@ -1,5 +1,3 @@
-using MSaver.Domain.Common;
-
 namespace MSaver.Domain.Errors;
 
 public static class AuthDomainErrors

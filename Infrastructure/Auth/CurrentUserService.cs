@@ -1,21 +1,10 @@
 using System.Security.Claims;
 
-using Microsoft.AspNetCore.Http;
-
-using MSaver.Application.Abstractions.Auth;
-using MSaver.Domain.Common;
-using MSaver.Domain.Errors;
-
 namespace MSaver.Infrastructure.Auth;
 
-public sealed class CurrentUserService : ICurrentUserService
+public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public CurrentUserService(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     public Guid UserId
     {

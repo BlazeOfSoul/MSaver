@@ -1,48 +1,33 @@
 using Microsoft.AspNetCore.Identity;
 
-using MSaver.Application.Abstractions.Auth;
-using MSaver.Application.Abstractions.Services;
-using MSaver.Application.Common.Results;
 using MSaver.Application.Features.Auth.Login;
 using MSaver.Application.Features.Auth.Refresh;
 using MSaver.Application.Features.Auth.Register;
-using MSaver.Domain.Common;
 using MSaver.Domain.Constants;
-using MSaver.Domain.Entities;
-using MSaver.Domain.Errors;
-using MSaver.Domain.Repositories;
 
 namespace MSaver.Application.Services;
 
-public sealed class AuthService : IAuthService
+public sealed class AuthService(
+    IUserRepository userRepository,
+    ICategoryRepository categoryRepository,
+    IAccountRepository accountRepository,
+    IRefreshTokenRepository refreshTokenRepository,
+    IJwtTokenGenerator jwtTokenGenerator,
+    IUnitOfWork unitOfWork,
+    IPasswordHasher<User> passwordHasher,
+    ICurrencyRepository currencyRepository) : IAuthService
 {
     private const int MaxActiveRefreshTokensPerUser = 3;
 
-    private readonly IUserRepository _userRepository;
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly IBalanceRepository _balanceRepository;
-    private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly IJwtTokenGenerator _jwtTokenGenerator;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IPasswordHasher<User> _passwordHasher;
+    private readonly IUserRepository _userRepository = userRepository;
+    private readonly ICategoryRepository _categoryRepository = categoryRepository;
+    private readonly IAccountRepository _accountRepository = accountRepository;
+    private readonly IRefreshTokenRepository _refreshTokenRepository = refreshTokenRepository;
+    private readonly IJwtTokenGenerator _jwtTokenGenerator = jwtTokenGenerator;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
 
-    public AuthService(
-        IUserRepository userRepository,
-        ICategoryRepository categoryRepository,
-        IBalanceRepository balanceRepository,
-        IRefreshTokenRepository refreshTokenRepository,
-        IJwtTokenGenerator jwtTokenGenerator,
-        IUnitOfWork unitOfWork,
-        IPasswordHasher<User> passwordHasher)
-    {
-        _userRepository = userRepository;
-        _categoryRepository = categoryRepository;
-        _balanceRepository = balanceRepository;
-        _refreshTokenRepository = refreshTokenRepository;
-        _jwtTokenGenerator = jwtTokenGenerator;
-        _unitOfWork = unitOfWork;
-        _passwordHasher = passwordHasher;
-    }
+    private readonly ICurrencyRepository _currencyRepository = currencyRepository;
 
     public async Task<Result<LoginResponse>> LoginAsync(
         LoginRequest request,
@@ -62,12 +47,12 @@ public sealed class AuthService : IAuthService
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(
             user.Id,
-            user.Username,
+            user.Name,
             user.Email);
 
         var (refreshTokenValue, refreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
             user.Id,
-            user.Username,
+            user.Name,
             user.Email);
 
         await AddRefreshTokenAsync(user.Id, refreshTokenValue, refreshExpiresAt, cancellationToken);
@@ -75,7 +60,7 @@ public sealed class AuthService : IAuthService
 
         var response = new LoginResponse(
             user.Id,
-            user.Username,
+            user.Name,
             user.Email,
             accessToken,
             refreshTokenValue);
@@ -97,16 +82,16 @@ public sealed class AuthService : IAuthService
             await _userRepository.AddAsync(user, cancellationToken);
 
             await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
-            await CreateInitialBalanceAsync(user.Id, cancellationToken);
+            await CreateDefaultAccountsAsync(user.Id, cancellationToken);
 
             var accessToken = _jwtTokenGenerator.GenerateAccessToken(
                 user.Id,
-                user.Username,
+                user.Name,
                 user.Email);
 
             var (refreshTokenValue, refreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
                 user.Id,
-                user.Username,
+                user.Name,
                 user.Email);
 
             await AddRefreshTokenAsync(user.Id, refreshTokenValue, refreshExpiresAt, cancellationToken);
@@ -114,7 +99,7 @@ public sealed class AuthService : IAuthService
 
             var response = new RegisterResponse(
                 user.Id,
-                user.Username,
+                user.Name,
                 user.Email,
                 accessToken,
                 refreshTokenValue);
@@ -148,12 +133,12 @@ public sealed class AuthService : IAuthService
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(
             user.Id,
-            user.Username,
+            user.Name,
             user.Email);
 
         var (newRefreshTokenValue, newRefreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
             user.Id,
-            user.Username,
+            user.Name,
             user.Email);
 
         await AddRefreshTokenAsync(user.Id, newRefreshTokenValue, newRefreshExpiresAt, cancellationToken);
@@ -161,7 +146,7 @@ public sealed class AuthService : IAuthService
 
         var response = new RefreshTokenResponse(
             user.Id,
-            user.Username,
+            user.Name,
             user.Email,
             accessToken,
             newRefreshTokenValue);
@@ -172,7 +157,7 @@ public sealed class AuthService : IAuthService
     private User CreateUser(RegisterRequest request)
     {
         var tempUser = User.Create(
-            username: request.Username,
+            name: request.Username,
             email: request.Email,
             passwordHash: "temp");
 
@@ -195,12 +180,18 @@ public sealed class AuthService : IAuthService
         await _categoryRepository.AddRangeAsync(defaultCategories, cancellationToken);
     }
 
-    private async Task CreateInitialBalanceAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task CreateDefaultAccountsAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var now = DateTime.UtcNow;
+        var defaultCurrency = await _currencyRepository.GetDefaultCurrencyAsync(cancellationToken);
+        var account = Account.Create(
+            userId,
+            defaultCurrency.Id,
+            name: "Основной",
+            initialBalance: 0m,
+            color: "#24c45f",
+            icon: "card");
 
-        var balance = Balance.Create(userId, now.Year, now.Month);
-        await _balanceRepository.AddAsync(balance, cancellationToken);
+        await _accountRepository.AddAsync(account, cancellationToken);
     }
 
     private async Task AddRefreshTokenAsync(
@@ -210,7 +201,7 @@ public sealed class AuthService : IAuthService
         CancellationToken cancellationToken)
     {
         var existingTokens = await _refreshTokenRepository
-            .GetByUserIdAsync(userId, cancellationToken);
+            .GetAsync(userId, cancellationToken);
 
         var activeTokens = existingTokens
             .Where(t => !t.IsExpired)

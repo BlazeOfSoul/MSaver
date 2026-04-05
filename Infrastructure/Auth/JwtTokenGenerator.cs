@@ -2,21 +2,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-
-using MSaver.Application.Abstractions.Auth;
 
 namespace MSaver.Infrastructure.Auth;
 
-public sealed class JwtTokenGenerator : IJwtTokenGenerator
+public sealed class JwtTokenGenerator(IConfiguration configuration) : IJwtTokenGenerator
 {
-    private readonly IConfiguration _configuration;
-
-    public JwtTokenGenerator(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
+    private readonly IConfiguration _configuration = configuration;
 
     public string GenerateAccessToken(Guid userId, string username, string email)
     {

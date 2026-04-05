@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
-using MSaver.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MSaver.Infrastructure.Persistence.Configuration;
 
@@ -9,20 +6,52 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
 {
     public void Configure(EntityTypeBuilder<Category> builder)
     {
-        builder.ToTable("Categories");
+        builder.ToTable("categories");
 
         builder.HasKey(x => x.Id);
 
-        builder
-            .HasOne(x => x.User)
-            .WithMany()
+        builder.Property(x => x.Id)
+            .ValueGeneratedNever();
+
+        builder.Property(x => x.UserId)
+            .IsRequired();
+
+        builder.Property(x => x.ParentId)
+            .IsRequired(false);
+
+        builder.Property(x => x.Name)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Type)
+            .HasConversion<int>()
+            .IsRequired();
+
+        builder.Property(x => x.Color)
+            .IsRequired()
+            .HasMaxLength(20);
+
+        builder.Property(x => x.Icon)
+            .HasMaxLength(50);
+
+        builder.Property(x => x.IsDeleted)
+            .IsRequired();
+
+        builder.HasIndex(x => new { x.UserId, x.Name, x.Type });
+
+        builder.HasOne(x => x.User)
+            .WithMany(x => x.Categories)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Property(x => x.Name).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.Color).HasMaxLength(20);
-        builder.Property(x => x.Type)
-            .HasConversion<string>()
-            .IsRequired();
+        builder.HasOne(x => x.Parent)
+            .WithMany(x => x.Children)
+            .HasForeignKey(x => x.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(x => x.Transactions)
+            .WithOne(x => x.Category)
+            .HasForeignKey(x => x.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

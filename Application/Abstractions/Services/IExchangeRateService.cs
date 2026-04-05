@@ -1,5 +1,4 @@
-﻿using MSaver.Application.Common.Results;
-using MSaver.Application.Features.ExchangeRates;
+﻿using MSaver.Application.Features.ExchangeRates;
 
 namespace MSaver.Application.Abstractions.Services;
 

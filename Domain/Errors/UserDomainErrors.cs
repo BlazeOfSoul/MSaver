@@ -1,14 +1,12 @@
-using MSaver.Domain.Common;
-
 namespace MSaver.Domain.Errors;
 
 public static class UserDomainErrors
 {
-    public static readonly DomainError UsernameRequired =
+    public static readonly DomainError NameRequired =
         DomainError.Validation(
-            code: "User.UsernameRequired",
+            code: "User.NameRequired",
             message: "Имя пользователя обязательно.",
-            field: "username");
+            field: "name");
 
     public static readonly DomainError EmailRequired =
         DomainError.Validation(
@@ -20,7 +18,7 @@ public static class UserDomainErrors
         DomainError.Validation(
             code: "User.PasswordHashRequired",
             message: "Хеш пароля обязателен.",
-            field: "password");
+            field: "passwordHash");
 
     public static readonly DomainError IdNotFound =
         DomainError.Failure(
@@ -32,4 +30,26 @@ public static class UserDomainErrors
             code: "User.UserIdRequired",
             message: "Идентификатор пользователя обязателен.",
             field: "userId");
+
+    public static readonly DomainError UserNotFound =
+        DomainError.NotFound(
+            code: "User.NotFound",
+            message: "Пользователь не найден.");
+
+    public static readonly DomainError EmailAlreadyExists =
+        DomainError.Conflict(
+            code: "User.EmailAlreadyExists",
+            message: "Пользователь с таким email уже существует.",
+            field: "email");
+
+    public static readonly DomainError NameAlreadyExists =
+        DomainError.Conflict(
+            code: "User.NameAlreadyExists",
+            message: "Пользователь с таким именем уже существует.",
+            field: "name");
+
+    public static readonly DomainError InvalidCredentials =
+        DomainError.Failure(
+            code: "User.InvalidCredentials",
+            message: "Неверный email или пароль.");
 }

@@ -1,4 +1,3 @@
-using MSaver.Application.Common.Results;
 using MSaver.Application.Features.Auth.Login;
 using MSaver.Application.Features.Auth.Refresh;
 using MSaver.Application.Features.Auth.Register;

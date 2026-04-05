@@ -1,19 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-
-using MSaver.Domain.Entities;
-using MSaver.Domain.Repositories;
-using MSaver.Infrastructure.Persistence;
-
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class UserRepository : IUserRepository
+public sealed class UserRepository(ApplicationDbContext dbContext) : IUserRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public UserRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+    private readonly ApplicationDbContext _dbContext = dbContext;
 
     public async Task<User?> GetByIdAsync(
         Guid id,
@@ -30,10 +19,10 @@ public sealed class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
     public async Task<User?> GetByUsernameAsync(
-        string username,
+        string name,
         CancellationToken cancellationToken = default) =>
         await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Name == name, cancellationToken);
 
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {

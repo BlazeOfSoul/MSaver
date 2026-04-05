@@ -1,20 +1,15 @@
-using Microsoft.EntityFrameworkCore;
-
-using MSaver.Domain.Entities;
-
 namespace MSaver.Infrastructure;
 
-public sealed class ApplicationDbContext : DbContext
+public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options) { }
-
     public DbSet<User> Users => Set<User>();
-    public DbSet<Balance> Balances => Set<Balance>();
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<Currency> Currencies => Set<Currency>();
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
-
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<TransactionTag> TransactionTags => Set<TransactionTag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
