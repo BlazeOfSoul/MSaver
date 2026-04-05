@@ -12,15 +12,22 @@ public interface ITransactionRepository
 
     Task<Transaction?> GetByIdWithCategoryAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Transaction>> GetAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default);
-
     Task<IReadOnlyCollection<Transaction>> GetByUserIdWithCategoryAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 
-    Task<decimal> SumByAccountIdAsync(
+    Task<Dictionary<Guid, decimal>> SumByAccountIdsAsync(
+        IReadOnlyCollection<Guid> accountIds,
+        CancellationToken cancellationToken = default);
+
+    Task<decimal> GetBalanceBeforeAsync(
         Guid accountId,
+        DateTime toExclusive,
+        CancellationToken cancellationToken = default);
+
+    Task<decimal> GetBalanceInPeriodAsync(
+        Guid accountId,
+        DateTime fromInclusive,
+        DateTime toExclusive,
         CancellationToken cancellationToken = default);
 }

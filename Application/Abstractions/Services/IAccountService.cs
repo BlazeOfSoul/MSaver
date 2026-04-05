@@ -1,7 +1,7 @@
 using MSaver.Application.Features.Accounts.Create;
 using MSaver.Application.Features.Accounts.CreatePrimary;
 using MSaver.Application.Features.Accounts.Get;
-using MSaver.Application.Features.Accounts.GetBalance;
+using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
 
 namespace MSaver.Application.Abstractions.Services;
@@ -27,7 +27,7 @@ public interface IAccountService
     Task<Result<GetAccountsResponse>> GetAccountsAsync(
         CancellationToken cancellationToken = default);
 
-    Task<Result<GetAccountBalanceResponse>> GetBalanceAsync(
-        Guid accountId,
+    Task<Result<GetMonthBalanceResponse>> GetMonthBalanceAsync(
+        GetMonthBalanceRequest request,
         CancellationToken cancellationToken = default);
 }

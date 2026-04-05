@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using MSaver.Api.Common;
 using MSaver.Application.Features.Accounts.Create;
 using MSaver.Application.Features.Accounts.CreatePrimary;
+using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
 
 namespace MSaver.Api.Controllers;
@@ -14,12 +15,14 @@ public sealed class AccountsController(
     IAccountService accountService,
     IValidator<CreateAccountRequest> createValidator,
     IValidator<CreatePrimaryAccountRequest> createPrimaryValidator,
-    IValidator<UpdateAccountRequest> updateValidator) : ApiControllerBase
+    IValidator<UpdateAccountRequest> updateValidator,
+    IValidator<GetMonthBalanceRequest> getMonthBalanceValidator) : ApiControllerBase
 {
     private readonly IAccountService _accountService = accountService;
     private readonly IValidator<CreateAccountRequest> _createValidator = createValidator;
     private readonly IValidator<CreatePrimaryAccountRequest> _createPrimaryValidator = createPrimaryValidator;
     private readonly IValidator<UpdateAccountRequest> _updateValidator = updateValidator;
+    private readonly IValidator<GetMonthBalanceRequest> _getMonthBalanceValidator = getMonthBalanceValidator;
 
     [HttpGet]
     public async Task<IActionResult> GetAccounts(CancellationToken cancellationToken)
@@ -28,11 +31,25 @@ public sealed class AccountsController(
         return FromResult(result);
     }
 
-    [HttpGet("{id:guid}/balance")]
-    public async Task<IActionResult> GetBalance(Guid id, CancellationToken cancellationToken)
+    [HttpGet("{accountId:guid}/month-balance")]
+    public Task<IActionResult> GetMonthBalance(
+            Guid accountId,
+            [FromQuery] int year,
+            [FromQuery] int month,
+            CancellationToken cancellationToken)
     {
-        var result = await _accountService.GetBalanceAsync(id, cancellationToken);
-        return FromResult(result);
+        var request = new GetMonthBalanceRequest
+        {
+            AccountId = accountId,
+            Year = year,
+            Month = month
+        };
+
+        return ValidateAndExecuteAsync<GetMonthBalanceRequest, GetMonthBalanceResponse>(
+            request,
+            _getMonthBalanceValidator,
+            ct => _accountService.GetMonthBalanceAsync(request, ct),
+            cancellationToken);
     }
 
     [HttpPost]

@@ -1,7 +1,7 @@
 using MSaver.Application.Features.Accounts.Create;
 using MSaver.Application.Features.Accounts.CreatePrimary;
 using MSaver.Application.Features.Accounts.Get;
-using MSaver.Application.Features.Accounts.GetBalance;
+using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
 
 namespace MSaver.Application.Services;
@@ -165,32 +165,36 @@ public sealed class AccountService(
         }
     }
 
-    public async Task<Result<GetAccountsResponse>> GetAccountsAsync(
-        CancellationToken cancellationToken = default)
+    public async Task<Result<GetAccountsResponse>> GetAccountsAsync(CancellationToken cancellationToken = default)
     {
         var userId = _currentUserService.UserId;
 
         var accounts = await _accountRepository.GetAsync(userId, cancellationToken);
+        var accountIds = accounts.Select(x => x.Id).ToArray();
 
-        var items = new List<AccountItemResponse>();
+        var totalsByAccountId = await _transactionRepository.SumByAccountIdsAsync(
+            accountIds,
+            cancellationToken);
 
-        foreach (var account in accounts)
-        {
-            var total = await _transactionRepository.SumByAccountIdAsync(account.Id, cancellationToken);
-
-            items.Add(new AccountItemResponse
+        var items = accounts
+            .Select(account =>
             {
-                Id = account.Id,
-                Name = account.Name,
-                CurrencyId = account.CurrencyId,
-                CurrencyCode = account.Currency!.Code,
-                InitialBalance = account.InitialBalance,
-                CurrentBalance = account.InitialBalance + total,
-                Color = account.Color,
-                Icon = account.Icon,
-                IsArchived = account.IsArchived
-            });
-        }
+                var total = totalsByAccountId.GetValueOrDefault(account.Id, 0m);
+
+                return new AccountItemResponse
+                {
+                    Id = account.Id,
+                    Name = account.Name,
+                    CurrencyId = account.CurrencyId,
+                    CurrencyCode = account.Currency!.Code,
+                    InitialBalance = account.InitialBalance,
+                    CurrentBalance = account.InitialBalance + total,
+                    Color = account.Color,
+                    Icon = account.Icon,
+                    IsArchived = account.IsArchived
+                };
+            })
+            .ToArray();
 
         return Result<GetAccountsResponse>.Success(new GetAccountsResponse
         {
@@ -198,25 +202,44 @@ public sealed class AccountService(
         });
     }
 
-    public async Task<Result<GetAccountBalanceResponse>> GetBalanceAsync(
-        Guid accountId,
+    public async Task<Result<GetMonthBalanceResponse>> GetMonthBalanceAsync(
+        GetMonthBalanceRequest request,
         CancellationToken cancellationToken = default)
     {
         var userId = _currentUserService.UserId;
 
-        var account = await _accountRepository.GetByIdAsync(accountId, cancellationToken);
+        var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
         if (account is null || account.UserId != userId)
-            return Result<GetAccountBalanceResponse>.Failure(AccountDomainErrors.AccountNotFound);
+            return Result<GetMonthBalanceResponse>.Failure(AccountDomainErrors.AccountNotFound);
 
-        var total = await _transactionRepository.SumByAccountIdAsync(account.Id, cancellationToken);
+        var monthStart = new DateTime(request.Year, request.Month, 1);
+        var monthEnd = monthStart.AddMonths(1);
 
-        return Result<GetAccountBalanceResponse>.Success(new GetAccountBalanceResponse
+        var beforeTotal = await _transactionRepository.GetBalanceBeforeAsync(
+            account.Id,
+            monthStart,
+            cancellationToken);
+
+        var openingBalance = account.InitialBalance + beforeTotal;
+
+        var monthChange = await _transactionRepository.GetBalanceInPeriodAsync(
+            account.Id,
+            monthStart,
+            monthEnd,
+            cancellationToken);
+
+        var closingBalance = openingBalance + monthChange;
+
+        return Result<GetMonthBalanceResponse>.Success(new GetMonthBalanceResponse
         {
             AccountId = account.Id,
             AccountName = account.Name,
-            InitialBalance = account.InitialBalance,
-            CurrentBalance = account.InitialBalance + total,
-            CurrencyCode = account.Currency!.Code
+            CurrencyCode = account.Currency!.Code,
+            OpeningBalance = openingBalance,
+            MonthChange = monthChange,
+            ClosingBalance = closingBalance,
+            Year = request.Year,
+            Month = request.Month
         });
     }
 }

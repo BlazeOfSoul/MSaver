@@ -71,12 +71,62 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<decimal> SumByAccountIdAsync(
+    public async Task<Dictionary<Guid, decimal>> SumByAccountIdsAsync(
+        IReadOnlyCollection<Guid> accountIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (accountIds.Count == 0)
+            return new Dictionary<Guid, decimal>();
+
+        return await _dbContext.Transactions
+            .Where(t => accountIds.Contains(t.AccountId))
+            .GroupBy(t => t.AccountId)
+            .Select(g => new
+            {
+                AccountId = g.Key,
+                Total = g.Sum(x => x.Amount)
+            })
+            .ToDictionaryAsync(
+                x => x.AccountId,
+                x => x.Total,
+                cancellationToken);
+    }
+
+    public async Task<decimal> GetBalanceAsync(
         Guid accountId,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Transactions
+        var total = await _dbContext.Transactions
             .Where(t => t.AccountId == accountId)
-            .SumAsync(t => (decimal?)t.Amount, cancellationToken) ?? 0m;
+            .SumAsync(t => (decimal?)t.Amount, cancellationToken);
+
+        return total ?? 0m;
+    }
+
+    public async Task<decimal> GetBalanceBeforeAsync(
+        Guid accountId,
+        DateTime toExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        var total = await _dbContext.Transactions
+            .Where(t => t.AccountId == accountId && t.Date < toExclusive)
+            .SumAsync(t => (decimal?)t.Amount, cancellationToken);
+
+        return total ?? 0m;
+    }
+
+    public async Task<decimal> GetBalanceInPeriodAsync(
+        Guid accountId,
+        DateTime fromInclusive,
+        DateTime toExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        var total = await _dbContext.Transactions
+            .Where(t => t.AccountId == accountId
+                        && t.Date >= fromInclusive
+                        && t.Date < toExclusive)
+            .SumAsync(t => (decimal?)t.Amount, cancellationToken);
+
+        return total ?? 0m;
     }
 }
