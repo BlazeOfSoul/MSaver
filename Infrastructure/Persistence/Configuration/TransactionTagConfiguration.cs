@@ -6,7 +6,7 @@ public sealed class TransactionTagConfiguration : IEntityTypeConfiguration<Trans
 {
     public void Configure(EntityTypeBuilder<TransactionTag> builder)
     {
-        builder.ToTable("transaction_tags");
+        builder.ToTable(TableNames.TransactionTags);
 
         builder.HasKey(x => new { x.TransactionId, x.TagId });
 

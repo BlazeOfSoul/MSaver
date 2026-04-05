@@ -1,12 +1,12 @@
-namespace MSaver.Application.Features.Accounts.Update;
+﻿namespace MSaver.Application.Features.Accounts.CreatePrimary;
 
-public sealed class UpdateAccountRequest
+public sealed class CreatePrimaryAccountRequest
 {
-    public Guid Id { get; set; }
-
     public Guid CurrencyId { get; set; }
 
     public string Name { get; set; } = string.Empty;
+
+    public decimal InitialBalance { get; set; }
 
     public string? Color { get; set; }
 

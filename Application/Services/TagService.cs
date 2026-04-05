@@ -1,5 +1,4 @@
 using MSaver.Application.Features.Tags.Create;
-using MSaver.Application.Features.Tags.Delete;
 using MSaver.Application.Features.Tags.Get;
 using MSaver.Application.Features.Tags.Update;
 
@@ -8,22 +7,26 @@ namespace MSaver.Application.Services;
 public sealed class TagService(
     IUserRepository userRepository,
     ITagRepository tagRepository,
-    IUnitOfWork unitOfWork) : ITagService
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService) : ITagService
 {
     private readonly IUserRepository _userRepository = userRepository;
     private readonly ITagRepository _tagRepository = tagRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICurrentUserService _currentUserService = currentUserService;
 
     public async Task<Result<CreateTagResponse>> CreateAsync(
         CreateTagRequest request,
         CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
+        var userId = _currentUserService.UserId;
+
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
         if (user is null)
             return Result<CreateTagResponse>.Failure(UserDomainErrors.UserNotFound);
 
         var exists = await _tagRepository.ExistsByNameAsync(
-            request.UserId,
+            userId,
             request.Name,
             cancellationToken);
 
@@ -33,7 +36,7 @@ public sealed class TagService(
         try
         {
             var tag = Domain.Entities.Tag.Create(
-                request.UserId,
+                userId,
                 request.Name,
                 request.Color);
 
@@ -52,19 +55,21 @@ public sealed class TagService(
         UpdateTagRequest request,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var tag = await _tagRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (tag is null)
             return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
 
-        if (tag.UserId != request.UserId)
+        if (tag.UserId != userId)
             return Result<Guid>.Failure(TagDomainErrors.AccessDenied);
 
         if (tag.IsDeleted)
             return Result<Guid>.Failure(TagDomainErrors.TagDeleted);
 
         var exists = await _tagRepository.ExistsByNameAsync(
-            request.UserId,
+            userId,
             request.Name,
             cancellationToken,
             request.Id);
@@ -88,15 +93,17 @@ public sealed class TagService(
     }
 
     public async Task<Result<Guid>> DeleteAsync(
-        DeleteTagRequest request,
+        Guid id,
         CancellationToken cancellationToken = default)
     {
-        var tag = await _tagRepository.GetByIdAsync(request.Id, cancellationToken);
+        var userId = _currentUserService.UserId;
+
+        var tag = await _tagRepository.GetByIdAsync(id, cancellationToken);
 
         if (tag is null)
             return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
 
-        if (tag.UserId != request.UserId)
+        if (tag.UserId != userId)
             return Result<Guid>.Failure(TagDomainErrors.AccessDenied);
 
         if (tag.IsDeleted)
@@ -111,10 +118,11 @@ public sealed class TagService(
     }
 
     public async Task<Result<GetTagsResponse>> GetAsync(
-        GetTagsRequest request,
         CancellationToken cancellationToken = default)
     {
-        var tags = await _tagRepository.GetAsync(request.UserId, cancellationToken);
+        var userId = _currentUserService.UserId;
+
+        var tags = await _tagRepository.GetAsync(userId, cancellationToken);
 
         var items = tags
             .Where(x => !x.IsDeleted)

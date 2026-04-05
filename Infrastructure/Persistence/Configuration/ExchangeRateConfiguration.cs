@@ -6,7 +6,7 @@ public sealed class ExchangeRateConfiguration : IEntityTypeConfiguration<Exchang
 {
     public void Configure(EntityTypeBuilder<ExchangeRate> builder)
     {
-        builder.ToTable("exchange_rates");
+        builder.ToTable(TableNames.ExchangeRates);
 
         builder.HasKey(x => x.Id);
 

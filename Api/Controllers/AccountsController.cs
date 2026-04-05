@@ -3,9 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
 using MSaver.Application.Features.Accounts.Create;
-using MSaver.Application.Features.Accounts.Delete;
-using MSaver.Application.Features.Accounts.Get;
-using MSaver.Application.Features.Accounts.GetBalance;
+using MSaver.Application.Features.Accounts.CreatePrimary;
 using MSaver.Application.Features.Accounts.Update;
 
 namespace MSaver.Api.Controllers;
@@ -14,30 +12,26 @@ namespace MSaver.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class AccountsController(
     IAccountService accountService,
-    ICurrentUserService currentUser,
     IValidator<CreateAccountRequest> createValidator,
+    IValidator<CreatePrimaryAccountRequest> createPrimaryValidator,
     IValidator<UpdateAccountRequest> updateValidator) : ApiControllerBase
 {
     private readonly IAccountService _accountService = accountService;
-    private readonly ICurrentUserService _currentUser = currentUser;
     private readonly IValidator<CreateAccountRequest> _createValidator = createValidator;
+    private readonly IValidator<CreatePrimaryAccountRequest> _createPrimaryValidator = createPrimaryValidator;
     private readonly IValidator<UpdateAccountRequest> _updateValidator = updateValidator;
 
     [HttpGet]
     public async Task<IActionResult> GetAccounts(CancellationToken cancellationToken)
     {
-        var request = new GetAccountsRequest(_currentUser.UserId);
-        var result = await _accountService.GetAccountsAsync(request, cancellationToken);
+        var result = await _accountService.GetAccountsAsync(cancellationToken);
         return FromResult(result);
     }
 
     [HttpGet("{id:guid}/balance")]
-    public async Task<IActionResult> GetBalance(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetBalance(Guid id, CancellationToken cancellationToken)
     {
-        var request = new GetAccountBalanceRequest(_currentUser.UserId, id);
-        var result = await _accountService.GetBalanceAsync(request, cancellationToken);
+        var result = await _accountService.GetBalanceAsync(id, cancellationToken);
         return FromResult(result);
     }
 
@@ -46,12 +40,22 @@ public sealed class AccountsController(
         [FromBody] CreateAccountRequest request,
         CancellationToken cancellationToken)
     {
-        request.UserId = _currentUser.UserId;
-
         return ValidateAndExecuteAsync<CreateAccountRequest, CreateAccountResponse>(
             request,
             _createValidator,
             ct => _accountService.CreateAsync(request, ct),
+            cancellationToken);
+    }
+
+    [HttpPost("primary")]
+    public Task<IActionResult> CreatePrimary(
+        [FromBody] CreatePrimaryAccountRequest request,
+        CancellationToken cancellationToken)
+    {
+        return ValidateAndExecuteAsync<CreatePrimaryAccountRequest, Guid>(
+            request,
+            _createPrimaryValidator,
+            ct => _accountService.CreatePrimaryAsync(request, ct),
             cancellationToken);
     }
 
@@ -62,7 +66,6 @@ public sealed class AccountsController(
         CancellationToken cancellationToken)
     {
         request.Id = id;
-        request.UserId = _currentUser.UserId;
 
         return ValidateAndExecuteAsync<UpdateAccountRequest, Guid>(
             request,
@@ -72,12 +75,9 @@ public sealed class AccountsController(
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var request = new DeleteAccountRequest(id, _currentUser.UserId);
-        var result = await _accountService.DeleteAsync(request, cancellationToken);
+        var result = await _accountService.DeleteAsync(id, cancellationToken);
         return FromResult(result);
     }
 }

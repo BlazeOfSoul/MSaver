@@ -6,7 +6,7 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
 {
     public void Configure(EntityTypeBuilder<Account> builder)
     {
-        builder.ToTable("accounts");
+        builder.ToTable(TableNames.Accounts);
 
         builder.HasKey(x => x.Id);
 
@@ -33,6 +33,10 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.Icon)
             .HasMaxLength(50);
 
+        builder.Property(x => x.IsPrimary)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(x => x.IsArchived)
             .IsRequired();
 
@@ -40,6 +44,11 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
             .IsRequired();
 
         builder.HasIndex(x => new { x.UserId, x.Name });
+
+        builder.HasIndex(x => x.UserId)
+            .HasDatabaseName("IX_accounts_user_id_primary")
+            .IsUnique()
+            .HasFilter("\"IsPrimary\" = true");
 
         builder.HasOne(x => x.User)
             .WithMany(x => x.Accounts)

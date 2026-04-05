@@ -53,4 +53,14 @@ public static class AccountDomainErrors
             code: "Account.AlreadyActive",
             message: "Счёт уже активен.",
             field: "id");
+
+    public static readonly DomainError PrimaryAccountAlreadyExists =
+        DomainError.Conflict(
+            code: "Account.PrimaryAccountAlreadyExists",
+            message: "Основной счёт уже существует.");
+
+    public static readonly DomainError PrimaryAccountCannotBeArchived =
+        DomainError.Conflict(
+            code: "Account.PrimaryAccountCannotBeArchived",
+            message: "Основной счёт не может быть архивирован.");
 }

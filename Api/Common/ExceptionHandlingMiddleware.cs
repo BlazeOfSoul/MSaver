@@ -41,7 +41,7 @@ public sealed class ExceptionHandlingMiddleware(
         };
 
         var details = error.Details is null
-            ? [with(StringComparer.OrdinalIgnoreCase)]
+            ? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             : error.Details
                 .Where(x => !string.IsNullOrWhiteSpace(x.Field))
                 .GroupBy(x => x.Field!)

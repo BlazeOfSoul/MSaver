@@ -1,5 +1,4 @@
 using MSaver.Application.Features.Transactions.Create;
-using MSaver.Application.Features.Transactions.Delete;
 using MSaver.Application.Features.Transactions.Get;
 using MSaver.Application.Features.Transactions.GetStatistics;
 using MSaver.Application.Features.Transactions.Update;
@@ -13,7 +12,8 @@ public sealed class TransactionService(
     ICategoryRepository categoryRepository,
     ITagRepository tagRepository,
     ITransactionRepository transactionRepository,
-    IUnitOfWork unitOfWork) : ITransactionService
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService) : ITransactionService
 {
     private readonly IUserRepository _userRepository = userRepository;
     private readonly IAccountRepository _accountRepository = accountRepository;
@@ -21,13 +21,16 @@ public sealed class TransactionService(
     private readonly ITagRepository _tagRepository = tagRepository;
     private readonly ITransactionRepository _transactionRepository = transactionRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICurrentUserService _currentUserService = currentUserService;
 
     public async Task<Result<Guid>> CreateAsync(
         CreateTransactionRequest request,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var validation = await ValidateTransactionRequestAsync(
-            request.UserId,
+            userId,
             request.AccountId,
             request.CategoryId,
             request.Amount,
@@ -41,7 +44,7 @@ public sealed class TransactionService(
         try
         {
             var transaction = Transaction.Create(
-                userId: request.UserId,
+                userId: userId,
                 accountId: request.AccountId,
                 categoryId: request.CategoryId,
                 currencyId: account.CurrencyId,
@@ -58,7 +61,7 @@ public sealed class TransactionService(
                 foreach (var tagId in distinctTagIds)
                 {
                     var tag = await _tagRepository.GetByIdAsync(tagId, cancellationToken);
-                    if (tag is null || tag.UserId != request.UserId || tag.IsDeleted)
+                    if (tag is null || tag.UserId != userId || tag.IsDeleted)
                         return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
                 }
 
@@ -80,15 +83,17 @@ public sealed class TransactionService(
         UpdateTransactionRequest request,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var transaction = await _transactionRepository.GetByIdWithCategoryAsync(request.Id, cancellationToken);
-        if (transaction is null || transaction.UserId != request.UserId)
+        if (transaction is null || transaction.UserId != userId)
             return Result<Guid>.Failure(TransactionDomainErrors.TransactionNotFound);
 
         if (transaction.IsTransfer())
             return Result<Guid>.Failure(TransactionDomainErrors.TransferTransactionCannotBeEditedAsRegular);
 
         var validation = await ValidateTransactionRequestAsync(
-            request.UserId,
+            userId,
             request.AccountId,
             request.CategoryId,
             request.Amount,
@@ -121,7 +126,7 @@ public sealed class TransactionService(
                 foreach (var tagId in tagIds)
                 {
                     var tag = await _tagRepository.GetByIdAsync(tagId, cancellationToken);
-                    if (tag is null || tag.UserId != request.UserId || tag.IsDeleted)
+                    if (tag is null || tag.UserId != userId || tag.IsDeleted)
                         return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
                 }
             }
@@ -140,11 +145,13 @@ public sealed class TransactionService(
     }
 
     public async Task<Result<Guid>> DeleteAsync(
-        DeleteTransactionRequest request,
+        Guid id,
         CancellationToken cancellationToken = default)
     {
-        var transaction = await _transactionRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (transaction is null || transaction.UserId != request.UserId)
+        var userId = _currentUserService.UserId;
+
+        var transaction = await _transactionRepository.GetByIdAsync(id, cancellationToken);
+        if (transaction is null || transaction.UserId != userId)
             return Result<Guid>.Failure(TransactionDomainErrors.TransactionNotFound);
 
         if (transaction.IsTransfer())
@@ -157,11 +164,12 @@ public sealed class TransactionService(
     }
 
     public async Task<Result<GetTransactionsResponse>> GetByUserAsync(
-        GetTransactionsRequest request,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var transactions = await _transactionRepository
-            .GetByUserIdWithCategoryAsync(request.UserId, cancellationToken);
+            .GetByUserIdWithCategoryAsync(userId, cancellationToken);
 
         var items = transactions
             .OrderByDescending(x => x.Date)
@@ -188,11 +196,12 @@ public sealed class TransactionService(
     }
 
     public async Task<Result<StatisticsResponse>> GetStatisticsAsync(
-        GetStatisticsRequest query,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var transactions = await _transactionRepository
-            .GetByUserIdWithCategoryAsync(query.UserId, cancellationToken);
+            .GetByUserIdWithCategoryAsync(userId, cancellationToken);
 
         var regularTransactions = transactions
             .Where(t => !t.TransferId.HasValue)

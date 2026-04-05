@@ -26,6 +26,8 @@ public sealed class Account : Entity
 
     public string? Icon { get; private set; }
 
+    public bool IsPrimary { get; private set; }
+
     public bool IsArchived { get; private set; }
 
     public DateTime CreatedAtUtc { get; private set; }
@@ -38,7 +40,8 @@ public sealed class Account : Entity
         string name,
         decimal initialBalance = 0m,
         string? color = null,
-        string? icon = null)
+        string? icon = null,
+        bool isPrimary = false)
     {
         if (userId == Guid.Empty)
             throw new DomainException(AccountDomainErrors.UserIdRequired);
@@ -51,6 +54,7 @@ public sealed class Account : Entity
             UserId = userId,
             CurrencyId = currencyId,
             InitialBalance = initialBalance,
+            IsPrimary = isPrimary,
             IsArchived = false
         };
 
@@ -79,6 +83,9 @@ public sealed class Account : Entity
 
     public void Archive()
     {
+        if (IsPrimary)
+            throw new DomainException(AccountDomainErrors.PrimaryAccountCannotBeArchived);
+
         IsArchived = true;
     }
 

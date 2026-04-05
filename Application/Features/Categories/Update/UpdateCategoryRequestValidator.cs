@@ -9,9 +9,6 @@ public sealed class UpdateCategoryRequestValidator : AbstractValidator<UpdateCat
         RuleFor(x => x.Id)
             .NotEmpty().WithMessage(ValidationMessages.Required);
 
-        RuleFor(x => x.UserId)
-            .NotEmpty().WithMessage(ValidationMessages.Required);
-
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage(ValidationMessages.Required)
             .MaximumLength(50).WithMessage(ValidationMessages.MaxLength);

@@ -9,7 +9,7 @@ public abstract class ApiControllerBase : ControllerBase
 {
     protected IActionResult FromResult(Result result)
     {
-        return result.IsSuccess ? 
+        return result.IsSuccess ?
             NoContent() :
             ProblemFromError(result.Error!);
     }
@@ -83,7 +83,7 @@ public abstract class ApiControllerBase : ControllerBase
         };
 
         var details = error.Details is null
-            ? [with(StringComparer.OrdinalIgnoreCase)]
+            ? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             : error.Details
                 .Where(x => !string.IsNullOrWhiteSpace(x.Field))
                 .GroupBy(x => x.Field!)

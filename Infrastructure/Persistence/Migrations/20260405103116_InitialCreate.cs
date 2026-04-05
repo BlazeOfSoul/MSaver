@@ -26,21 +26,6 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                     table.PrimaryKey("PK_currencies", x => x.Id);
                 });
 
-            var bynId = new Guid("c517cf82-43b2-426e-b601-ba9285e49732");
-
-            migrationBuilder.InsertData(
-                table: "currencies",
-                columns: new[] { "Id", "Code", "Name", "Symbol", "Precision", "IsDefault" },
-                values: new object[]
-                {
-                    bynId,
-                    "BYN",
-                    "Belarusian Ruble",
-                    "Br",
-                    (short)2,
-                    true
-                });
-
             migrationBuilder.CreateTable(
                 name: "users",
                 columns: table => new
@@ -95,6 +80,7 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                     InitialBalance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Color = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     Icon = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    IsPrimary = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     IsArchived = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -167,20 +153,20 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Tags",
+                name: "tags",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Color = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Color = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Tags", x => x.Id);
+                    table.PrimaryKey("PK_tags", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Tags_users_UserId",
+                        name: "FK_tags_users_UserId",
                         column: x => x.UserId,
                         principalTable: "users",
                         principalColumn: "Id",
@@ -251,9 +237,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_transaction_tags", x => new { x.TransactionId, x.TagId });
                     table.ForeignKey(
-                        name: "FK_transaction_tags_Tags_TagId",
+                        name: "FK_transaction_tags_tags_TagId",
                         column: x => x.TagId,
-                        principalTable: "Tags",
+                        principalTable: "tags",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -268,6 +254,13 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                 name: "IX_accounts_CurrencyId",
                 table: "accounts",
                 column: "CurrencyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_accounts_user_id_primary",
+                table: "accounts",
+                column: "UserId",
+                unique: true,
+                filter: "\"IsPrimary\" = true");
 
             migrationBuilder.CreateIndex(
                 name: "IX_accounts_UserId_Name",
@@ -311,9 +304,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tags_UserId",
-                table: "Tags",
-                column: "UserId");
+                name: "IX_tags_UserId_Name",
+                table: "tags",
+                columns: new[] { "UserId", "Name" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_transaction_tags_TagId",
@@ -375,7 +368,7 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                 name: "transaction_tags");
 
             migrationBuilder.DropTable(
-                name: "Tags");
+                name: "tags");
 
             migrationBuilder.DropTable(
                 name: "transactions");

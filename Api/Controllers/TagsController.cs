@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
 using MSaver.Application.Features.Tags.Create;
-using MSaver.Application.Features.Tags.Delete;
-using MSaver.Application.Features.Tags.Get;
 using MSaver.Application.Features.Tags.Update;
 
 namespace MSaver.Api.Controllers;
@@ -13,20 +11,17 @@ namespace MSaver.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class TagsController(
     ITagService tagService,
-    ICurrentUserService currentUser,
     IValidator<CreateTagRequest> createValidator,
     IValidator<UpdateTagRequest> updateValidator) : ApiControllerBase
 {
     private readonly ITagService _tagService = tagService;
-    private readonly ICurrentUserService _currentUser = currentUser;
     private readonly IValidator<CreateTagRequest> _createValidator = createValidator;
     private readonly IValidator<UpdateTagRequest> _updateValidator = updateValidator;
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var request = new GetTagsRequest(_currentUser.UserId);
-        var result = await _tagService.GetAsync(request, cancellationToken);
+        var result = await _tagService.GetAsync(cancellationToken);
         return FromResult(result);
     }
 
@@ -35,8 +30,6 @@ public sealed class TagsController(
         [FromBody] CreateTagRequest request,
         CancellationToken cancellationToken)
     {
-        request.UserId = _currentUser.UserId;
-
         return ValidateAndExecuteAsync<CreateTagRequest, CreateTagResponse>(
             request,
             _createValidator,
@@ -50,13 +43,17 @@ public sealed class TagsController(
         [FromBody] UpdateTagRequest request,
         CancellationToken cancellationToken)
     {
-        request.Id = id;
-        request.UserId = _currentUser.UserId;
+        var command = new UpdateTagRequest
+        {
+            Id = id,
+            Name = request.Name,
+            Color = request.Color
+        };
 
         return ValidateAndExecuteAsync<UpdateTagRequest, Guid>(
-            request,
+            command,
             _updateValidator,
-            ct => _tagService.UpdateAsync(request, ct),
+            ct => _tagService.UpdateAsync(command, ct),
             cancellationToken);
     }
 
@@ -65,8 +62,7 @@ public sealed class TagsController(
         Guid id,
         CancellationToken cancellationToken)
     {
-        var request = new DeleteTagRequest(id, _currentUser.UserId);
-        var result = await _tagService.DeleteAsync(request, cancellationToken);
+        var result = await _tagService.DeleteAsync(id, cancellationToken);
         return FromResult(result);
     }
 }

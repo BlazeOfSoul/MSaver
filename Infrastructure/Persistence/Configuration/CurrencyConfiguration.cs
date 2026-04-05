@@ -6,7 +6,7 @@ public sealed class CurrencyConfiguration : IEntityTypeConfiguration<Currency>
 {
     public void Configure(EntityTypeBuilder<Currency> builder)
     {
-        builder.ToTable("currencies");
+        builder.ToTable(TableNames.Currencies);
 
         builder.HasKey(x => x.Id);
 

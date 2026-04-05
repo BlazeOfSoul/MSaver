@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
 using MSaver.Application.Features.Categories.Create;
-using MSaver.Application.Features.Categories.Delete;
-using MSaver.Application.Features.Categories.Get;
 using MSaver.Application.Features.Categories.Update;
 
 namespace MSaver.Api.Controllers;
@@ -13,21 +11,17 @@ namespace MSaver.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class CategoriesController(
     ICategoryService categoryService,
-    ICurrentUserService currentUser,
     IValidator<CreateCategoryRequest> createValidator,
     IValidator<UpdateCategoryRequest> updateValidator) : ApiControllerBase
 {
     private readonly ICategoryService _categoryService = categoryService;
-    private readonly ICurrentUserService _currentUser = currentUser;
     private readonly IValidator<CreateCategoryRequest> _createValidator = createValidator;
     private readonly IValidator<UpdateCategoryRequest> _updateValidator = updateValidator;
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var request = new GetCategoriesRequest(_currentUser.UserId);
-
-        var result = await _categoryService.GetAsync(request, cancellationToken);
+        var result = await _categoryService.GetAsync(cancellationToken);
         return FromResult(result);
     }
 
@@ -36,8 +30,6 @@ public sealed class CategoriesController(
         [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        request.UserId = _currentUser.UserId;
-
         return ValidateAndExecuteAsync<CreateCategoryRequest, CreateCategoryResponse>(
             request,
             _createValidator,
@@ -53,7 +45,6 @@ public sealed class CategoriesController(
     {
         var command = new UpdateCategoryRequest(
             id,
-            _currentUser.UserId,
             request.Name,
             request.Color,
             request.Type);
@@ -70,9 +61,7 @@ public sealed class CategoriesController(
         Guid id,
         CancellationToken cancellationToken)
     {
-        var command = new DeleteCategoryRequest(id, _currentUser.UserId);
-
-        var result = await _categoryService.DeleteAsync(command, cancellationToken);
+        var result = await _categoryService.DeleteAsync(id, cancellationToken);
         return FromResult(result);
     }
 }

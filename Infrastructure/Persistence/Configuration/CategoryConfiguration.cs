@@ -6,7 +6,7 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
 {
     public void Configure(EntityTypeBuilder<Category> builder)
     {
-        builder.ToTable("categories");
+        builder.ToTable(TableNames.Categories);
 
         builder.HasKey(x => x.Id);
 

@@ -82,7 +82,6 @@ public sealed class AuthService(
             await _userRepository.AddAsync(user, cancellationToken);
 
             await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
-            await CreateDefaultAccountsAsync(user.Id, cancellationToken);
 
             var accessToken = _jwtTokenGenerator.GenerateAccessToken(
                 user.Id,
@@ -178,20 +177,6 @@ public sealed class AuthService(
             .ToList();
 
         await _categoryRepository.AddRangeAsync(defaultCategories, cancellationToken);
-    }
-
-    private async Task CreateDefaultAccountsAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        var defaultCurrency = await _currencyRepository.GetDefaultCurrencyAsync(cancellationToken);
-        var account = Account.Create(
-            userId,
-            defaultCurrency.Id,
-            name: "Основной",
-            initialBalance: 0m,
-            color: "#24c45f",
-            icon: "card");
-
-        await _accountRepository.AddAsync(account, cancellationToken);
     }
 
     private async Task AddRefreshTokenAsync(

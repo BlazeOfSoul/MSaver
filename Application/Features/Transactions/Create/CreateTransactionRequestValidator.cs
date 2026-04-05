@@ -6,10 +6,6 @@ public sealed class CreateTransactionRequestValidator : AbstractValidator<Create
 {
     public CreateTransactionRequestValidator()
     {
-        RuleFor(x => x.UserId)
-            .NotEmpty()
-            .WithMessage(ValidationMessages.InvalidId);
-
         RuleFor(x => x.AccountId)
             .NotEmpty()
             .WithMessage(ValidationMessages.InvalidId);

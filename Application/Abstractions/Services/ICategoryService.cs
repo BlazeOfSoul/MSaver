@@ -1,5 +1,4 @@
 using MSaver.Application.Features.Categories.Create;
-using MSaver.Application.Features.Categories.Delete;
 using MSaver.Application.Features.Categories.Get;
 using MSaver.Application.Features.Categories.Update;
 
@@ -16,10 +15,9 @@ public interface ICategoryService
         CancellationToken cancellationToken = default);
 
     Task<Result<Guid>> DeleteAsync(
-        DeleteCategoryRequest request,
+        Guid id,
         CancellationToken cancellationToken = default);
 
     Task<Result<GetCategoriesResponse>> GetAsync(
-        GetCategoriesRequest request,
         CancellationToken cancellationToken = default);
 }

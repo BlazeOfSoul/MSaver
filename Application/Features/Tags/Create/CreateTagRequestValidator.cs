@@ -6,10 +6,6 @@ public sealed class CreateTagRequestValidator : AbstractValidator<CreateTagReque
 {
     public CreateTagRequestValidator()
     {
-        RuleFor(x => x.UserId)
-            .NotEmpty()
-            .WithMessage(ValidationMessages.InvalidId);
-
         RuleFor(x => x.Name)
             .NotEmpty()
             .WithMessage(ValidationMessages.Required)

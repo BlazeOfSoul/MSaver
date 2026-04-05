@@ -10,10 +10,6 @@ public sealed class UpdateTagRequestValidator : AbstractValidator<UpdateTagReque
             .NotEmpty()
             .WithMessage(ValidationMessages.InvalidId);
 
-        RuleFor(x => x.UserId)
-            .NotEmpty()
-            .WithMessage(ValidationMessages.InvalidId);
-
         RuleFor(x => x.Name)
             .NotEmpty()
             .WithMessage(ValidationMessages.Required)

@@ -2,13 +2,15 @@ namespace MSaver.Domain.Entities;
 
 public sealed class Tag : Entity
 {
+    private readonly List<TransactionTag> _transactionTags = [];
+
     private Tag()
     {
         Name = null!;
-        User = null!;
     }
 
     public Guid UserId { get; private set; }
+    public User? User { get; private set; }
 
     public string Name { get; private set; }
 
@@ -16,9 +18,7 @@ public sealed class Tag : Entity
 
     public bool IsDeleted { get; private set; }
 
-    public User User { get; private set; }
-
-    public ICollection<TransactionTag> TransactionTags { get; private set; } = [];
+    public IReadOnlyCollection<TransactionTag> TransactionTags => _transactionTags;
 
     public static Tag Create(Guid userId, string name, string? color = null)
     {

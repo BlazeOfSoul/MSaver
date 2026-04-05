@@ -10,10 +10,6 @@ public sealed class UpdateAccountRequestValidator : AbstractValidator<UpdateAcco
             .NotEmpty()
             .WithMessage(ValidationMessages.InvalidId);
 
-        RuleFor(x => x.UserId)
-            .NotEmpty()
-            .WithMessage(ValidationMessages.InvalidId);
-
         RuleFor(x => x.CurrencyId)
             .NotEmpty()
             .WithMessage(ValidationMessages.InvalidId);

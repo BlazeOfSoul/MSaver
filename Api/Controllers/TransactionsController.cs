@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
 using MSaver.Application.Features.Transactions.Create;
-using MSaver.Application.Features.Transactions.Delete;
-using MSaver.Application.Features.Transactions.Get;
-using MSaver.Application.Features.Transactions.GetStatistics;
 using MSaver.Application.Features.Transactions.Update;
 
 namespace MSaver.Api.Controllers;
@@ -14,30 +11,24 @@ namespace MSaver.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class TransactionsController(
     ITransactionService transactionService,
-    ICurrentUserService currentUser,
     IValidator<CreateTransactionRequest> createValidator,
     IValidator<UpdateTransactionRequest> updateValidator) : ApiControllerBase
 {
     private readonly ITransactionService _transactionService = transactionService;
-    private readonly ICurrentUserService _currentUser = currentUser;
     private readonly IValidator<CreateTransactionRequest> _createValidator = createValidator;
     private readonly IValidator<UpdateTransactionRequest> _updateValidator = updateValidator;
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var request = new GetTransactionsRequest(_currentUser.UserId);
-
-        var result = await _transactionService.GetByUserAsync(request, cancellationToken);
+        var result = await _transactionService.GetByUserAsync(cancellationToken);
         return FromResult(result);
     }
 
     [HttpGet("statistics")]
     public async Task<IActionResult> GetStatistics(CancellationToken cancellationToken)
     {
-        var request = new GetStatisticsRequest(_currentUser.UserId);
-
-        var result = await _transactionService.GetStatisticsAsync(request, cancellationToken);
+        var result = await _transactionService.GetStatisticsAsync(cancellationToken);
         return FromResult(result);
     }
 
@@ -46,8 +37,6 @@ public sealed class TransactionsController(
         [FromBody] CreateTransactionRequest request,
         CancellationToken cancellationToken)
     {
-        request.UserId = _currentUser.UserId;
-
         return ValidateAndExecuteAsync<CreateTransactionRequest, Guid>(
             request,
             _createValidator,
@@ -61,13 +50,21 @@ public sealed class TransactionsController(
         [FromBody] UpdateTransactionRequest request,
         CancellationToken cancellationToken)
     {
-        request.Id = id;
-        request.UserId = _currentUser.UserId;
+        var command = new UpdateTransactionRequest
+        {
+            Id = id,
+            AccountId = request.AccountId,
+            CategoryId = request.CategoryId,
+            Amount = request.Amount,
+            Date = request.Date,
+            Description = request.Description,
+            TagIds = request.TagIds
+        };
 
         return ValidateAndExecuteAsync<UpdateTransactionRequest, Guid>(
-            request,
+            command,
             _updateValidator,
-            ct => _transactionService.UpdateAsync(request, ct),
+            ct => _transactionService.UpdateAsync(command, ct),
             cancellationToken);
     }
 
@@ -76,9 +73,7 @@ public sealed class TransactionsController(
         Guid id,
         CancellationToken cancellationToken)
     {
-        var request = new DeleteTransactionRequest(id, _currentUser.UserId);
-
-        var result = await _transactionService.DeleteAsync(request, cancellationToken);
+        var result = await _transactionService.DeleteAsync(id, cancellationToken);
         return FromResult(result);
     }
 }

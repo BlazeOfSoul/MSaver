@@ -1,5 +1,4 @@
 using MSaver.Application.Features.Categories.Create;
-using MSaver.Application.Features.Categories.Delete;
 using MSaver.Application.Features.Categories.Get;
 using MSaver.Application.Features.Categories.Update;
 
@@ -7,17 +6,20 @@ namespace MSaver.Application.Services;
 
 public sealed class CategoryService(
     ICategoryRepository categoryRepository,
-    IUnitOfWork unitOfWork) : ICategoryService
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService) : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository = categoryRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICurrentUserService _currentUserService = currentUserService;
 
     public async Task<Result<GetCategoriesResponse>> GetAsync(
-        GetCategoriesRequest request,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var categories = await _categoryRepository
-            .GetAsync(request.UserId, cancellationToken);
+            .GetAsync(userId, cancellationToken);
 
         var items = categories
             .Where(x => !x.IsDeleted)
@@ -41,8 +43,10 @@ public sealed class CategoryService(
         CreateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var exists = await _categoryRepository.ExistsByNameAsync(
-            request.UserId,
+            userId,
             request.Name,
             cancellationToken);
 
@@ -52,7 +56,7 @@ public sealed class CategoryService(
         try
         {
             var category = Domain.Entities.Category.Create(
-                request.UserId,
+                userId,
                 request.Name,
                 request.Type,
                 request.Color);
@@ -76,6 +80,8 @@ public sealed class CategoryService(
         UpdateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var category = await _categoryRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (category is null)
@@ -84,11 +90,11 @@ public sealed class CategoryService(
         if (category.IsDeleted)
             return Result<Guid>.Failure(CategoryDomainErrors.CategoryDeleted);
 
-        if (category.UserId != request.UserId)
+        if (category.UserId != userId)
             return Result<Guid>.Failure(CategoryDomainErrors.AccessDenied);
 
         var exists = await _categoryRepository.ExistsByNameAsync(
-            request.UserId,
+            userId,
             request.Name,
             cancellationToken,
             request.Id);
@@ -112,10 +118,12 @@ public sealed class CategoryService(
     }
 
     public async Task<Result<Guid>> DeleteAsync(
-        DeleteCategoryRequest request,
+        Guid id,
         CancellationToken cancellationToken = default)
     {
-        var category = await _categoryRepository.GetByIdAsync(request.Id, cancellationToken);
+        var userId = _currentUserService.UserId;
+
+        var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
 
         if (category is null)
             return Result<Guid>.Failure(CategoryDomainErrors.CategoryNotFound);
@@ -123,7 +131,7 @@ public sealed class CategoryService(
         if (category.IsDeleted)
             return Result<Guid>.Failure(CategoryDomainErrors.CategoryDeleted);
 
-        if (category.UserId != request.UserId)
+        if (category.UserId != userId)
             return Result<Guid>.Failure(CategoryDomainErrors.AccessDenied);
 
         category.SoftDelete();

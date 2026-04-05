@@ -4,8 +4,6 @@ namespace MSaver.Application.Features.Categories.Create;
 
 public sealed class CreateCategoryRequest
 {
-    public Guid UserId { get; set; }
-
     public string Name { get; set; } = null!;
 
     public CategoryType Type { get; set; }

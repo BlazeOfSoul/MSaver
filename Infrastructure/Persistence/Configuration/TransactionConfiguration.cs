@@ -6,7 +6,7 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
 {
     public void Configure(EntityTypeBuilder<Transaction> builder)
     {
-        builder.ToTable("transactions");
+        builder.ToTable(TableNames.Transactions);
 
         builder.HasKey(x => x.Id);
 
