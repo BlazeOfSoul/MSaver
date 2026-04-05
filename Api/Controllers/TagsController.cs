@@ -1,5 +1,3 @@
-using FluentValidation;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

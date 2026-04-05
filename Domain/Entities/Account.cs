@@ -2,7 +2,7 @@ namespace MSaver.Domain.Entities;
 
 public sealed class Account : Entity
 {
-    private readonly List<Transaction> _transactions = new();
+    private readonly List<Transaction> _transactions = [];
 
     private Account()
     {

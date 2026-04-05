@@ -4,8 +4,8 @@ namespace MSaver.Domain.Entities;
 
 public sealed class Category : Entity
 {
-    private readonly List<Category> _children = new();
-    private readonly List<Transaction> _transactions = new();
+    private readonly List<Category> _children = [];
+    private readonly List<Transaction> _transactions = [];
 
     private Category()
     {

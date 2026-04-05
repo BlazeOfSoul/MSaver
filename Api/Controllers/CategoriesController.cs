@@ -1,6 +1,4 @@
-﻿using FluentValidation;
-
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;

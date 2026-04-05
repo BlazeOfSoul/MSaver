@@ -18,7 +18,7 @@ public sealed class Tag : Entity
 
     public User User { get; private set; }
 
-    public ICollection<TransactionTag> TransactionTags { get; private set; } = new List<TransactionTag>();
+    public ICollection<TransactionTag> TransactionTags { get; private set; } = [];
 
     public static Tag Create(Guid userId, string name, string? color = null)
     {

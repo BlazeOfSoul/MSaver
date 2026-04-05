@@ -32,10 +32,9 @@ public sealed record DomainError(
             DomainErrorType.Validation,
             code,
             message,
-            new[]
-            {
+            [
                 new DomainValidationItem(field, code, message)
-            });
+            ]);
 
     public static DomainError Validation(
         string code,

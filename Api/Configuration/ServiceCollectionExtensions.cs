@@ -1,8 +1,6 @@
 using System.Text;
 using System.Text.Json;
 
-using FluentValidation;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;

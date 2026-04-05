@@ -4,6 +4,8 @@ global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
 
+global using FluentValidation;
+
 global using MSaver.Application.Abstractions.Auth;
 global using MSaver.Application.Abstractions.Services;
 // Application

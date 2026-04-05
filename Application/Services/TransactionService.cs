@@ -114,7 +114,7 @@ public sealed class TransactionService(
                 transaction.ChangeAccount(request.AccountId, account.CurrencyId);
             }
 
-            var tagIds = request.TagIds?.Distinct().ToArray() ?? Array.Empty<Guid>();
+            var tagIds = request.TagIds?.Distinct().ToArray() ?? [];
 
             if (tagIds.Length > 0)
             {
@@ -211,7 +211,7 @@ public sealed class TransactionService(
 
             if (!monthsByYear.ContainsKey(year))
             {
-                monthsByYear[year] = new HashSet<int>();
+                monthsByYear[year] = [];
             }
 
             monthsByYear[year].Add(month);
@@ -245,12 +245,12 @@ public sealed class TransactionService(
 
             if (!targetTable.ContainsKey(year))
             {
-                targetTable[year] = new();
+                targetTable[year] = [];
             }
 
             if (!targetTable[year].ContainsKey(t.Category.Name))
             {
-                targetTable[year][t.Category.Name] = new();
+                targetTable[year][t.Category.Name] = [];
             }
 
             if (!targetTable[year][t.Category.Name].ContainsKey(month))

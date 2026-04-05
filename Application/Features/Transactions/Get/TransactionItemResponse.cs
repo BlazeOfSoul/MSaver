@@ -2,58 +2,25 @@ namespace MSaver.Application.Features.Transactions.Get;
 
 public sealed class TransactionItemResponse
 {
-    public Guid Id
-    {
-        get; init;
-    }
+    public Guid Id { get; init; }
 
-    public Guid AccountId
-    {
-        get; init;
-    }
+    public Guid AccountId { get; init; }
 
-    public Guid CategoryId
-    {
-        get; init;
-    }
+    public Guid CategoryId { get; init; }
 
-    public string CategoryName
-    {
-        get; init;
-    } = string.Empty;
+    public string CategoryName { get; init; } = string.Empty;
 
-    public string CategoryColor
-    {
-        get; init;
-    } = string.Empty;
+    public string CategoryColor { get; init; } = string.Empty;
 
-    public decimal Amount
-    {
-        get; init;
-    }
+    public decimal Amount { get; init; }
 
-    public DateTime Date
-    {
-        get; init;
-    }
+    public DateTime Date { get; init; }
 
-    public string Description
-    {
-        get; init;
-    } = string.Empty;
+    public string Description { get; init; } = string.Empty;
 
-    public IReadOnlyCollection<Guid> TagIds
-    {
-        get; init;
-    } = Array.Empty<Guid>();
+    public IReadOnlyCollection<Guid> TagIds { get; init; } = [];
 
-    public IReadOnlyCollection<string> Tags
-    {
-        get; init;
-    } = Array.Empty<string>();
+    public IReadOnlyCollection<string> Tags { get; init; } = [];
 
-    public bool IsTransfer
-    {
-        get; init;
-    }
+    public bool IsTransfer { get; init; }
 }

@@ -2,8 +2,5 @@
 
 public sealed class GetCategoriesResponse
 {
-    public IReadOnlyCollection<CategoryItemResponse> Items
-    {
-        get; init;
-    } = Array.Empty<CategoryItemResponse>();
+    public IReadOnlyCollection<CategoryItemResponse> Items { get; init; } = [];
 }

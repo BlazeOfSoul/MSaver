@@ -2,11 +2,11 @@ namespace MSaver.Domain.Entities;
 
 public sealed class User : Entity
 {
-    private readonly List<Account> _accounts = new();
-    private readonly List<Category> _categories = new();
-    private readonly List<Tag> _tags = new();
-    private readonly List<Transaction> _transactions = new();
-    private readonly List<RefreshToken> _refreshTokens = new();
+    private readonly List<Account> _accounts = [];
+    private readonly List<Category> _categories = [];
+    private readonly List<Tag> _tags = [];
+    private readonly List<Transaction> _transactions = [];
+    private readonly List<RefreshToken> _refreshTokens = [];
 
     private User()
     {

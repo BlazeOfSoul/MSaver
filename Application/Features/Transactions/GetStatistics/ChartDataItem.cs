@@ -2,7 +2,7 @@
 
 public sealed class ChartDataItem
 {
-    public List<string> Labels { get; set; } = new();
-    public List<decimal> Data { get; set; } = new();
-    public List<string> BackgroundColors { get; set; } = new();
+    public List<string> Labels { get; set; } = [];
+    public List<decimal> Data { get; set; } = [];
+    public List<string> BackgroundColors { get; set; } = [];
 }

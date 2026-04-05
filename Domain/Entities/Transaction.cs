@@ -2,7 +2,7 @@
 
 public sealed class Transaction : Entity
 {
-    private readonly List<TransactionTag> _transactionTags = new();
+    private readonly List<TransactionTag> _transactionTags = [];
 
     private Transaction()
     {

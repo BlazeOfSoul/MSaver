@@ -1,4 +1,3 @@
-using FluentValidation;
 using FluentValidation.Results;
 
 using Microsoft.AspNetCore.Mvc;
@@ -10,18 +9,16 @@ public abstract class ApiControllerBase : ControllerBase
 {
     protected IActionResult FromResult(Result result)
     {
-        if (result.IsSuccess)
-            return NoContent();
-
-        return ProblemFromError(result.Error!);
+        return result.IsSuccess ? 
+            NoContent() :
+            ProblemFromError(result.Error!);
     }
 
     protected IActionResult FromResult<T>(Result<T> result)
     {
-        if (result.IsSuccess)
-            return Ok(result.Value);
-
-        return ProblemFromError(result.Error!);
+        return result.IsSuccess ?
+            Ok(result.Value) :
+            ProblemFromError(result.Error!);
     }
 
     protected async Task<IActionResult> ValidateAndExecuteAsync<TRequest>(
@@ -86,7 +83,7 @@ public abstract class ApiControllerBase : ControllerBase
         };
 
         var details = error.Details is null
-            ? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            ? [with(StringComparer.OrdinalIgnoreCase)]
             : error.Details
                 .Where(x => !string.IsNullOrWhiteSpace(x.Field))
                 .GroupBy(x => x.Field!)

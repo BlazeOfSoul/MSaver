@@ -2,9 +2,9 @@ namespace MSaver.Domain.Entities;
 
 public sealed class Currency : Entity
 {
-    private readonly List<Account> _accounts = new();
-    private readonly List<Transaction> _transactions = new();
-    private readonly List<Transaction> _baseCurrencyTransactions = new();
+    private readonly List<Account> _accounts = [];
+    private readonly List<Transaction> _transactions = [];
+    private readonly List<Transaction> _baseCurrencyTransactions = [];
 
     private Currency()
     {
