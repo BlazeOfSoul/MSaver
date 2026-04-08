@@ -2,23 +2,23 @@ using FluentValidation.Results;
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace MSaver.Api.Common;
+using MSaver.Api.Common;
 
 [ApiController]
 public abstract class ApiControllerBase : ControllerBase
 {
     protected IActionResult FromResult(Result result)
     {
-        return result.IsSuccess ?
-            NoContent() :
-            ProblemFromError(result.Error!);
+        return result.IsSuccess
+            ? NoContent()
+            : ProblemFromError(result.Error!);
     }
 
     protected IActionResult FromResult<T>(Result<T> result)
     {
-        return result.IsSuccess ?
-            Ok(result.Value) :
-            ProblemFromError(result.Error!);
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : ProblemFromError(result.Error!);
     }
 
     protected async Task<IActionResult> ValidateAndExecuteAsync<TRequest>(
@@ -30,10 +30,7 @@ public abstract class ApiControllerBase : ControllerBase
         ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
-        {
-            var error = MapValidationErrors(validationResult);
-            return ProblemFromError(error);
-        }
+            return BadRequest(ApiErrorFactory.ValidationFailed(validationResult));
 
         var result = await action(cancellationToken);
         return FromResult(result);
@@ -48,28 +45,10 @@ public abstract class ApiControllerBase : ControllerBase
         ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
-        {
-            var error = MapValidationErrors(validationResult);
-            return ProblemFromError(error);
-        }
+            return BadRequest(ApiErrorFactory.ValidationFailed(validationResult));
 
         var result = await action(cancellationToken);
         return FromResult(result);
-    }
-
-    private static DomainError MapValidationErrors(ValidationResult validationResult)
-    {
-        var details = validationResult.Errors
-            .Select(e => new DomainValidationItem(
-                Field: e.PropertyName,
-                Code: e.ErrorCode,
-                Message: e.ErrorMessage))
-            .ToArray();
-
-        return DomainError.Validation(
-            code: "Validation.Failed",
-            message: "Обнаружены ошибки валидации.",
-            details: details);
     }
 
     private IActionResult ProblemFromError(DomainError error)
@@ -82,23 +61,6 @@ public abstract class ApiControllerBase : ControllerBase
             _ => StatusCodes.Status500InternalServerError
         };
 
-        var details = error.Details is null
-            ? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
-            : error.Details
-                .Where(x => !string.IsNullOrWhiteSpace(x.Field))
-                .GroupBy(x => x.Field!)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(x => x.Message).Distinct().ToArray(),
-                    StringComparer.OrdinalIgnoreCase);
-
-        var payload = new
-        {
-            code = error.Code,
-            message = error.Message,
-            details
-        };
-
-        return StatusCode(statusCode, payload);
+        return StatusCode(statusCode, ApiErrorFactory.FromDomainError(error));
     }
 }

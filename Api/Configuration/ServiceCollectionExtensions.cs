@@ -1,10 +1,10 @@
 using System.Text;
-using System.Text.Json;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+using MSaver.Api.Common;
 using MSaver.Application.Features.Auth.Register;
 using MSaver.Infrastructure;
 using MSaver.Infrastructure.DependencyInjection;
@@ -109,21 +109,11 @@ public static class ServiceCollectionExtensions
                     {
                         context.HandleResponse();
 
-                        if (context.Response.HasStarted)
-                            return Task.CompletedTask;
-
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        context.Response.ContentType = "application/json; charset=utf-8";
-
-                        var payload = new
-                        {
-                            code = "Auth.Unauthorized",
-                            message = "Пользователь не авторизован.",
-                            details = new Dictionary<string, string[]>()
-                        };
-
-                        var json = JsonSerializer.Serialize(payload);
-                        return context.Response.WriteAsync(json);
+                        return ApiErrorWriter.WriteAsync(
+                            context.Response,
+                            StatusCodes.Status401Unauthorized,
+                            ApiErrorFactory.Unauthorized(),
+                            context.HttpContext.RequestAborted);
                     }
                 };
             });

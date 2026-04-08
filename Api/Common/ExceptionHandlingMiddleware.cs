@@ -1,6 +1,4 @@
-using System.Text.Json;
-
-namespace MSaver.Api.Common;
+using MSaver.Api.Common;
 
 public sealed class ExceptionHandlingMiddleware(
     RequestDelegate next,
@@ -23,15 +21,16 @@ public sealed class ExceptionHandlingMiddleware(
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception occurred");
-            await WriteUnexpectedErrorAsync(context);
+            await ApiErrorWriter.WriteAsync(
+                context.Response,
+                StatusCodes.Status500InternalServerError,
+                ApiErrorFactory.Unexpected(),
+                context.RequestAborted);
         }
     }
 
-    private static async Task WriteDomainErrorAsync(HttpContext context, DomainError error)
+    private static Task WriteDomainErrorAsync(HttpContext context, DomainError error)
     {
-        if (context.Response.HasStarted)
-            return;
-
         var statusCode = error.Type switch
         {
             DomainErrorType.Validation => StatusCodes.Status400BadRequest,
@@ -40,50 +39,10 @@ public sealed class ExceptionHandlingMiddleware(
             _ => StatusCodes.Status500InternalServerError
         };
 
-        var details = error.Details is null
-            ? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
-            : error.Details
-                .Where(x => !string.IsNullOrWhiteSpace(x.Field))
-                .GroupBy(x => x.Field!)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(x => x.Message).Distinct().ToArray(),
-                    StringComparer.OrdinalIgnoreCase);
-
-        var payload = new
-        {
-            code = error.Code,
-            message = error.Message,
-            details
-        };
-
-        var json = JsonSerializer.Serialize(payload);
-
-        context.Response.Clear();
-        context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/json; charset=utf-8";
-
-        await context.Response.WriteAsync(json);
-    }
-
-    private static async Task WriteUnexpectedErrorAsync(HttpContext context)
-    {
-        if (context.Response.HasStarted)
-            return;
-
-        var payload = new
-        {
-            code = "General.UnexpectedError",
-            message = "Произошла непредвиденная ошибка. Попробуйте позже.",
-            details = new Dictionary<string, string[]>()
-        };
-
-        var json = JsonSerializer.Serialize(payload);
-
-        context.Response.Clear();
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        context.Response.ContentType = "application/json; charset=utf-8";
-
-        await context.Response.WriteAsync(json);
+        return ApiErrorWriter.WriteAsync(
+            context.Response,
+            statusCode,
+            ApiErrorFactory.FromDomainError(error),
+            context.RequestAborted);
     }
 }
