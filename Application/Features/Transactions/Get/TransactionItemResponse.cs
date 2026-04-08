@@ -4,13 +4,9 @@ public sealed class TransactionItemResponse
 {
     public Guid Id { get; init; }
 
-    public Guid AccountId { get; init; }
+    public TransactionAccountResponse Account { get; init; } = null!;
 
-    public Guid CategoryId { get; init; }
-
-    public string CategoryName { get; init; } = string.Empty;
-
-    public string CategoryColor { get; init; } = string.Empty;
+    public TransactionCategoryResponse Category { get; init; } = null!;
 
     public decimal Amount { get; init; }
 
@@ -18,9 +14,7 @@ public sealed class TransactionItemResponse
 
     public string Description { get; init; } = string.Empty;
 
-    public IReadOnlyCollection<Guid> TagIds { get; init; } = [];
-
-    public IReadOnlyCollection<string> Tags { get; init; } = [];
+    public IReadOnlyCollection<TransactionTagResponse> Tags { get; init; } = [];
 
     public bool IsTransfer { get; init; }
 }

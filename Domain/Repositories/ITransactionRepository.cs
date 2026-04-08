@@ -12,7 +12,7 @@ public interface ITransactionRepository
 
     Task<Transaction?> GetByIdWithCategoryAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Transaction>> GetByUserIdWithCategoryAsync(
+    Task<IReadOnlyCollection<Transaction>> GetByUserIdWithDetailsAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 

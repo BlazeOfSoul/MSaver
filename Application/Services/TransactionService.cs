@@ -9,7 +9,6 @@ public sealed class TransactionService(
     IUserRepository userRepository,
     IAccountRepository accountRepository,
     ICategoryRepository categoryRepository,
-    ITagRepository tagRepository,
     ITransactionRepository transactionRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService) : ITransactionService
@@ -17,7 +16,6 @@ public sealed class TransactionService(
     private readonly IUserRepository _userRepository = userRepository;
     private readonly IAccountRepository _accountRepository = accountRepository;
     private readonly ICategoryRepository _categoryRepository = categoryRepository;
-    private readonly ITagRepository _tagRepository = tagRepository;
     private readonly ITransactionRepository _transactionRepository = transactionRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ICurrentUserService _currentUserService = currentUserService;
@@ -57,27 +55,6 @@ public sealed class TransactionService(
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
-        }
-
-        if (request.TagIds is not null && request.TagIds.Count > 0)
-        {
-            var distinctTagIds = request.TagIds.Distinct().ToArray();
-
-            foreach (var tagId in distinctTagIds)
-            {
-                var tag = await _tagRepository.GetByIdAsync(tagId, cancellationToken);
-                if (tag is null || tag.UserId != userId || tag.IsDeleted)
-                    return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
-            }
-
-            try
-            {
-                transaction.ReplaceTags(distinctTagIds);
-            }
-            catch (DomainException ex)
-            {
-                return Result<Guid>.Failure(ex.Error);
-            }
         }
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);
@@ -138,20 +115,6 @@ public sealed class TransactionService(
             }
         }
 
-        var tagIds = request.TagIds?.Distinct().ToArray() ?? [];
-
-        if (tagIds.Length > 0)
-        {
-            foreach (var tagId in tagIds)
-            {
-                var tag = await _tagRepository.GetByIdAsync(tagId, cancellationToken);
-                if (tag is null || tag.UserId != userId || tag.IsDeleted)
-                    return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
-            }
-        }
-
-        transaction.ReplaceTags(tagIds);
-
         await _transactionRepository.UpdateAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -183,22 +146,39 @@ public sealed class TransactionService(
         var userId = _currentUserService.UserId;
 
         var transactions = await _transactionRepository
-            .GetByUserIdWithCategoryAsync(userId, cancellationToken);
+            .GetByUserIdWithDetailsAsync(userId, cancellationToken);
 
         var items = transactions
             .OrderByDescending(x => x.Date)
             .Select(x => new TransactionItemResponse
             {
                 Id = x.Id,
-                AccountId = x.AccountId,
-                CategoryId = x.CategoryId,
-                CategoryName = x.Category!.Name,
-                CategoryColor = x.Category.Color,
+                Account = new TransactionAccountResponse
+                {
+                    Id = x.AccountId,
+                    Name = x.Account!.Name,
+                    Color = x.Account.Color,
+                    CurrencyId = x.Account.CurrencyId,
+                    CurrencyCode = x.Account.Currency!.Code,
+                    IsArchived = x.Account.IsArchived
+                },
+                Category = new TransactionCategoryResponse
+                {
+                    Id = x.CategoryId,
+                    Name = x.Category!.Name,
+                    Color = x.Category.Color
+                },
                 Amount = x.Amount,
                 Date = x.Date,
                 Description = x.Description,
-                TagIds = x.TransactionTags.Select(tt => tt.TagId).ToArray(),
-                Tags = x.TransactionTags.Select(tt => tt.Tag!.Name).ToArray(),
+                Tags = [.. x.TransactionTags
+                    .Where(tt => tt.Tag is not null)
+                    .Select(tt => new TransactionTagResponse
+                    {
+                        Id = tt.TagId,
+                        Name = tt.Tag!.Name,
+                        Color = tt.Tag.Color
+                    })],
                 IsTransfer = x.TransferId.HasValue
             })
             .ToArray();

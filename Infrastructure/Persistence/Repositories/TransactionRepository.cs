@@ -57,15 +57,17 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Transaction>> GetByUserIdWithCategoryAsync(
+    public async Task<IReadOnlyCollection<Transaction>> GetByUserIdWithDetailsAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.Transactions
+            .AsNoTracking()
             .Include(t => t.Category)
-            .Include(t => t.Account)
+            .Include(t => t.Account!)
+                .ThenInclude(a => a.Currency)
             .Include(t => t.TransactionTags)
-            .ThenInclude(tt => tt.Tag)
+                .ThenInclude(tt => tt.Tag)
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.Date)
             .ToListAsync(cancellationToken);

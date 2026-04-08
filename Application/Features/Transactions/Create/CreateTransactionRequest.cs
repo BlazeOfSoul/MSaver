@@ -11,6 +11,4 @@ public sealed class CreateTransactionRequest
     public decimal Amount { get; set; }
 
     public DateTime Date { get; set; }
-
-    public IReadOnlyCollection<Guid> TagIds { get; set; } = [];
 }

@@ -50,8 +50,7 @@ public sealed class TransactionsController(
             body.CategoryId,
             body.Amount,
             body.Date,
-            body.Description,
-            body.TagIds);
+            body.Description);
 
         return ValidateAndExecuteAsync<UpdateTransactionRequest, Guid>(
             request,

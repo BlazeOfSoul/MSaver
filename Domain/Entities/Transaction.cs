@@ -42,7 +42,7 @@ public sealed class Transaction : Entity
         Guid currencyId,
         decimal amount,
         DateTime date,
-        string description = "",
+        string? description = null,
         Guid? baseCurrencyId = null,
         decimal? amountBase = null)
     {
@@ -79,7 +79,7 @@ public sealed class Transaction : Entity
         Guid categoryId,
         decimal amount,
         DateTime date,
-        string description = "",
+        string? description = null,
         Guid? baseCurrencyId = null,
         decimal? amountBase = null)
     {
@@ -105,11 +105,6 @@ public sealed class Transaction : Entity
 
         AccountId = accountId;
         CurrencyId = currencyId;
-    }
-
-    public void ChangeDescription(string description)
-    {
-        SetDescription(description);
     }
 
     public void SetBaseAmount(Guid baseCurrencyId, decimal amountBase)
@@ -162,7 +157,7 @@ public sealed class Transaction : Entity
         Amount = amount;
     }
 
-    private void SetDescription(string description)
+    private void SetDescription(string? description)
     {
         Description = description?.Trim() ?? string.Empty;
     }

@@ -6,5 +6,4 @@ public sealed record UpdateTransactionRequest(
     Guid CategoryId,
     decimal Amount,
     DateTime Date,
-    string Description,
-    IReadOnlyCollection<Guid> TagIds);
+    string? Description);
