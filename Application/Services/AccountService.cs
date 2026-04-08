@@ -24,39 +24,40 @@ public sealed class AccountService(
     {
         var userId = _currentUserService.UserId;
 
+        var currency = await _currencyRepository.GetByIdAsync(request.CurrencyId, cancellationToken);
+        if (currency is null)
+            return Result<Guid>.Failure(AccountDomainErrors.CurrencyNotFound);
+
+        var existsByName = await _accountRepository.ExistsByNameAsync(
+            userId,
+            request.Name,
+            cancellationToken);
+
+        if (existsByName)
+            return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
+
+        var hasAccounts = await _accountRepository.AnyAsync(userId, cancellationToken);
+        var isPrimary = !hasAccounts;
+
+        Account account;
         try
         {
-            var currency = await _currencyRepository.GetByIdAsync(request.CurrencyId, cancellationToken);
-            if (currency is null)
-                return Result<Guid>.Failure(AccountDomainErrors.CurrencyNotFound);
-
-            var existsByName = await _accountRepository.ExistsByNameAsync(
-                userId,
-                request.Name,
-                cancellationToken);
-
-            if (existsByName)
-                return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
-
-            var hasAccounts = await _accountRepository.AnyAsync(userId, cancellationToken);
-            var isPrimary = !hasAccounts;
-
-            var account = Account.Create(
+            account = Account.Create(
                 userId: userId,
                 currencyId: request.CurrencyId,
                 name: request.Name,
                 color: request.Color,
                 isPrimary: isPrimary);
-
-            await _accountRepository.AddAsync(account, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(account.Id);
         }
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
         }
+
+        await _accountRepository.AddAsync(account, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(account.Id);
     }
 
     public async Task<Result<Guid>> UpdateAsync(
@@ -65,34 +66,34 @@ public sealed class AccountService(
     {
         var userId = _currentUserService.UserId;
 
+        var account = await _accountRepository.GetByIdAsync(request.Id, cancellationToken);
+        if (account is null || account.UserId != userId)
+            return Result<Guid>.Failure(AccountDomainErrors.AccountNotFound);
+
+        var exists = await _accountRepository.ExistsByNameAsync(
+            userId,
+            request.Name,
+            cancellationToken,
+            request.Id);
+
+        if (exists)
+            return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
+
         try
         {
-            var account = await _accountRepository.GetByIdAsync(request.Id, cancellationToken);
-            if (account is null || account.UserId != userId)
-                return Result<Guid>.Failure(AccountDomainErrors.AccountNotFound);
-
-            var exists = await _accountRepository.ExistsByNameAsync(
-                userId,
-                request.Name,
-                cancellationToken,
-                request.Id);
-
-            if (exists)
-                return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
-
             account.Update(
                 request.Name,
                 request.Color);
-
-            await _accountRepository.UpdateAsync(account, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(account.Id);
         }
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
         }
+
+        await _accountRepository.UpdateAsync(account, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(account.Id);
     }
 
     public async Task<Result<Guid>> DeleteAsync(
@@ -101,23 +102,23 @@ public sealed class AccountService(
     {
         var userId = _currentUserService.UserId;
 
+        var account = await _accountRepository.GetByIdAsync(id, cancellationToken);
+        if (account is null || account.UserId != userId)
+            return Result<Guid>.Failure(AccountDomainErrors.AccountNotFound);
+
         try
         {
-            var account = await _accountRepository.GetByIdAsync(id, cancellationToken);
-            if (account is null || account.UserId != userId)
-                return Result<Guid>.Failure(AccountDomainErrors.AccountNotFound);
-
             account.Archive();
-
-            await _accountRepository.UpdateAsync(account, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(account.Id);
         }
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
         }
+
+        await _accountRepository.UpdateAsync(account, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(account.Id);
     }
 
     public async Task<Result<GetAccountsResponse>> GetAccountsAsync(CancellationToken cancellationToken = default)

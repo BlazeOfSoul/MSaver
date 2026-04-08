@@ -40,9 +40,10 @@ public sealed class TransactionService(
 
         var account = validation.Account!;
 
+        Transaction transaction;
         try
         {
-            var transaction = Transaction.Create(
+            transaction = Transaction.Create(
                 userId: userId,
                 accountId: request.AccountId,
                 categoryId: request.CategoryId,
@@ -52,30 +53,37 @@ public sealed class TransactionService(
                 description: request.Description,
                 baseCurrencyId: null,
                 amountBase: null);
-
-            if (request.TagIds is not null && request.TagIds.Count > 0)
-            {
-                var distinctTagIds = request.TagIds.Distinct().ToArray();
-
-                foreach (var tagId in distinctTagIds)
-                {
-                    var tag = await _tagRepository.GetByIdAsync(tagId, cancellationToken);
-                    if (tag is null || tag.UserId != userId || tag.IsDeleted)
-                        return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
-                }
-
-                transaction.ReplaceTags(distinctTagIds);
-            }
-
-            await _transactionRepository.AddAsync(transaction, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(transaction.Id);
         }
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
         }
+
+        if (request.TagIds is not null && request.TagIds.Count > 0)
+        {
+            var distinctTagIds = request.TagIds.Distinct().ToArray();
+
+            foreach (var tagId in distinctTagIds)
+            {
+                var tag = await _tagRepository.GetByIdAsync(tagId, cancellationToken);
+                if (tag is null || tag.UserId != userId || tag.IsDeleted)
+                    return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
+            }
+
+            try
+            {
+                transaction.ReplaceTags(distinctTagIds);
+            }
+            catch (DomainException ex)
+            {
+                return Result<Guid>.Failure(ex.Error);
+            }
+        }
+
+        await _transactionRepository.AddAsync(transaction, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(transaction.Id);
     }
 
     public async Task<Result<Guid>> UpdateAsync(
@@ -112,35 +120,42 @@ public sealed class TransactionService(
                 description: request.Description,
                 baseCurrencyId: null,
                 amountBase: null);
-
-            if (transaction.AccountId != request.AccountId || transaction.CurrencyId != account.CurrencyId)
-            {
-                transaction.ChangeAccount(request.AccountId, account.CurrencyId);
-            }
-
-            var tagIds = request.TagIds?.Distinct().ToArray() ?? [];
-
-            if (tagIds.Length > 0)
-            {
-                foreach (var tagId in tagIds)
-                {
-                    var tag = await _tagRepository.GetByIdAsync(tagId, cancellationToken);
-                    if (tag is null || tag.UserId != userId || tag.IsDeleted)
-                        return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
-                }
-            }
-
-            transaction.ReplaceTags(tagIds);
-
-            await _transactionRepository.UpdateAsync(transaction, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(transaction.Id);
         }
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
         }
+
+        if (transaction.AccountId != request.AccountId || transaction.CurrencyId != account.CurrencyId)
+        {
+            try
+            {
+                transaction.ChangeAccount(request.AccountId, account.CurrencyId);
+            }
+            catch (DomainException ex)
+            {
+                return Result<Guid>.Failure(ex.Error);
+            }
+        }
+
+        var tagIds = request.TagIds?.Distinct().ToArray() ?? [];
+
+        if (tagIds.Length > 0)
+        {
+            foreach (var tagId in tagIds)
+            {
+                var tag = await _tagRepository.GetByIdAsync(tagId, cancellationToken);
+                if (tag is null || tag.UserId != userId || tag.IsDeleted)
+                    return Result<Guid>.Failure(TagDomainErrors.TagNotFound);
+            }
+        }
+
+        transaction.ReplaceTags(tagIds);
+
+        await _transactionRepository.UpdateAsync(transaction, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(transaction.Id);
     }
 
     public async Task<Result<Guid>> DeleteAsync(

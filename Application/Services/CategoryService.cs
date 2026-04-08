@@ -54,28 +54,29 @@ public sealed class CategoryService(
         if (exists)
             return Result<Guid>.Failure(CategoryDomainErrors.NameAlreadyExists);
 
+        Domain.Entities.Category category;
         try
         {
-            var category = Domain.Entities.Category.Create(
+            category = Domain.Entities.Category.Create(
                 userId,
                 request.Name,
                 request.Type,
                 request.Color);
-
-            await _categoryRepository.AddAsync(category, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(category.Id);
         }
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
         }
+
+        await _categoryRepository.AddAsync(category, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(category.Id);
     }
 
     public async Task<Result<Guid>> UpdateAsync(
-    UpdateCategoryRequest request,
-    CancellationToken cancellationToken = default)
+        UpdateCategoryRequest request,
+        CancellationToken cancellationToken = default)
     {
         var userId = _currentUserService.UserId;
 
@@ -105,16 +106,16 @@ public sealed class CategoryService(
         try
         {
             category.Update(request.Name, request.Color, type);
-
-            await _categoryRepository.UpdateAsync(category, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(category.Id);
         }
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
         }
+
+        await _categoryRepository.UpdateAsync(category, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(category.Id);
     }
 
     public async Task<Result<Guid>> DeleteAsync(

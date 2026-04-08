@@ -10,23 +10,19 @@ namespace MSaver.Application.Services;
 public sealed class AuthService(
     IUserRepository userRepository,
     ICategoryRepository categoryRepository,
-    IAccountRepository accountRepository,
     IRefreshTokenRepository refreshTokenRepository,
     IJwtTokenGenerator jwtTokenGenerator,
     IUnitOfWork unitOfWork,
-    IPasswordHasher<User> passwordHasher,
-    ICurrencyRepository currencyRepository) : IAuthService
+    IPasswordHasher<User> passwordHasher) : IAuthService
 {
     private const int MaxActiveRefreshTokensPerUser = 3;
 
     private readonly IUserRepository _userRepository = userRepository;
     private readonly ICategoryRepository _categoryRepository = categoryRepository;
-    private readonly IAccountRepository _accountRepository = accountRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository = refreshTokenRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator = jwtTokenGenerator;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
-    private readonly ICurrencyRepository _currencyRepository = currencyRepository;
 
     public async Task<Result<LoginResponse>> LoginAsync(
         LoginRequest request,
@@ -69,24 +65,25 @@ public sealed class AuthService(
         RegisterRequest request,
         CancellationToken cancellationToken = default)
     {
+        var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
+        if (existingUser is not null)
+            return Result<Guid>.Failure(AuthDomainErrors.RepeatedEmail);
+
+        User user;
         try
         {
-            var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
-            if (existingUser is not null)
-                return Result<Guid>.Failure(AuthDomainErrors.RepeatedEmail);
-
-            var user = CreateUser(request);
-            await _userRepository.AddAsync(user, cancellationToken);
-
-            await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(user.Id);
+            user = CreateUser(request);
         }
         catch (DomainException ex)
         {
             return Result<Guid>.Failure(ex.Error);
         }
+
+        await _userRepository.AddAsync(user, cancellationToken);
+        await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(user.Id);
     }
 
     public async Task<Result<RefreshTokenResponse>> RefreshAsync(
