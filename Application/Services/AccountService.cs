@@ -44,8 +44,7 @@ public sealed class AccountService(
                 request.CurrencyId,
                 request.Name,
                 request.InitialBalance,
-                request.Color,
-                request.Icon);
+                request.Color);
 
             await _accountRepository.AddAsync(account, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -127,7 +126,10 @@ public sealed class AccountService(
             if (exists)
                 return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
 
-            account.Update(request.Name, request.CurrencyId, request.Color, request.Icon);
+            account.Update(
+                request.Name,
+                request.CurrencyId,
+                request.Color);
 
             await _accountRepository.UpdateAsync(account, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

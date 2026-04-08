@@ -27,8 +27,6 @@ public sealed class Category : Entity
 
     public string Color { get; private set; }
 
-    public string? Icon { get; private set; }
-
     public bool IsDeleted { get; private set; }
 
     public IReadOnlyCollection<Category> Children => _children;
@@ -42,7 +40,6 @@ public sealed class Category : Entity
         string name,
         CategoryType type,
         string color,
-        string? icon = null,
         Guid? parentId = null)
     {
         if (userId == Guid.Empty)
@@ -58,7 +55,6 @@ public sealed class Category : Entity
 
         category.SetName(name);
         category.SetColor(color);
-        category.SetIcon(icon);
 
         return category;
     }
@@ -67,12 +63,10 @@ public sealed class Category : Entity
         string name,
         string color,
         CategoryType type,
-        string? icon = null,
         Guid? parentId = null)
     {
         SetName(name);
         SetColor(color);
-        SetIcon(icon);
         SetParent(parentId);
 
         Type = type;
@@ -81,11 +75,6 @@ public sealed class Category : Entity
     public void SetParent(Guid? parentId)
     {
         ParentId = parentId;
-    }
-
-    public void ChangeIcon(string? icon)
-    {
-        SetIcon(icon);
     }
 
     public void SoftDelete()
@@ -112,12 +101,5 @@ public sealed class Category : Entity
             throw new DomainException(CategoryDomainErrors.ColorRequired);
 
         Color = color.Trim();
-    }
-
-    private void SetIcon(string? icon)
-    {
-        Icon = string.IsNullOrWhiteSpace(icon)
-            ? null
-            : icon.Trim();
     }
 }

@@ -32,9 +32,6 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .IsRequired()
             .HasMaxLength(20);
 
-        builder.Property(x => x.Icon)
-            .HasMaxLength(50);
-
         builder.Property(x => x.IsDeleted)
             .IsRequired();
 

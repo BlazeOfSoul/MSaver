@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -111,7 +112,6 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Color = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    Icon = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -226,6 +226,30 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "tag_categories",
+                columns: table => new
+                {
+                    TagId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategoryId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tag_categories", x => new { x.TagId, x.CategoryId });
+                    table.ForeignKey(
+                        name: "FK_tag_categories_categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_tag_categories_tags_TagId",
+                        column: x => x.TagId,
+                        principalTable: "tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "transaction_tags",
                 columns: table => new
                 {
@@ -304,6 +328,11 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_tag_categories_CategoryId",
+                table: "tag_categories",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_tags_UserId_Name",
                 table: "tags",
                 columns: new[] { "UserId", "Name" });
@@ -363,6 +392,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "RefreshToken");
+
+            migrationBuilder.DropTable(
+                name: "tag_categories");
 
             migrationBuilder.DropTable(
                 name: "transaction_tags");
