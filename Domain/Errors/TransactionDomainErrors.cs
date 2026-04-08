@@ -80,14 +80,4 @@ public static class TransactionDomainErrors
         DomainError.NotFound(
             code: "Transaction.TransactionNotFound",
             message: "Транзакция не найдена.");
-
-    public static readonly DomainError TransferTransactionCannotBeEditedAsRegular =
-        DomainError.Validation(
-            code: "Transaction.TransferTransactionCannotBeEditedAsRegular",
-            message: "Транзакцию перевода нельзя редактировать как обычную операцию.");
-
-    public static readonly DomainError TransferTransactionCannotBeDeletedAsRegular =
-        DomainError.Validation(
-            code: "Transaction.TransferTransactionCannotBeDeletedAsRegular",
-            message: "Транзакцию перевода нельзя удалить как обычную операцию.");
 }

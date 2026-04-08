@@ -4,7 +4,6 @@ public sealed class Currency : Entity
 {
     private readonly List<Account> _accounts = [];
     private readonly List<Transaction> _transactions = [];
-    private readonly List<Transaction> _baseCurrencyTransactions = [];
 
     private Currency() { }
 
@@ -21,8 +20,6 @@ public sealed class Currency : Entity
     public IReadOnlyCollection<Account> Accounts => _accounts;
 
     public IReadOnlyCollection<Transaction> Transactions => _transactions;
-
-    public IReadOnlyCollection<Transaction> BaseCurrencyTransactions => _baseCurrencyTransactions;
 
     public static Currency Create(
         string code,

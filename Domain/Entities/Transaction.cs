@@ -2,8 +2,6 @@
 
 public sealed class Transaction : Entity
 {
-    private readonly List<TransactionTag> _transactionTags = [];
-
     private Transaction() { }
 
     public Guid UserId { get; private set; }
@@ -18,22 +16,11 @@ public sealed class Transaction : Entity
     public Guid CurrencyId { get; private set; }
     public Currency? Currency { get; private set; }
 
-    public Guid? BaseCurrencyId { get; private set; }
-    public Currency? BaseCurrency { get; private set; }
-
-    public Guid? TransferId { get; private set; }
-
     public decimal Amount { get; private set; }
-
-    public decimal? AmountBase { get; private set; }
-
-    public decimal? TransferRate { get; private set; }
 
     public DateTime Date { get; private set; }
 
-    public string Description { get; private set; } = null!;
-
-    public IReadOnlyCollection<TransactionTag> TransactionTags => _transactionTags;
+    public string Description { get; private set; } = string.Empty;
 
     public static Transaction Create(
         Guid userId,
@@ -42,9 +29,7 @@ public sealed class Transaction : Entity
         Guid currencyId,
         decimal amount,
         DateTime date,
-        string? description = null,
-        Guid? baseCurrencyId = null,
-        decimal? amountBase = null)
+        string? description = null)
     {
         if (userId == Guid.Empty)
             throw new DomainException(TransactionDomainErrors.UserIdRequired);
@@ -64,9 +49,7 @@ public sealed class Transaction : Entity
             AccountId = accountId,
             CategoryId = categoryId,
             CurrencyId = currencyId,
-            BaseCurrencyId = baseCurrencyId,
-            Date = date,
-            AmountBase = amountBase
+            Date = date
         };
 
         transaction.SetAmount(amount);
@@ -79,17 +62,13 @@ public sealed class Transaction : Entity
         Guid categoryId,
         decimal amount,
         DateTime date,
-        string? description = null,
-        Guid? baseCurrencyId = null,
-        decimal? amountBase = null)
+        string? description = null)
     {
         if (categoryId == Guid.Empty)
             throw new DomainException(TransactionDomainErrors.CategoryIdRequired);
 
         CategoryId = categoryId;
         Date = date;
-        BaseCurrencyId = baseCurrencyId;
-        AmountBase = amountBase;
 
         SetAmount(amount);
         SetDescription(description);
@@ -105,48 +84,6 @@ public sealed class Transaction : Entity
 
         AccountId = accountId;
         CurrencyId = currencyId;
-    }
-
-    public void SetBaseAmount(Guid baseCurrencyId, decimal amountBase)
-    {
-        if (baseCurrencyId == Guid.Empty)
-            throw new DomainException(TransactionDomainErrors.BaseCurrencyIdRequired);
-
-        BaseCurrencyId = baseCurrencyId;
-        AmountBase = amountBase;
-    }
-
-    public void MarkAsTransfer(Guid transferId, decimal transferRate)
-    {
-        if (transferId == Guid.Empty)
-            throw new DomainException(TransactionDomainErrors.TransferIdRequired);
-
-        if (transferRate <= 0)
-            throw new DomainException(TransactionDomainErrors.TransferRateMustBePositive);
-
-        TransferId = transferId;
-        TransferRate = transferRate;
-    }
-
-    public void ClearTransfer()
-    {
-        TransferId = null;
-        TransferRate = null;
-    }
-
-    public void ReplaceTags(IEnumerable<Guid> tagIds)
-    {
-        _transactionTags.Clear();
-
-        foreach (var tagId in tagIds.Distinct())
-        {
-            _transactionTags.Add(TransactionTag.Create(Id, tagId));
-        }
-    }
-
-    public bool IsTransfer()
-    {
-        return TransferId.HasValue;
     }
 
     private void SetAmount(decimal amount)

@@ -33,11 +33,6 @@ public sealed class TagConfiguration : IEntityTypeConfiguration<Tag>
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(x => x.TransactionTags)
-            .WithOne(x => x.Tag)
-            .HasForeignKey(x => x.TagId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasMany(x => x.TagCategories)
             .WithOne(x => x.Tag)
             .HasForeignKey(x => x.TagId)

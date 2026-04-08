@@ -48,9 +48,7 @@ public sealed class TransactionService(
                 currencyId: account.CurrencyId,
                 amount: request.Amount,
                 date: request.Date,
-                description: request.Description,
-                baseCurrencyId: null,
-                amountBase: null);
+                description: request.Description);
         }
         catch (DomainException ex)
         {
@@ -73,9 +71,6 @@ public sealed class TransactionService(
         if (transaction is null || transaction.UserId != userId)
             return Result<Guid>.Failure(TransactionDomainErrors.TransactionNotFound);
 
-        if (transaction.IsTransfer())
-            return Result<Guid>.Failure(TransactionDomainErrors.TransferTransactionCannotBeEditedAsRegular);
-
         var validation = await ValidateTransactionRequestAsync(
             userId,
             request.AccountId,
@@ -94,9 +89,7 @@ public sealed class TransactionService(
                 categoryId: request.CategoryId,
                 amount: request.Amount,
                 date: request.Date,
-                description: request.Description,
-                baseCurrencyId: null,
-                amountBase: null);
+                description: request.Description);
         }
         catch (DomainException ex)
         {
@@ -130,9 +123,6 @@ public sealed class TransactionService(
         var transaction = await _transactionRepository.GetByIdAsync(id, cancellationToken);
         if (transaction is null || transaction.UserId != userId)
             return Result<Guid>.Failure(TransactionDomainErrors.TransactionNotFound);
-
-        if (transaction.IsTransfer())
-            return Result<Guid>.Failure(TransactionDomainErrors.TransferTransactionCannotBeDeletedAsRegular);
 
         await _transactionRepository.RemoveAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -170,16 +160,7 @@ public sealed class TransactionService(
                 },
                 Amount = x.Amount,
                 Date = x.Date,
-                Description = x.Description,
-                Tags = [.. x.TransactionTags
-                    .Where(tt => tt.Tag is not null)
-                    .Select(tt => new TransactionTagResponse
-                    {
-                        Id = tt.TagId,
-                        Name = tt.Tag!.Name,
-                        Color = tt.Tag.Color
-                    })],
-                IsTransfer = x.TransferId.HasValue
+                Description = x.Description
             })
             .ToArray();
 

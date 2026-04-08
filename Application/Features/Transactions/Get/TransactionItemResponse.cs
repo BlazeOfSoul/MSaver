@@ -13,8 +13,4 @@ public sealed class TransactionItemResponse
     public DateTime Date { get; init; }
 
     public string Description { get; init; } = string.Empty;
-
-    public IReadOnlyCollection<TransactionTagResponse> Tags { get; init; } = [];
-
-    public bool IsTransfer { get; init; }
 }

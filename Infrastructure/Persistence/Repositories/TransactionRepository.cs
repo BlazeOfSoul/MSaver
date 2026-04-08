@@ -42,8 +42,6 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         return await _dbContext.Transactions
             .Include(t => t.Category)
             .Include(t => t.Account)
-            .Include(t => t.TransactionTags)
-            .ThenInclude(tt => tt.Tag)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
@@ -66,8 +64,6 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .Include(t => t.Category)
             .Include(t => t.Account!)
                 .ThenInclude(a => a.Currency)
-            .Include(t => t.TransactionTags)
-                .ThenInclude(tt => tt.Tag)
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.Date)
             .ToListAsync(cancellationToken);
