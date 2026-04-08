@@ -87,7 +87,6 @@ public sealed class AccountService(
                 name: request.Name,
                 initialBalance: request.InitialBalance,
                 color: request.Color,
-                icon: request.Icon,
                 isPrimary: true);
 
             await _accountRepository.AddAsync(account, cancellationToken);
@@ -113,10 +112,6 @@ public sealed class AccountService(
             if (account is null || account.UserId != userId)
                 return Result<Guid>.Failure(AccountDomainErrors.AccountNotFound);
 
-            var currency = await _currencyRepository.GetByIdAsync(request.CurrencyId, cancellationToken);
-            if (currency is null)
-                return Result<Guid>.Failure(AccountDomainErrors.CurrencyNotFound);
-
             var exists = await _accountRepository.ExistsByNameAsync(
                 userId,
                 request.Name,
@@ -128,7 +123,6 @@ public sealed class AccountService(
 
             account.Update(
                 request.Name,
-                request.CurrencyId,
                 request.Color);
 
             await _accountRepository.UpdateAsync(account, cancellationToken);
@@ -192,7 +186,6 @@ public sealed class AccountService(
                     InitialBalance = account.InitialBalance,
                     CurrentBalance = account.InitialBalance + total,
                     Color = account.Color,
-                    Icon = account.Icon,
                     IsArchived = account.IsArchived
                 };
             })

@@ -31,7 +31,7 @@ public sealed class Transaction : Entity
 
     public DateTime Date { get; private set; }
 
-    public string Description { get; private set; }
+    public string Description { get; private set; } = null!;
 
     public IReadOnlyCollection<TransactionTag> TransactionTags => _transactionTags;
 

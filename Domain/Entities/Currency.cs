@@ -8,11 +8,11 @@ public sealed class Currency : Entity
 
     private Currency() { }
 
-    public string Code { get; private set; }
+    public string Code { get; private set; } = null!;
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = null!;
 
-    public string Symbol { get; private set; }
+    public string Symbol { get; private set; } = null!;
 
     public short Precision { get; private set; }
 

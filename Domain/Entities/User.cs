@@ -10,11 +10,11 @@ public sealed class User : Entity
 
     private User() { }
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = null!;
 
-    public string Email { get; private set; }
+    public string Email { get; private set; } = null!;
 
-    public string PasswordHash { get; private set; }
+    public string PasswordHash { get; private set; } = null!;
 
     public DateTime CreatedAt { get; private set; }
 

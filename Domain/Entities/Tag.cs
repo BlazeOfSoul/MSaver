@@ -10,7 +10,7 @@ public sealed class Tag : Entity
     public Guid UserId { get; private set; }
     public User? User { get; private set; }
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = null!;
 
     public string? Color { get; private set; }
 

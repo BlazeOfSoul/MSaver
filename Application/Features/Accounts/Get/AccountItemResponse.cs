@@ -16,7 +16,5 @@ public sealed class AccountItemResponse
 
     public string? Color { get; init; }
 
-    public string? Icon { get; init; }
-
     public bool IsArchived { get; init; }
 }

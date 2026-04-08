@@ -12,13 +12,11 @@ public sealed class Account : Entity
     public Guid CurrencyId { get; private set; }
     public Currency? Currency { get; private set; }
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = null!;
 
     public decimal InitialBalance { get; private set; }
 
     public string? Color { get; private set; }
-
-    public string? Icon { get; private set; }
 
     public bool IsPrimary { get; private set; }
 
@@ -34,7 +32,6 @@ public sealed class Account : Entity
         string name,
         decimal initialBalance = 0m,
         string? color = null,
-        string? icon = null,
         bool isPrimary = false)
     {
         if (userId == Guid.Empty)
@@ -54,25 +51,16 @@ public sealed class Account : Entity
 
         account.SetName(name);
         account.SetColor(color);
-        account.SetIcon(icon);
 
         return account;
     }
 
     public void Update(
         string name,
-        Guid currencyId,
-        string? color = null,
-        string? icon = null)
+        string? color = null)
     {
-        if (currencyId == Guid.Empty)
-            throw new DomainException(AccountDomainErrors.CurrencyIdRequired);
-
         SetName(name);
         SetColor(color);
-        SetIcon(icon);
-
-        CurrencyId = currencyId;
     }
 
     public void Archive()
@@ -106,12 +94,5 @@ public sealed class Account : Entity
         Color = string.IsNullOrWhiteSpace(color)
             ? null
             : color.Trim();
-    }
-
-    private void SetIcon(string? icon)
-    {
-        Icon = string.IsNullOrWhiteSpace(icon)
-            ? null
-            : icon.Trim();
     }
 }

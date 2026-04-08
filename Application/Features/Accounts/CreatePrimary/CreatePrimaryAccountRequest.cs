@@ -9,6 +9,4 @@ public sealed class CreatePrimaryAccountRequest
     public decimal InitialBalance { get; set; }
 
     public string? Color { get; set; }
-
-    public string? Icon { get; set; }
 }

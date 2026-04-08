@@ -30,9 +30,6 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.Color)
             .HasMaxLength(20);
 
-        builder.Property(x => x.Icon)
-            .HasMaxLength(50);
-
         builder.Property(x => x.IsPrimary)
             .IsRequired()
             .HasDefaultValue(false);
