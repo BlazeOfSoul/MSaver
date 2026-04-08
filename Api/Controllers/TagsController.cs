@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
+using MSaver.Api.Contracts.Tags;
 using MSaver.Application.Features.Tags.AssignCategories;
 using MSaver.Application.Features.Tags.Create;
 using MSaver.Application.Features.Tags.Update;
@@ -43,20 +44,18 @@ public sealed class TagsController(
     [HttpPut("{id:guid}")]
     public Task<IActionResult> Update(
         Guid id,
-        [FromBody] UpdateTagRequest request,
+        [FromBody] UpdateTagBody body,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateTagRequest
-        {
-            Id = id,
-            Name = request.Name,
-            Color = request.Color
-        };
+        var request = new UpdateTagRequest(
+            id,
+            body.Name,
+            body.Color);
 
         return ValidateAndExecuteAsync<UpdateTagRequest, Guid>(
-            command,
+            request,
             _updateValidator,
-            ct => _tagService.UpdateAsync(command, ct),
+            ct => _tagService.UpdateAsync(request, ct),
             cancellationToken);
     }
 
@@ -72,10 +71,14 @@ public sealed class TagsController(
     [HttpPut("{tagId:guid}/categories")]
     public Task<IActionResult> AssignCategories(
         Guid tagId,
-        [FromBody] AssignTagCategoriesRequest request,
+        [FromBody] AssignTagCategoriesBody body,
         CancellationToken cancellationToken)
     {
-        request.TagId = tagId;
+        var request = new AssignTagCategoriesRequest
+        {
+            TagId = tagId,
+            CategoryIds = body.CategoryIds
+        };
 
         return ValidateAndExecuteAsync<AssignTagCategoriesRequest, Guid>(
             request,

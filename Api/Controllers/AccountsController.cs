@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
+using MSaver.Api.Contracts.Accounts;
 using MSaver.Application.Features.Accounts.Create;
 using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
@@ -30,17 +31,15 @@ public sealed class AccountsController(
 
     [HttpGet("{accountId:guid}/month-balance")]
     public Task<IActionResult> GetMonthBalance(
-            Guid accountId,
-            [FromQuery] int year,
-            [FromQuery] int month,
-            CancellationToken cancellationToken)
+        Guid accountId,
+        [FromQuery] int year,
+        [FromQuery] int month,
+        CancellationToken cancellationToken)
     {
-        var request = new GetMonthBalanceRequest
-        {
-            AccountId = accountId,
-            Year = year,
-            Month = month
-        };
+        var request = new GetMonthBalanceRequest(
+            accountId,
+            year,
+            month);
 
         return ValidateAndExecuteAsync<GetMonthBalanceRequest, GetMonthBalanceResponse>(
             request,
@@ -64,10 +63,13 @@ public sealed class AccountsController(
     [HttpPut("{id:guid}")]
     public Task<IActionResult> Update(
         Guid id,
-        [FromBody] UpdateAccountRequest request,
+        [FromBody] UpdateAccountBody body,
         CancellationToken cancellationToken)
     {
-        request.Id = id;
+        var request = new UpdateAccountRequest(
+            id,
+            body.Name,
+            body.Color);
 
         return ValidateAndExecuteAsync<UpdateAccountRequest, Guid>(
             request,

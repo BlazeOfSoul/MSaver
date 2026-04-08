@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
+using MSaver.Api.Contracts.Transactions;
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Update;
 
@@ -40,24 +41,22 @@ public sealed class TransactionsController(
     [HttpPut("{id:guid}")]
     public Task<IActionResult> Update(
         Guid id,
-        [FromBody] UpdateTransactionRequest request,
+        [FromBody] UpdateTransactionBody body,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateTransactionRequest
-        {
-            Id = id,
-            AccountId = request.AccountId,
-            CategoryId = request.CategoryId,
-            Amount = request.Amount,
-            Date = request.Date,
-            Description = request.Description,
-            TagIds = request.TagIds
-        };
+        var request = new UpdateTransactionRequest(
+            id,
+            body.AccountId,
+            body.CategoryId,
+            body.Amount,
+            body.Date,
+            body.Description,
+            body.TagIds);
 
         return ValidateAndExecuteAsync<UpdateTransactionRequest, Guid>(
-            command,
+            request,
             _updateValidator,
-            ct => _transactionService.UpdateAsync(command, ct),
+            ct => _transactionService.UpdateAsync(request, ct),
             cancellationToken);
     }
 

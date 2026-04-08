@@ -1,6 +1,7 @@
 using MSaver.Application.Features.Categories.Create;
 using MSaver.Application.Features.Categories.Get;
 using MSaver.Application.Features.Categories.Update;
+using MSaver.Domain.Enums;
 
 namespace MSaver.Application.Services;
 
@@ -73,8 +74,8 @@ public sealed class CategoryService(
     }
 
     public async Task<Result<Guid>> UpdateAsync(
-        UpdateCategoryRequest request,
-        CancellationToken cancellationToken = default)
+    UpdateCategoryRequest request,
+    CancellationToken cancellationToken = default)
     {
         var userId = _currentUserService.UserId;
 
@@ -98,9 +99,12 @@ public sealed class CategoryService(
         if (exists)
             return Result<Guid>.Failure(CategoryDomainErrors.NameAlreadyExists);
 
+        if (!Enum.TryParse<CategoryType>(request.Type, true, out var type))
+            return Result<Guid>.Failure(CategoryDomainErrors.InvalidCategoryType);
+
         try
         {
-            category.Update(request.Name, request.Color, request.Type);
+            category.Update(request.Name, request.Color, type);
 
             await _categoryRepository.UpdateAsync(category, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

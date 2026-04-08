@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
+using MSaver.Api.Contracts.Categories;
 using MSaver.Application.Features.Categories.Create;
 using MSaver.Application.Features.Categories.Update;
 
@@ -40,19 +41,19 @@ public sealed class CategoriesController(
     [HttpPut("{id:guid}")]
     public Task<IActionResult> Update(
         Guid id,
-        [FromBody] UpdateCategoryRequest request,
+        [FromBody] UpdateCategoryBody body,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateCategoryRequest(
+        var request = new UpdateCategoryRequest(
             id,
-            request.Name,
-            request.Color,
-            request.Type);
+            body.Name,
+            body.Color,
+            body.Type);
 
         return ValidateAndExecuteAsync<UpdateCategoryRequest, Guid>(
-            command,
+            request,
             _updateValidator,
-            ct => _categoryService.UpdateAsync(command, ct),
+            ct => _categoryService.UpdateAsync(request, ct),
             cancellationToken);
     }
 

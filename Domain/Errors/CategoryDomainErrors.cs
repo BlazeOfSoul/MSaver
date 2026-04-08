@@ -20,6 +20,12 @@ public static class CategoryDomainErrors
             message: "Цвет категории обязателен.",
             field: "color");
 
+    public static readonly DomainError InvalidCategoryType =
+        DomainError.Validation(
+            code: "Category.InvalidType",
+            message: "Некорректный тип категории.",
+            field: "type");
+
     public static readonly DomainError CategoryNotFound =
         DomainError.NotFound(
             code: "Category.NotFound",

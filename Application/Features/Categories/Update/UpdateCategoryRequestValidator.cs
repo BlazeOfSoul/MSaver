@@ -1,4 +1,5 @@
 using MSaver.Application.Common.Validation;
+using MSaver.Domain.Enums;
 
 namespace MSaver.Application.Features.Categories.Update;
 
@@ -18,6 +19,8 @@ public sealed class UpdateCategoryRequestValidator : AbstractValidator<UpdateCat
             .MaximumLength(20).WithMessage(ValidationMessages.MaxLength);
 
         RuleFor(x => x.Type)
-            .IsInEnum();
+            .NotEmpty().WithMessage(ValidationMessages.Required)
+            .Must(x => Enum.TryParse<CategoryType>(x, true, out _))
+            .WithMessage("Некорректный тип категории.");
     }
 }
