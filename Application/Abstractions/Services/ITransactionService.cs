@@ -1,6 +1,5 @@
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Get;
-using MSaver.Application.Features.Transactions.GetStatistics;
 using MSaver.Application.Features.Transactions.Update;
 
 namespace MSaver.Application.Abstractions.Services;
@@ -20,8 +19,5 @@ public interface ITransactionService
         CancellationToken cancellationToken = default);
 
     Task<Result<GetTransactionsResponse>> GetByUserAsync(
-        CancellationToken cancellationToken = default);
-
-    Task<Result<StatisticsResponse>> GetStatisticsAsync(
         CancellationToken cancellationToken = default);
 }

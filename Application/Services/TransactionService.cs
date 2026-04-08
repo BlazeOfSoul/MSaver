@@ -1,6 +1,5 @@
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Get;
-using MSaver.Application.Features.Transactions.GetStatistics;
 using MSaver.Application.Features.Transactions.Update;
 using MSaver.Domain.Enums;
 
@@ -193,88 +192,6 @@ public sealed class TransactionService(
         {
             Items = items
         });
-    }
-
-    public async Task<Result<StatisticsResponse>> GetStatisticsAsync(
-        CancellationToken cancellationToken = default)
-    {
-        var userId = _currentUserService.UserId;
-
-        var transactions = await _transactionRepository
-            .GetByUserIdWithCategoryAsync(userId, cancellationToken);
-
-        var regularTransactions = transactions
-            .Where(t => !t.TransferId.HasValue)
-            .ToList();
-
-        var response = new StatisticsResponse();
-        var yearsSet = new HashSet<int>();
-        var monthsByYear = new Dictionary<int, HashSet<int>>();
-
-        foreach (var t in regularTransactions)
-        {
-            var year = t.Date.Year;
-            var month = t.Date.Month - 1;
-
-            yearsSet.Add(year);
-
-            if (!monthsByYear.ContainsKey(year))
-            {
-                monthsByYear[year] = [];
-            }
-
-            monthsByYear[year].Add(month);
-
-            var isIncome = t.Amount > 0;
-            var amountAbs = Math.Abs(t.Amount);
-
-            var targetChart = isIncome ? response.IncomeChartDataByYear : response.ExpenseChartDataByYear;
-            var targetTable = isIncome ? response.IncomeTableData : response.ExpenseTableData;
-
-            if (!targetChart.ContainsKey(year))
-            {
-                targetChart[year] = Enumerable.Range(0, 12)
-                    .Select(_ => new ChartDataItem())
-                    .ToList();
-            }
-
-            var chartMonth = targetChart[year][month];
-            var categoryIndex = chartMonth.Labels.IndexOf(t.Category!.Name);
-
-            if (categoryIndex == -1)
-            {
-                chartMonth.Labels.Add(t.Category.Name);
-                chartMonth.Data.Add(amountAbs);
-                chartMonth.BackgroundColors.Add(t.Category.Color);
-            }
-            else
-            {
-                chartMonth.Data[categoryIndex] += amountAbs;
-            }
-
-            if (!targetTable.ContainsKey(year))
-            {
-                targetTable[year] = [];
-            }
-
-            if (!targetTable[year].ContainsKey(t.Category.Name))
-            {
-                targetTable[year][t.Category.Name] = [];
-            }
-
-            if (!targetTable[year][t.Category.Name].ContainsKey(month))
-            {
-                targetTable[year][t.Category.Name][month] = 0;
-            }
-
-            targetTable[year][t.Category.Name][month] += amountAbs;
-        }
-
-        response.AvailableYears = yearsSet.OrderBy(y => y).ToList();
-        response.AvailableMonthsByYear = monthsByYear
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.OrderBy(m => m).ToList());
-
-        return Result<StatisticsResponse>.Success(response);
     }
 
     private async Task<(bool IsFailure, DomainError Error, Account? Account, Category? Category)> ValidateTransactionRequestAsync(

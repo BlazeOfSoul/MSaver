@@ -25,13 +25,6 @@ public sealed class TransactionsController(
         return FromResult(result);
     }
 
-    [HttpGet("statistics")]
-    public async Task<IActionResult> GetStatistics(CancellationToken cancellationToken)
-    {
-        var result = await _transactionService.GetStatisticsAsync(cancellationToken);
-        return FromResult(result);
-    }
-
     [HttpPost]
     public Task<IActionResult> Create(
         [FromBody] CreateTransactionRequest request,
