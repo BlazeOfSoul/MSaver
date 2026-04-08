@@ -10,7 +10,7 @@ public interface IAuthService
         LoginRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<Result<RegisterResponse>> RegisterAsync(
+    Task<Result<Guid>> RegisterAsync(
         RegisterRequest request,
         CancellationToken cancellationToken = default);
 

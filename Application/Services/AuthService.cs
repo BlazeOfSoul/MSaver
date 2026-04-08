@@ -26,7 +26,6 @@ public sealed class AuthService(
     private readonly IJwtTokenGenerator _jwtTokenGenerator = jwtTokenGenerator;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
-
     private readonly ICurrencyRepository _currencyRepository = currencyRepository;
 
     public async Task<Result<LoginResponse>> LoginAsync(
@@ -60,15 +59,13 @@ public sealed class AuthService(
 
         var response = new LoginResponse(
             user.Id,
-            user.Name,
-            user.Email,
             accessToken,
             refreshTokenValue);
 
         return Result<LoginResponse>.Success(response);
     }
 
-    public async Task<Result<RegisterResponse>> RegisterAsync(
+    public async Task<Result<Guid>> RegisterAsync(
         RegisterRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -76,38 +73,19 @@ public sealed class AuthService(
         {
             var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
             if (existingUser is not null)
-                return Result<RegisterResponse>.Failure(AuthDomainErrors.RepeatedEmail);
+                return Result<Guid>.Failure(AuthDomainErrors.RepeatedEmail);
 
             var user = CreateUser(request);
             await _userRepository.AddAsync(user, cancellationToken);
 
             await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
-
-            var accessToken = _jwtTokenGenerator.GenerateAccessToken(
-                user.Id,
-                user.Name,
-                user.Email);
-
-            var (refreshTokenValue, refreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
-                user.Id,
-                user.Name,
-                user.Email);
-
-            await AddRefreshTokenAsync(user.Id, refreshTokenValue, refreshExpiresAt, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var response = new RegisterResponse(
-                user.Id,
-                user.Name,
-                user.Email,
-                accessToken,
-                refreshTokenValue);
-
-            return Result<RegisterResponse>.Success(response);
+            return Result<Guid>.Success(user.Id);
         }
         catch (DomainException ex)
         {
-            return Result<RegisterResponse>.Failure(ex.Error);
+            return Result<Guid>.Failure(ex.Error);
         }
     }
 

@@ -25,7 +25,7 @@ public sealed class AuthController(
     public Task<IActionResult> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
-        => ValidateAndExecuteAsync<RegisterRequest, RegisterResponse>(
+        => ValidateAndExecuteAsync<RegisterRequest, Guid>(
             request,
             _registerValidator,
             ct => _authService.RegisterAsync(request, ct),

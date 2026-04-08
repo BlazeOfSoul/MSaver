@@ -1,5 +1,3 @@
-using FluentValidation;
-
 using MSaver.Application.Common.Validation;
 
 namespace MSaver.Application.Features.Tags.AssignCategories;
