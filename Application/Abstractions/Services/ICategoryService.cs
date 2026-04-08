@@ -6,7 +6,7 @@ namespace MSaver.Application.Abstractions.Services;
 
 public interface ICategoryService
 {
-    Task<Result<CreateCategoryResponse>> CreateAsync(
+    Task<Result<Guid>> CreateAsync(
         CreateCategoryRequest request,
         CancellationToken cancellationToken = default);
 

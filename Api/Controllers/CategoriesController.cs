@@ -30,7 +30,7 @@ public sealed class CategoriesController(
         [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        return ValidateAndExecuteAsync<CreateCategoryRequest, CreateCategoryResponse>(
+        return ValidateAndExecuteAsync<CreateCategoryRequest, Guid>(
             request,
             _createValidator,
             ct => _categoryService.CreateAsync(request, ct),

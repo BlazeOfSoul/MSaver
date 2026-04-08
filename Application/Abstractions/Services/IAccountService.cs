@@ -7,7 +7,7 @@ namespace MSaver.Application.Abstractions.Services;
 
 public interface IAccountService
 {
-    Task<Result<CreateAccountResponse>> CreateAsync(
+    Task<Result<Guid>> CreateAsync(
         CreateAccountRequest request,
         CancellationToken cancellationToken = default);
 

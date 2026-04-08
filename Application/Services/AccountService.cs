@@ -18,7 +18,7 @@ public sealed class AccountService(
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ICurrentUserService _currentUserService = currentUserService;
 
-    public async Task<Result<CreateAccountResponse>> CreateAsync(
+    public async Task<Result<Guid>> CreateAsync(
         CreateAccountRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -28,7 +28,7 @@ public sealed class AccountService(
         {
             var currency = await _currencyRepository.GetByIdAsync(request.CurrencyId, cancellationToken);
             if (currency is null)
-                return Result<CreateAccountResponse>.Failure(AccountDomainErrors.CurrencyNotFound);
+                return Result<Guid>.Failure(AccountDomainErrors.CurrencyNotFound);
 
             var existsByName = await _accountRepository.ExistsByNameAsync(
                 userId,
@@ -36,7 +36,7 @@ public sealed class AccountService(
                 cancellationToken);
 
             if (existsByName)
-                return Result<CreateAccountResponse>.Failure(AccountDomainErrors.NameAlreadyExists);
+                return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
 
             var hasAccounts = await _accountRepository.AnyAsync(userId, cancellationToken);
             var isPrimary = !hasAccounts;
@@ -51,11 +51,11 @@ public sealed class AccountService(
             await _accountRepository.AddAsync(account, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result<CreateAccountResponse>.Success(new CreateAccountResponse(account.Id));
+            return Result<Guid>.Success(account.Id);
         }
         catch (DomainException ex)
         {
-            return Result<CreateAccountResponse>.Failure(ex.Error);
+            return Result<Guid>.Failure(ex.Error);
         }
     }
 

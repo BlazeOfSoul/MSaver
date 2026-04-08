@@ -39,7 +39,7 @@ public sealed class CategoryService(
         });
     }
 
-    public async Task<Result<CreateCategoryResponse>> CreateAsync(
+    public async Task<Result<Guid>> CreateAsync(
         CreateCategoryRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -51,7 +51,7 @@ public sealed class CategoryService(
             cancellationToken);
 
         if (exists)
-            return Result<CreateCategoryResponse>.Failure(CategoryDomainErrors.NameAlreadyExists);
+            return Result<Guid>.Failure(CategoryDomainErrors.NameAlreadyExists);
 
         try
         {
@@ -64,15 +64,11 @@ public sealed class CategoryService(
             await _categoryRepository.AddAsync(category, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result<CreateCategoryResponse>.Success(new CreateCategoryResponse(
-                category.Id,
-                category.Name,
-                category.Type,
-                category.Color));
+            return Result<Guid>.Success(category.Id);
         }
         catch (DomainException ex)
         {
-            return Result<CreateCategoryResponse>.Failure(ex.Error);
+            return Result<Guid>.Failure(ex.Error);
         }
     }
 

@@ -7,7 +7,7 @@ namespace MSaver.Application.Abstractions.Services;
 
 public interface ITagService
 {
-    Task<Result<CreateTagResponse>> CreateAsync(
+    Task<Result<Guid>> CreateAsync(
         CreateTagRequest request,
         CancellationToken cancellationToken = default);
 

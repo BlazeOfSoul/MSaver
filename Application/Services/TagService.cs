@@ -18,7 +18,7 @@ public sealed class TagService(
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ICurrentUserService _currentUserService = currentUserService;
 
-    public async Task<Result<CreateTagResponse>> CreateAsync(
+    public async Task<Result<Guid>> CreateAsync(
         CreateTagRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -26,7 +26,7 @@ public sealed class TagService(
 
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
         if (user is null)
-            return Result<CreateTagResponse>.Failure(UserDomainErrors.UserNotFound);
+            return Result<Guid>.Failure(UserDomainErrors.UserNotFound);
 
         var exists = await _tagRepository.ExistsByNameAsync(
             userId,
@@ -34,7 +34,7 @@ public sealed class TagService(
             cancellationToken);
 
         if (exists)
-            return Result<CreateTagResponse>.Failure(TagDomainErrors.NameAlreadyExists);
+            return Result<Guid>.Failure(TagDomainErrors.NameAlreadyExists);
 
         try
         {
@@ -46,11 +46,11 @@ public sealed class TagService(
             await _tagRepository.AddAsync(tag, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result<CreateTagResponse>.Success(new CreateTagResponse(tag.Id));
+            return Result<Guid>.Success(tag.Id);
         }
         catch (DomainException ex)
         {
-            return Result<CreateTagResponse>.Failure(ex.Error);
+            return Result<Guid>.Failure(ex.Error);
         }
     }
 

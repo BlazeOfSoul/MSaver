@@ -33,7 +33,7 @@ public sealed class TagsController(
         [FromBody] CreateTagRequest request,
         CancellationToken cancellationToken)
     {
-        return ValidateAndExecuteAsync<CreateTagRequest, CreateTagResponse>(
+        return ValidateAndExecuteAsync<CreateTagRequest, Guid>(
             request,
             _createValidator,
             ct => _tagService.CreateAsync(request, ct),
@@ -71,9 +71,9 @@ public sealed class TagsController(
 
     [HttpPut("{tagId:guid}/categories")]
     public Task<IActionResult> AssignCategories(
-    Guid tagId,
-    [FromBody] AssignTagCategoriesRequest request,
-    CancellationToken cancellationToken)
+        Guid tagId,
+        [FromBody] AssignTagCategoriesRequest request,
+        CancellationToken cancellationToken)
     {
         request.TagId = tagId;
 

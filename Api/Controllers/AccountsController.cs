@@ -54,7 +54,7 @@ public sealed class AccountsController(
         [FromBody] CreateAccountRequest request,
         CancellationToken cancellationToken)
     {
-        return ValidateAndExecuteAsync<CreateAccountRequest, CreateAccountResponse>(
+        return ValidateAndExecuteAsync<CreateAccountRequest, Guid>(
             request,
             _createValidator,
             ct => _accountService.CreateAsync(request, ct),
