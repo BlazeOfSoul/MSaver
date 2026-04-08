@@ -8,13 +8,15 @@ public interface IAccountRepository
         Guid userId,
         CancellationToken cancellationToken = default);
 
+    Task AddAsync(Account account, CancellationToken cancellationToken = default);
+
+    Task UpdateAsync(Account account, CancellationToken cancellationToken = default);
+
     Task<bool> ExistsByNameAsync(
         Guid userId,
         string name,
         CancellationToken cancellationToken = default,
         Guid? excludeId = null);
 
-    Task AddAsync(Account account, CancellationToken cancellationToken = default);
-
-    Task UpdateAsync(Account account, CancellationToken cancellationToken = default);
+    Task<bool> AnyAsync(Guid userId, CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,4 @@
 using MSaver.Application.Features.Accounts.Create;
-using MSaver.Application.Features.Accounts.CreatePrimary;
 using MSaver.Application.Features.Accounts.Get;
 using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
@@ -31,20 +30,24 @@ public sealed class AccountService(
             if (currency is null)
                 return Result<CreateAccountResponse>.Failure(AccountDomainErrors.CurrencyNotFound);
 
-            var exists = await _accountRepository.ExistsByNameAsync(
+            var existsByName = await _accountRepository.ExistsByNameAsync(
                 userId,
                 request.Name,
                 cancellationToken);
 
-            if (exists)
+            if (existsByName)
                 return Result<CreateAccountResponse>.Failure(AccountDomainErrors.NameAlreadyExists);
 
+            var hasAccounts = await _accountRepository.AnyAsync(userId, cancellationToken);
+            var isPrimary = !hasAccounts;
+
             var account = Account.Create(
-                userId,
-                request.CurrencyId,
-                request.Name,
-                request.InitialBalance,
-                request.Color);
+                userId: userId,
+                currencyId: request.CurrencyId,
+                name: request.Name,
+                initialBalance: request.InitialBalance,
+                color: request.Color,
+                isPrimary: isPrimary);
 
             await _accountRepository.AddAsync(account, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -54,49 +57,6 @@ public sealed class AccountService(
         catch (DomainException ex)
         {
             return Result<CreateAccountResponse>.Failure(ex.Error);
-        }
-    }
-
-    public async Task<Result<Guid>> CreatePrimaryAsync(
-        CreatePrimaryAccountRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        var userId = _currentUserService.UserId;
-
-        try
-        {
-            var currency = await _currencyRepository.GetByIdAsync(request.CurrencyId, cancellationToken);
-            if (currency is null)
-                return Result<Guid>.Failure(AccountDomainErrors.CurrencyNotFound);
-
-            var existsByName = await _accountRepository.ExistsByNameAsync(
-                userId,
-                request.Name,
-                cancellationToken);
-
-            if (existsByName)
-                return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
-
-            var accounts = await _accountRepository.GetAsync(userId, cancellationToken);
-            if (accounts.Any(x => x.IsPrimary))
-                return Result<Guid>.Failure(AccountDomainErrors.PrimaryAccountAlreadyExists);
-
-            var account = Account.Create(
-                userId: userId,
-                currencyId: request.CurrencyId,
-                name: request.Name,
-                initialBalance: request.InitialBalance,
-                color: request.Color,
-                isPrimary: true);
-
-            await _accountRepository.AddAsync(account, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result<Guid>.Success(account.Id);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
         }
     }
 

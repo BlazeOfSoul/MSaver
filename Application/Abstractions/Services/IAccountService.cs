@@ -1,5 +1,4 @@
 using MSaver.Application.Features.Accounts.Create;
-using MSaver.Application.Features.Accounts.CreatePrimary;
 using MSaver.Application.Features.Accounts.Get;
 using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
@@ -10,10 +9,6 @@ public interface IAccountService
 {
     Task<Result<CreateAccountResponse>> CreateAsync(
         CreateAccountRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<Result<Guid>> CreatePrimaryAsync(
-        CreatePrimaryAccountRequest request,
         CancellationToken cancellationToken = default);
 
     Task<Result<Guid>> UpdateAsync(

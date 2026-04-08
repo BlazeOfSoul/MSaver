@@ -24,6 +24,21 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
             .ToListAsync(cancellationToken);
     }
 
+    public async Task AddAsync(
+        Account account,
+        CancellationToken cancellationToken = default)
+    {
+        await _context.Accounts.AddAsync(account, cancellationToken);
+    }
+
+    public Task UpdateAsync(
+        Account account,
+        CancellationToken cancellationToken = default)
+    {
+        _context.Accounts.Update(account);
+        return Task.CompletedTask;
+    }
+
     public async Task<bool> ExistsByNameAsync(
         Guid userId,
         string name,
@@ -38,18 +53,10 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
         return await query.AnyAsync(cancellationToken);
     }
 
-    public async Task AddAsync(
-        Account account,
+    public Task<bool> AnyAsync(
+        Guid userId,
         CancellationToken cancellationToken = default)
     {
-        await _context.Accounts.AddAsync(account, cancellationToken);
-    }
-
-    public Task UpdateAsync(
-        Account account,
-        CancellationToken cancellationToken = default)
-    {
-        _context.Accounts.Update(account);
-        return Task.CompletedTask;
+        return _context.Accounts.AnyAsync(x => x.UserId == userId, cancellationToken);
     }
 }

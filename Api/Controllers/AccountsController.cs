@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using MSaver.Api.Common;
 using MSaver.Application.Features.Accounts.Create;
-using MSaver.Application.Features.Accounts.CreatePrimary;
 using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
 
@@ -14,13 +13,11 @@ namespace MSaver.Api.Controllers;
 public sealed class AccountsController(
     IAccountService accountService,
     IValidator<CreateAccountRequest> createValidator,
-    IValidator<CreatePrimaryAccountRequest> createPrimaryValidator,
     IValidator<UpdateAccountRequest> updateValidator,
     IValidator<GetMonthBalanceRequest> getMonthBalanceValidator) : ApiControllerBase
 {
     private readonly IAccountService _accountService = accountService;
     private readonly IValidator<CreateAccountRequest> _createValidator = createValidator;
-    private readonly IValidator<CreatePrimaryAccountRequest> _createPrimaryValidator = createPrimaryValidator;
     private readonly IValidator<UpdateAccountRequest> _updateValidator = updateValidator;
     private readonly IValidator<GetMonthBalanceRequest> _getMonthBalanceValidator = getMonthBalanceValidator;
 
@@ -61,18 +58,6 @@ public sealed class AccountsController(
             request,
             _createValidator,
             ct => _accountService.CreateAsync(request, ct),
-            cancellationToken);
-    }
-
-    [HttpPost("primary")]
-    public Task<IActionResult> CreatePrimary(
-        [FromBody] CreatePrimaryAccountRequest request,
-        CancellationToken cancellationToken)
-    {
-        return ValidateAndExecuteAsync<CreatePrimaryAccountRequest, Guid>(
-            request,
-            _createPrimaryValidator,
-            ct => _accountService.CreatePrimaryAsync(request, ct),
             cancellationToken);
     }
 
