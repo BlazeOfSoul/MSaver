@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace MSaver.Infrastructure.Auth;
@@ -15,7 +16,7 @@ public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
                 throw new DomainException(UserDomainErrors.IdNotFound);
 
             var userIdClaim =
-                principal.FindFirst("uid")?.Value ??
+                principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ??
                 principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrWhiteSpace(userIdClaim))

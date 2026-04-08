@@ -51,11 +51,10 @@ public sealed class JwtTokenGenerator(IConfiguration configuration) : IJwtTokenG
     {
         var claims = new List<Claim>
         {
-            new("uid", userId.ToString()),
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, username),
             new(JwtRegisteredClaimNames.Email, email),
-            new("typ", tokenType)
+            new(JwtRegisteredClaimNames.Typ, tokenType)
         };
 
         var key = new SymmetricSecurityKey(
