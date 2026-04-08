@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
+using MSaver.Api.Auth;
 using MSaver.Application.Services;
 using MSaver.Infrastructure.Auth;
 using MSaver.Infrastructure.Persistence.Repositories;
