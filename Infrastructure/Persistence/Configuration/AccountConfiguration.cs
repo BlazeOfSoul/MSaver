@@ -23,10 +23,6 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
             .IsRequired()
             .HasMaxLength(100);
 
-        builder.Property(x => x.InitialBalance)
-            .HasPrecision(18, 2)
-            .IsRequired();
-
         builder.Property(x => x.Color)
             .HasMaxLength(20);
 

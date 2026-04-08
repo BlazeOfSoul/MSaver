@@ -45,7 +45,6 @@ public sealed class AccountService(
                 userId: userId,
                 currencyId: request.CurrencyId,
                 name: request.Name,
-                initialBalance: request.InitialBalance,
                 color: request.Color,
                 isPrimary: isPrimary);
 
@@ -143,8 +142,7 @@ public sealed class AccountService(
                     Name = account.Name,
                     CurrencyId = account.CurrencyId,
                     CurrencyCode = account.Currency!.Code,
-                    InitialBalance = account.InitialBalance,
-                    CurrentBalance = account.InitialBalance + total,
+                    CurrentBalance = total,
                     Color = account.Color,
                     IsArchived = account.IsArchived
                 };
@@ -175,22 +173,20 @@ public sealed class AccountService(
             monthStart,
             cancellationToken);
 
-        var openingBalance = account.InitialBalance + beforeTotal;
-
         var monthChange = await _transactionRepository.GetBalanceInPeriodAsync(
             account.Id,
             monthStart,
             monthEnd,
             cancellationToken);
 
-        var closingBalance = openingBalance + monthChange;
+        var closingBalance = beforeTotal + monthChange;
 
         return Result<GetMonthBalanceResponse>.Success(new GetMonthBalanceResponse
         {
             AccountId = account.Id,
             AccountName = account.Name,
             CurrencyCode = account.Currency!.Code,
-            OpeningBalance = openingBalance,
+            OpeningBalance = beforeTotal,
             MonthChange = monthChange,
             ClosingBalance = closingBalance,
             Year = request.Year,

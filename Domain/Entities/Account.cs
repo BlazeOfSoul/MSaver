@@ -14,8 +14,6 @@ public sealed class Account : Entity
 
     public string Name { get; private set; } = null!;
 
-    public decimal InitialBalance { get; private set; }
-
     public string? Color { get; private set; }
 
     public bool IsPrimary { get; private set; }
@@ -30,7 +28,6 @@ public sealed class Account : Entity
         Guid userId,
         Guid currencyId,
         string name,
-        decimal initialBalance = 0m,
         string? color = null,
         bool isPrimary = false)
     {
@@ -44,7 +41,6 @@ public sealed class Account : Entity
         {
             UserId = userId,
             CurrencyId = currencyId,
-            InitialBalance = initialBalance,
             IsPrimary = isPrimary,
             IsArchived = false
         };
@@ -74,11 +70,6 @@ public sealed class Account : Entity
     public void Restore()
     {
         IsArchived = false;
-    }
-
-    public void ChangeInitialBalance(decimal initialBalance)
-    {
-        InitialBalance = initialBalance;
     }
 
     private void SetName(string name)

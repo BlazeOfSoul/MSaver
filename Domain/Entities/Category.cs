@@ -16,11 +16,11 @@ public sealed class Category : Entity
     public Guid? ParentId { get; private set; }
     public Category? Parent { get; private set; }
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = null!;
 
     public CategoryType Type { get; private set; }
 
-    public string Color { get; private set; }
+    public string Color { get; private set; } = null!;
 
     public bool IsDeleted { get; private set; }
 
