@@ -6,12 +6,7 @@ public sealed class Currency : Entity
     private readonly List<Transaction> _transactions = [];
     private readonly List<Transaction> _baseCurrencyTransactions = [];
 
-    private Currency()
-    {
-        Code = null!;
-        Name = null!;
-        Symbol = null!;
-    }
+    private Currency() { }
 
     public string Code { get; private set; }
 

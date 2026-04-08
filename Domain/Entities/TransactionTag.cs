@@ -2,9 +2,7 @@ namespace MSaver.Domain.Entities;
 
 public sealed class TransactionTag : Entity
 {
-    private TransactionTag()
-    {
-    }
+    private TransactionTag() { }
 
     public Guid TransactionId { get; private set; }
     public Transaction? Transaction { get; private set; }

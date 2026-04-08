@@ -4,13 +4,7 @@ public sealed class Account : Entity
 {
     private readonly List<Transaction> _transactions = [];
 
-    private Account()
-    {
-        Name = null!;
-        User = null!;
-        Currency = null!;
-        CreatedAtUtc = DateTime.UtcNow;
-    }
+    private Account() { }
 
     public Guid UserId { get; private set; }
     public User? User { get; private set; }

@@ -2,9 +2,7 @@ namespace MSaver.Domain.Entities;
 
 public sealed class TagCategory
 {
-    private TagCategory()
-    {
-    }
+    private TagCategory() { }
 
     public Guid TagId { get; private set; }
     public Tag? Tag { get; private set; }

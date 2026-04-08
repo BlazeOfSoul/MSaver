@@ -4,10 +4,7 @@ public sealed class Transaction : Entity
 {
     private readonly List<TransactionTag> _transactionTags = [];
 
-    private Transaction()
-    {
-        Description = string.Empty;
-    }
+    private Transaction() { }
 
     public Guid UserId { get; private set; }
     public User? User { get; private set; }

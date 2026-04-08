@@ -2,9 +2,7 @@ namespace MSaver.Domain.Entities;
 
 public sealed class RefreshToken : Entity
 {
-    private RefreshToken()
-    {
-    }
+    private RefreshToken() { }
 
     public Guid UserId { get; private set; }
 

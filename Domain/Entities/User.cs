@@ -8,13 +8,7 @@ public sealed class User : Entity
     private readonly List<Transaction> _transactions = [];
     private readonly List<RefreshToken> _refreshTokens = [];
 
-    private User()
-    {
-        Name = null!;
-        Email = null!;
-        PasswordHash = null!;
-        CreatedAt = DateTime.UtcNow;
-    }
+    private User() { }
 
     public string Name { get; private set; }
 

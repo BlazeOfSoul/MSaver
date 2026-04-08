@@ -5,10 +5,7 @@ public sealed class Tag : Entity
     private readonly List<TransactionTag> _transactionTags = [];
     private readonly List<TagCategory> _tagCategories = [];
 
-    private Tag()
-    {
-        Name = null!;
-    }
+    private Tag() { }
 
     public Guid UserId { get; private set; }
     public User? User { get; private set; }

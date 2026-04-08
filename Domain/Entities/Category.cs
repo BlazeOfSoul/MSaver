@@ -8,12 +8,7 @@ public sealed class Category : Entity
     private readonly List<Transaction> _transactions = [];
     private readonly List<TagCategory> _tagCategories = [];
 
-    private Category()
-    {
-        Name = null!;
-        Color = null!;
-        User = null!;
-    }
+    private Category() { }
 
     public Guid UserId { get; private set; }
     public User? User { get; private set; }
