@@ -38,22 +38,14 @@ public sealed class TransactionService(
 
         var account = validation.Account!;
 
-        Transaction transaction;
-        try
-        {
-            transaction = Transaction.Create(
-                userId: userId,
-                accountId: request.AccountId,
-                categoryId: request.CategoryId,
-                currencyId: account.CurrencyId,
-                amount: request.Amount,
-                date: request.Date,
-                description: request.Description);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        Transaction transaction = Transaction.Create(
+            userId: userId,
+            accountId: request.AccountId,
+            categoryId: request.CategoryId,
+            currencyId: account.CurrencyId,
+            amount: request.Amount,
+            date: request.Date,
+            description: request.Description);
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -83,29 +75,16 @@ public sealed class TransactionService(
 
         var account = validation.Account!;
 
-        try
-        {
-            transaction.Update(
-                categoryId: request.CategoryId,
-                amount: request.Amount,
-                date: request.Date,
-                description: request.Description);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        transaction.Update(
+            categoryId: request.CategoryId,
+            amount: request.Amount,
+            date: request.Date,
+            description: request.Description);
 
-        if (transaction.AccountId != request.AccountId || transaction.CurrencyId != account.CurrencyId)
+        if (transaction.AccountId != request.AccountId ||
+            transaction.CurrencyId != account.CurrencyId)
         {
-            try
-            {
-                transaction.ChangeAccount(request.AccountId, account.CurrencyId);
-            }
-            catch (DomainException ex)
-            {
-                return Result<Guid>.Failure(ex.Error);
-            }
+            transaction.ChangeAccount(request.AccountId, account.CurrencyId);
         }
 
         await _transactionRepository.UpdateAsync(transaction, cancellationToken);

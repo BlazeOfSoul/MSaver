@@ -36,22 +36,15 @@ public sealed class TagService(
         if (exists)
             return Result<Guid>.Failure(TagDomainErrors.NameAlreadyExists);
 
-        try
-        {
-            var tag = Tag.Create(
-                userId,
-                request.Name,
-                request.Color);
+        var tag = Tag.Create(
+            userId,
+            request.Name,
+            request.Color);
 
-            await _tagRepository.AddAsync(tag, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _tagRepository.AddAsync(tag, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result<Guid>.Success(tag.Id);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        return Result<Guid>.Success(tag.Id);
     }
 
     public async Task<Result<Guid>> UpdateAsync(
@@ -80,19 +73,12 @@ public sealed class TagService(
         if (exists)
             return Result<Guid>.Failure(TagDomainErrors.NameAlreadyExists);
 
-        try
-        {
-            tag.Update(request.Name, request.Color);
+        tag.Update(request.Name, request.Color);
 
-            await _tagRepository.UpdateAsync(tag, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _tagRepository.UpdateAsync(tag, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result<Guid>.Success(tag.Id);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        return Result<Guid>.Success(tag.Id);
     }
 
     public async Task<Result<Guid>> DeleteAsync(
@@ -174,18 +160,11 @@ public sealed class TagService(
         if (categories.Count != categoryIds.Length)
             return Result<Guid>.Failure(CategoryDomainErrors.CategoryNotFound);
 
-        try
-        {
-            tag.ReplaceCategories(categoryIds);
+        tag.ReplaceCategories(categoryIds);
 
-            await _tagRepository.UpdateAsync(tag, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _tagRepository.UpdateAsync(tag, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result<Guid>.Success(tag.Id);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        return Result<Guid>.Success(tag.Id);
     }
 }

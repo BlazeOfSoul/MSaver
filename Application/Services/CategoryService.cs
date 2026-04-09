@@ -54,19 +54,11 @@ public sealed class CategoryService(
         if (exists)
             return Result<Guid>.Failure(CategoryDomainErrors.NameAlreadyExists);
 
-        Domain.Entities.Category category;
-        try
-        {
-            category = Domain.Entities.Category.Create(
-                userId,
-                request.Name,
-                request.Type,
-                request.Color);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        var category = Category.Create(
+            userId,
+            request.Name,
+            request.Type,
+            request.Color);
 
         await _categoryRepository.AddAsync(category, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -103,14 +95,10 @@ public sealed class CategoryService(
         if (!Enum.TryParse<CategoryType>(request.Type, true, out var type))
             return Result<Guid>.Failure(CategoryDomainErrors.InvalidCategoryType);
 
-        try
-        {
-            category.Update(request.Name, request.Color, type);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        category.Update(
+            request.Name,
+            request.Color,
+            type);
 
         await _categoryRepository.UpdateAsync(category, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

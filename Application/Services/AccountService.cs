@@ -39,20 +39,12 @@ public sealed class AccountService(
         var hasAccounts = await _accountRepository.AnyAsync(userId, cancellationToken);
         var isPrimary = !hasAccounts;
 
-        Account account;
-        try
-        {
-            account = Account.Create(
-                userId: userId,
-                currencyId: request.CurrencyId,
-                name: request.Name,
-                color: request.Color,
-                isPrimary: isPrimary);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        Account account = Account.Create(
+            userId: userId,
+            currencyId: request.CurrencyId,
+            name: request.Name,
+            color: request.Color,
+            isPrimary: isPrimary);
 
         await _accountRepository.AddAsync(account, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -79,16 +71,9 @@ public sealed class AccountService(
         if (exists)
             return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
 
-        try
-        {
-            account.Update(
-                request.Name,
-                request.Color);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        account.Update(
+            request.Name,
+            request.Color);
 
         await _accountRepository.UpdateAsync(account, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -106,14 +91,7 @@ public sealed class AccountService(
         if (account is null || account.UserId != userId)
             return Result<Guid>.Failure(AccountDomainErrors.AccountNotFound);
 
-        try
-        {
-            account.Archive();
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        account.Archive();
 
         await _accountRepository.UpdateAsync(account, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

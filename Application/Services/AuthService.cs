@@ -69,15 +69,7 @@ public sealed class AuthService(
         if (existingUser is not null)
             return Result<Guid>.Failure(AuthDomainErrors.RepeatedEmail);
 
-        User user;
-        try
-        {
-            user = CreateUser(request);
-        }
-        catch (DomainException ex)
-        {
-            return Result<Guid>.Failure(ex.Error);
-        }
+        User user = CreateUser(request);
 
         await _userRepository.AddAsync(user, cancellationToken);
         await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
