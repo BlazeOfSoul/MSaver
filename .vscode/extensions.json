@@ -7,7 +7,6 @@
     "ms-dotnettools.csharp",
     "ms-dotnettools.csdevkit",
     "formulahendry.auto-rename-tag",
-    "ms-dotnettools.vscode-dotnet-runtime",
-    "ms-dotnettools.vscodeintellicode-csharp"
+    "ms-dotnettools.vscode-dotnet-runtime"
   ]
 }

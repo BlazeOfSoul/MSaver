@@ -1,0 +1,100 @@
+﻿using MSaver.Domain.Enums;
+
+namespace MSaver.Domain.Entities;
+
+public sealed class Category : Entity
+{
+    private readonly List<Category> _children = [];
+    private readonly List<Transaction> _transactions = [];
+    private readonly List<TagCategory> _tagCategories = [];
+
+    private Category() { }
+
+    public Guid UserId { get; private set; }
+    public User? User { get; private set; }
+
+    public Guid? ParentId { get; private set; }
+    public Category? Parent { get; private set; }
+
+    public string Name { get; private set; } = null!;
+
+    public CategoryType Type { get; private set; }
+
+    public string Color { get; private set; } = null!;
+
+    public bool IsDeleted { get; private set; }
+
+    public IReadOnlyCollection<Category> Children => _children;
+
+    public IReadOnlyCollection<Transaction> Transactions => _transactions;
+
+    public IReadOnlyCollection<TagCategory> TagCategories => _tagCategories;
+
+    public static Category Create(
+        Guid userId,
+        string name,
+        CategoryType type,
+        string color,
+        Guid? parentId = null)
+    {
+        if (userId == Guid.Empty)
+            throw new DomainException(CategoryDomainErrors.UserIdRequired);
+
+        var category = new Category
+        {
+            UserId = userId,
+            Type = type,
+            ParentId = parentId,
+            IsDeleted = false
+        };
+
+        category.SetName(name);
+        category.SetColor(color);
+
+        return category;
+    }
+
+    public void Update(
+        string name,
+        string color,
+        CategoryType type,
+        Guid? parentId = null)
+    {
+        SetName(name);
+        SetColor(color);
+        SetParent(parentId);
+
+        Type = type;
+    }
+
+    public void SetParent(Guid? parentId)
+    {
+        ParentId = parentId;
+    }
+
+    public void SoftDelete()
+    {
+        IsDeleted = true;
+    }
+
+    public void Restore()
+    {
+        IsDeleted = false;
+    }
+
+    private void SetName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainException(CategoryDomainErrors.NameRequired);
+
+        Name = name.Trim();
+    }
+
+    private void SetColor(string color)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+            throw new DomainException(CategoryDomainErrors.ColorRequired);
+
+        Color = color.Trim();
+    }
+}
