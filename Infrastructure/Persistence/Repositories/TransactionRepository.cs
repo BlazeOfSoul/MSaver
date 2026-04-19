@@ -63,7 +63,6 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .AsNoTracking()
             .Include(t => t.Category)
             .Include(t => t.Account!)
-                .ThenInclude(a => a.Currency)
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.Date)
             .ToListAsync(cancellationToken);

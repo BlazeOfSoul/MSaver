@@ -34,7 +34,7 @@ public sealed class TagsController(
         [FromBody] CreateTagRequest request,
         CancellationToken cancellationToken)
     {
-        return ValidateAndExecuteAsync<CreateTagRequest, Guid>(
+        return ValidateAndExecuteAsync(
             request,
             _createValidator,
             ct => _tagService.CreateAsync(request, ct),
@@ -52,7 +52,7 @@ public sealed class TagsController(
             body.Name,
             body.Color);
 
-        return ValidateAndExecuteAsync<UpdateTagRequest, Guid>(
+        return ValidateAndExecuteAsync(
             request,
             _updateValidator,
             ct => _tagService.UpdateAsync(request, ct),
@@ -80,7 +80,7 @@ public sealed class TagsController(
             CategoryIds = body.CategoryIds
         };
 
-        return ValidateAndExecuteAsync<AssignTagCategoriesRequest, Guid>(
+        return ValidateAndExecuteAsync(
             request,
             _assignTagCategoriesValidator,
             ct => _tagService.AssignCategoriesAsync(request, ct),

@@ -41,7 +41,7 @@ public sealed class AccountsController(
             year,
             month);
 
-        return ValidateAndExecuteAsync<GetMonthBalanceRequest, GetMonthBalanceResponse>(
+        return ValidateAndExecuteAsync(
             request,
             _getMonthBalanceValidator,
             ct => _accountService.GetMonthBalanceAsync(request, ct),
@@ -53,7 +53,7 @@ public sealed class AccountsController(
         [FromBody] CreateAccountRequest request,
         CancellationToken cancellationToken)
     {
-        return ValidateAndExecuteAsync<CreateAccountRequest, Guid>(
+        return ValidateAndExecuteAsync(
             request,
             _createValidator,
             ct => _accountService.CreateAsync(request, ct),
@@ -71,7 +71,7 @@ public sealed class AccountsController(
             body.Name,
             body.Color);
 
-        return ValidateAndExecuteAsync<UpdateAccountRequest, Guid>(
+        return ValidateAndExecuteAsync(
             request,
             _updateValidator,
             ct => _accountService.UpdateAsync(request, ct),

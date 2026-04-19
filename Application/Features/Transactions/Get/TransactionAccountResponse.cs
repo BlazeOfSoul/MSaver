@@ -8,8 +8,6 @@ public sealed class TransactionAccountResponse
 
     public string? Color { get; init; }
 
-    public Guid CurrencyId { get; init; }
-
     public string CurrencyCode { get; init; } = string.Empty;
 
     public bool IsArchived { get; init; }

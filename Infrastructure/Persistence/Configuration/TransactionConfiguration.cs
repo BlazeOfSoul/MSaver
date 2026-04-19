@@ -22,9 +22,6 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.Property(x => x.CategoryId)
             .IsRequired();
 
-        builder.Property(x => x.CurrencyId)
-            .IsRequired();
-
         builder.Property(x => x.Amount)
             .HasPrecision(18, 2)
             .IsRequired();
@@ -54,11 +51,6 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.HasOne(x => x.Category)
             .WithMany(x => x.Transactions)
             .HasForeignKey(x => x.CategoryId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(x => x.Currency)
-            .WithMany(x => x.Transactions)
-            .HasForeignKey(x => x.CurrencyId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

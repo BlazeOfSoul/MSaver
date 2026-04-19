@@ -13,9 +13,6 @@ public sealed class Transaction : Entity
     public Guid CategoryId { get; private set; }
     public Category? Category { get; private set; }
 
-    public Guid CurrencyId { get; private set; }
-    public Currency? Currency { get; private set; }
-
     public decimal Amount { get; private set; }
 
     public DateTime Date { get; private set; }
@@ -26,7 +23,6 @@ public sealed class Transaction : Entity
         Guid userId,
         Guid accountId,
         Guid categoryId,
-        Guid currencyId,
         decimal amount,
         DateTime date,
         string? description = null)
@@ -40,15 +36,11 @@ public sealed class Transaction : Entity
         if (categoryId == Guid.Empty)
             throw new DomainException(TransactionDomainErrors.CategoryIdRequired);
 
-        if (currencyId == Guid.Empty)
-            throw new DomainException(TransactionDomainErrors.CurrencyIdRequired);
-
         var transaction = new Transaction
         {
             UserId = userId,
             AccountId = accountId,
             CategoryId = categoryId,
-            CurrencyId = currencyId,
             Date = date
         };
 
@@ -72,18 +64,6 @@ public sealed class Transaction : Entity
 
         SetAmount(amount);
         SetDescription(description);
-    }
-
-    public void ChangeAccount(Guid accountId, Guid currencyId)
-    {
-        if (accountId == Guid.Empty)
-            throw new DomainException(TransactionDomainErrors.AccountIdRequired);
-
-        if (currencyId == Guid.Empty)
-            throw new DomainException(TransactionDomainErrors.CurrencyIdRequired);
-
-        AccountId = accountId;
-        CurrencyId = currencyId;
     }
 
     private void SetAmount(decimal amount)

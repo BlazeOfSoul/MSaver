@@ -12,4 +12,5 @@ public static class ValidationMessages
     public const string InvalidId = "Некорректный идентификатор.";
     public const string InvalidDate = "Некорректная дата.";
     public const string CollectionRequired = "Необходимо указать хотя бы одно значение.";
+    public const string DifferentAccountsRequired = "Счета списания и зачисления должны отличаться.";
 }

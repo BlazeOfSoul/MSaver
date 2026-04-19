@@ -26,7 +26,7 @@ public static class CategoryDomainErrors
             message: "Некорректный тип категории.",
             field: "type");
 
-    public static readonly DomainError CategoryNotFound =
+    public static readonly DomainError NotFound =
         DomainError.NotFound(
             code: "Category.NotFound",
             message: "Категория не найдена.");
@@ -78,4 +78,14 @@ public static class CategoryDomainErrors
             code: "Category.DeletedCategoryCannotBeParent",
             message: "Удалённая категория не может быть родительской.",
             field: "parentId");
+
+    public static readonly DomainError SystemCategoryCannotBeModified =
+        DomainError.Conflict(
+            code: "Category.SystemCategoryCannotBeModified",
+            message: "Системную категорию нельзя изменять.");
+
+    public static readonly DomainError SystemCategoryCannotBeDeleted =
+        DomainError.Conflict(
+            code: "Category.SystemCategoryCannotBeDeleted",
+            message: "Системную категорию нельзя удалить.");
 }

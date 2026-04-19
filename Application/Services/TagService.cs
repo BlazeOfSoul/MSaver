@@ -158,7 +158,7 @@ public sealed class TagService(
             cancellationToken);
 
         if (categories.Count != categoryIds.Length)
-            return Result<Guid>.Failure(CategoryDomainErrors.CategoryNotFound);
+            return Result<Guid>.Failure(CategoryDomainErrors.NotFound);
 
         tag.ReplaceCategories(categoryIds);
 

@@ -16,7 +16,7 @@ public sealed class TagCategory
             throw new DomainException(TagDomainErrors.TagNotFound);
 
         if (categoryId == Guid.Empty)
-            throw new DomainException(CategoryDomainErrors.CategoryNotFound);
+            throw new DomainException(CategoryDomainErrors.NotFound);
 
         return new TagCategory
         {

@@ -25,7 +25,7 @@ public sealed class AuthController(
     public Task<IActionResult> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
-        => ValidateAndExecuteAsync<RegisterRequest, Guid>(
+        => ValidateAndExecuteAsync(
             request,
             _registerValidator,
             ct => _authService.RegisterAsync(request, ct),
@@ -36,7 +36,7 @@ public sealed class AuthController(
     public Task<IActionResult> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
-        => ValidateAndExecuteAsync<LoginRequest, LoginResponse>(
+        => ValidateAndExecuteAsync(
             request,
             _loginValidator,
             ct => _authService.LoginAsync(request, ct),
@@ -47,7 +47,7 @@ public sealed class AuthController(
     public Task<IActionResult> Refresh(
         [FromBody] RefreshTokenRequest request,
         CancellationToken cancellationToken)
-        => ValidateAndExecuteAsync<RefreshTokenRequest, RefreshTokenResponse>(
+        => ValidateAndExecuteAsync(
             request,
             _refreshValidator,
             ct => _authService.RefreshAsync(request, ct),

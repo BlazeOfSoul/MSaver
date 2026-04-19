@@ -21,6 +21,10 @@ public interface ICategoryRepository
         IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken = default);
 
+    Task<Category?> GetTransferCategoryAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsByNameAsync(
         Guid userId,
         string name,

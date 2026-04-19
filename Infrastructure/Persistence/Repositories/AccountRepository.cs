@@ -9,7 +9,6 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
         CancellationToken cancellationToken = default)
     {
         return await _context.Accounts
-            .Include(x => x.Currency)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
@@ -18,7 +17,6 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
         CancellationToken cancellationToken = default)
     {
         return await _context.Accounts
-            .Include(x => x.Currency)
             .Where(x => x.UserId == userId)
             .OrderBy(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);

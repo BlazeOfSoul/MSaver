@@ -16,8 +16,9 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.UserId)
             .IsRequired();
 
-        builder.Property(x => x.CurrencyId)
-            .IsRequired();
+        builder.Property(x => x.CurrencyCode)
+            .IsRequired()
+            .HasMaxLength(3);
 
         builder.Property(x => x.Name)
             .IsRequired()
@@ -47,11 +48,6 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
             .WithMany(x => x.Accounts)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(x => x.Currency)
-            .WithMany(x => x.Accounts)
-            .HasForeignKey(x => x.CurrencyId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(x => x.Transactions)
             .WithOne(x => x.Account)

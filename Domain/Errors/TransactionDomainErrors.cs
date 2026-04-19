@@ -20,18 +20,6 @@ public static class TransactionDomainErrors
             message: "Идентификатор категории обязателен.",
             field: "categoryId");
 
-    public static readonly DomainError CurrencyIdRequired =
-        DomainError.Validation(
-            code: "Transaction.CurrencyIdRequired",
-            message: "Идентификатор валюты обязателен.",
-            field: "currencyId");
-
-    public static readonly DomainError BaseCurrencyIdRequired =
-        DomainError.Validation(
-            code: "Transaction.BaseCurrencyIdRequired",
-            message: "Идентификатор базовой валюты обязателен.",
-            field: "baseCurrencyId");
-
     public static readonly DomainError AmountMustNotBeZero =
         DomainError.Validation(
             code: "Transaction.AmountMustNotBeZero",
@@ -55,6 +43,18 @@ public static class TransactionDomainErrors
             code: "Transaction.TransferRateMustBePositive",
             message: "Курс перевода должен быть больше нуля.",
             field: "transferRate");
+
+    public static readonly DomainError TransferAccountsMustBeDifferent =
+        DomainError.Validation(
+            code: "Transaction.TransferAccountsMustBeDifferent",
+            message: "Счета списания и зачисления должны отличаться.",
+            field: "toAccountId");
+
+    public static readonly DomainError TransferAmountMustBeGreaterThanZero =
+        DomainError.Validation(
+            code: "Transaction.TransferAmountMustBeGreaterThanZero",
+            message: "Сумма перевода должна быть больше нуля.",
+            field: "amount");
 
     public static readonly DomainError CategoryNotFound =
         DomainError.NotFound(

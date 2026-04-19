@@ -1,6 +1,8 @@
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Get;
+using MSaver.Application.Features.Transactions.Transfer;
 using MSaver.Application.Features.Transactions.Update;
+using MSaver.Domain.Constants;
 using MSaver.Domain.Enums;
 
 namespace MSaver.Application.Services;
@@ -11,7 +13,8 @@ public sealed class TransactionService(
     ICategoryRepository categoryRepository,
     ITransactionRepository transactionRepository,
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : ITransactionService
+    ICurrentUserService currentUserService,
+    IExchangeRateService exchangeRateService) : ITransactionService
 {
     private readonly IUserRepository _userRepository = userRepository;
     private readonly IAccountRepository _accountRepository = accountRepository;
@@ -19,6 +22,7 @@ public sealed class TransactionService(
     private readonly ITransactionRepository _transactionRepository = transactionRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ICurrentUserService _currentUserService = currentUserService;
+    private readonly IExchangeRateService _exchangeRateService = exchangeRateService;
 
     public async Task<Result<Guid>> CreateAsync(
         CreateTransactionRequest request,
@@ -28,7 +32,6 @@ public sealed class TransactionService(
 
         var validation = await ValidateTransactionRequestAsync(
             userId,
-            request.AccountId,
             request.CategoryId,
             request.Amount,
             cancellationToken);
@@ -36,13 +39,14 @@ public sealed class TransactionService(
         if (validation.IsFailure)
             return Result<Guid>.Failure(validation.Error);
 
-        var account = validation.Account!;
+        var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
+        if (account is null || account.UserId != userId)
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
         Transaction transaction = Transaction.Create(
             userId: userId,
             accountId: request.AccountId,
             categoryId: request.CategoryId,
-            currencyId: account.CurrencyId,
             amount: request.Amount,
             date: request.Date,
             description: request.Description);
@@ -65,7 +69,6 @@ public sealed class TransactionService(
 
         var validation = await ValidateTransactionRequestAsync(
             userId,
-            request.AccountId,
             request.CategoryId,
             request.Amount,
             cancellationToken);
@@ -73,19 +76,11 @@ public sealed class TransactionService(
         if (validation.IsFailure)
             return Result<Guid>.Failure(validation.Error);
 
-        var account = validation.Account!;
-
         transaction.Update(
             categoryId: request.CategoryId,
             amount: request.Amount,
             date: request.Date,
             description: request.Description);
-
-        if (transaction.AccountId != request.AccountId ||
-            transaction.CurrencyId != account.CurrencyId)
-        {
-            transaction.ChangeAccount(request.AccountId, account.CurrencyId);
-        }
 
         await _transactionRepository.UpdateAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -127,8 +122,7 @@ public sealed class TransactionService(
                     Id = x.AccountId,
                     Name = x.Account!.Name,
                     Color = x.Account.Color,
-                    CurrencyId = x.Account.CurrencyId,
-                    CurrencyCode = x.Account.Currency!.Code,
+                    CurrencyCode = x.Account.CurrencyCode,
                     IsArchived = x.Account.IsArchived
                 },
                 Category = new TransactionCategoryResponse
@@ -149,37 +143,120 @@ public sealed class TransactionService(
         });
     }
 
-    private async Task<(bool IsFailure, DomainError Error, Account? Account, Category? Category)> ValidateTransactionRequestAsync(
+    public async Task<Result<CreateTransferResponse>> TransferAsync(
+        CreateTransferRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        var fromAccount = await _accountRepository.GetByIdAsync(request.FromAccountId, cancellationToken);
+        if (fromAccount is null || fromAccount.UserId != userId)
+            return Result<CreateTransferResponse>.Failure(AccountDomainErrors.NotFound);
+
+        var toAccount = await _accountRepository.GetByIdAsync(request.ToAccountId, cancellationToken);
+        if (toAccount is null || toAccount.UserId != userId)
+            return Result<CreateTransferResponse>.Failure(AccountDomainErrors.NotFound);
+
+        if (fromAccount.IsArchived)
+            return Result<CreateTransferResponse>.Failure(AccountDomainErrors.AccountArchived);
+
+        if (toAccount.IsArchived)
+            return Result<CreateTransferResponse>.Failure(AccountDomainErrors.AccountArchived);
+
+        if (fromAccount.Id == toAccount.Id)
+            return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferAccountsMustBeDifferent);
+
+        if (request.Amount <= 0)
+            return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferAmountMustBeGreaterThanZero);
+
+        decimal rate;
+
+        if (request.Rate.HasValue)
+        {
+            if (request.Rate.Value <= 0)
+                return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferRateMustBePositive);
+
+            rate = request.Rate.Value;
+        }
+        else
+        {
+            rate = fromAccount.CurrencyCode == toAccount.CurrencyCode
+                ? 1m
+                : await _exchangeRateService.GetRateAsync(
+                    fromAccount.CurrencyCode,
+                    toAccount.CurrencyCode,
+                    cancellationToken);
+        }
+
+        var precision = CurrencyDefinitions.Get(toAccount.CurrencyCode).Precision;
+
+        var depositAmount = Math.Round(
+            request.Amount * rate,
+            precision,
+            MidpointRounding.AwayFromZero);
+
+        var transferCategory = await _categoryRepository.GetTransferCategoryAsync(userId, cancellationToken);
+        if (transferCategory is null)
+            return Result<CreateTransferResponse>.Failure(CategoryDomainErrors.NotFound);
+
+        var expenseTransaction = Transaction.Create(
+            userId: userId,
+            accountId: fromAccount.Id,
+            categoryId: transferCategory.Id,
+            amount: -request.Amount,
+            date: request.Date,
+            description: request.Description);
+
+        var incomeTransaction = Transaction.Create(
+            userId: userId,
+            accountId: toAccount.Id,
+            categoryId: transferCategory.Id,
+            amount: depositAmount,
+            date: request.Date,
+            description: request.Description);
+
+        await _transactionRepository.AddAsync(expenseTransaction, cancellationToken);
+        await _transactionRepository.AddAsync(incomeTransaction, cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<CreateTransferResponse>.Success(
+            new CreateTransferResponse(
+                ExpenseTransactionId: expenseTransaction.Id,
+                IncomeTransactionId: incomeTransaction.Id,
+                WithdrawAmount: request.Amount,
+                DepositAmount: depositAmount,
+                Rate: rate,
+                FromCurrencyCode: fromAccount.CurrencyCode,
+                ToCurrencyCode: toAccount.CurrencyCode));
+    }
+
+    private async Task<(bool IsFailure, DomainError Error, Category? Category)> ValidateTransactionRequestAsync(
         Guid userId,
-        Guid accountId,
         Guid categoryId,
         decimal amount,
         CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
         if (user is null)
-            return (true, UserDomainErrors.UserNotFound, null, null);
-
-        var account = await _accountRepository.GetByIdAsync(accountId, cancellationToken);
-        if (account is null || account.UserId != userId)
-            return (true, AccountDomainErrors.AccountNotFound, null, null);
+            return (true, UserDomainErrors.UserNotFound, null);
 
         var category = await _categoryRepository.GetByIdAsync(categoryId, cancellationToken);
         if (category is null || category.UserId != userId)
-            return (true, TransactionDomainErrors.CategoryNotFound, null, null);
+            return (true, TransactionDomainErrors.CategoryNotFound, null);
 
         if (category.IsDeleted)
-            return (true, CategoryDomainErrors.CategoryDeleted, null, null);
+            return (true, CategoryDomainErrors.CategoryDeleted, null);
 
         if (amount == 0)
-            return (true, TransactionDomainErrors.AmountMustNotBeZero, null, null);
+            return (true, TransactionDomainErrors.AmountMustNotBeZero, null);
 
         if (category.Type == CategoryType.Debit && amount > 0 ||
             category.Type == CategoryType.Credit && amount < 0)
         {
-            return (true, TransactionDomainErrors.AmountSignMismatchWithCategoryType, null, null);
+            return (true, TransactionDomainErrors.AmountSignMismatchWithCategoryType, null);
         }
 
-        return (false, null!, account, category);
+        return (false, null!, category);
     }
 }

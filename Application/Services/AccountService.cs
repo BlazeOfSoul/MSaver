@@ -7,13 +7,11 @@ namespace MSaver.Application.Services;
 
 public sealed class AccountService(
     IAccountRepository accountRepository,
-    ICurrencyRepository currencyRepository,
     ITransactionRepository transactionRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService) : IAccountService
 {
     private readonly IAccountRepository _accountRepository = accountRepository;
-    private readonly ICurrencyRepository _currencyRepository = currencyRepository;
     private readonly ITransactionRepository _transactionRepository = transactionRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ICurrentUserService _currentUserService = currentUserService;
@@ -23,10 +21,6 @@ public sealed class AccountService(
         CancellationToken cancellationToken = default)
     {
         var userId = _currentUserService.UserId;
-
-        var currency = await _currencyRepository.GetByIdAsync(request.CurrencyId, cancellationToken);
-        if (currency is null)
-            return Result<Guid>.Failure(AccountDomainErrors.CurrencyNotFound);
 
         var existsByName = await _accountRepository.ExistsByNameAsync(
             userId,
@@ -41,7 +35,7 @@ public sealed class AccountService(
 
         Account account = Account.Create(
             userId: userId,
-            currencyId: request.CurrencyId,
+            currencyCode: request.CurrencyCode,
             name: request.Name,
             color: request.Color,
             isPrimary: isPrimary);
@@ -60,7 +54,7 @@ public sealed class AccountService(
 
         var account = await _accountRepository.GetByIdAsync(request.Id, cancellationToken);
         if (account is null || account.UserId != userId)
-            return Result<Guid>.Failure(AccountDomainErrors.AccountNotFound);
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
         var exists = await _accountRepository.ExistsByNameAsync(
             userId,
@@ -89,7 +83,7 @@ public sealed class AccountService(
 
         var account = await _accountRepository.GetByIdAsync(id, cancellationToken);
         if (account is null || account.UserId != userId)
-            return Result<Guid>.Failure(AccountDomainErrors.AccountNotFound);
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
         account.Archive();
 
@@ -119,8 +113,7 @@ public sealed class AccountService(
                 {
                     Id = account.Id,
                     Name = account.Name,
-                    CurrencyId = account.CurrencyId,
-                    CurrencyCode = account.Currency!.Code,
+                    CurrencyCode = account.CurrencyCode,
                     CurrentBalance = total,
                     Color = account.Color,
                     IsArchived = account.IsArchived
@@ -142,7 +135,7 @@ public sealed class AccountService(
 
         var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
         if (account is null || account.UserId != userId)
-            return Result<GetMonthBalanceResponse>.Failure(AccountDomainErrors.AccountNotFound);
+            return Result<GetMonthBalanceResponse>.Failure(AccountDomainErrors.NotFound);
 
         var monthStart = new DateTime(request.Year, request.Month, 1);
         var monthEnd = monthStart.AddMonths(1);
@@ -164,7 +157,7 @@ public sealed class AccountService(
         {
             AccountId = account.Id,
             AccountName = account.Name,
-            CurrencyCode = account.Currency!.Code,
+            CurrencyCode = account.CurrencyCode,
             OpeningBalance = beforeTotal,
             MonthChange = monthChange,
             ClosingBalance = closingBalance,

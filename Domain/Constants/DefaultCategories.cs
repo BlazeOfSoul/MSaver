@@ -30,5 +30,7 @@ public static class DefaultCategories
             { DefaultCategoryType.Cashback, ("Кэшбэк", CategoryType.Credit, "#16A085") },
             { DefaultCategoryType.GiftIncome, ("Подарок", CategoryType.Credit, "#F39C12") },
             { DefaultCategoryType.OtherIncome, ("Другое", CategoryType.Credit, "#BDC3C7") },
+
+            { DefaultCategoryType.Transfer, ("Переводы", CategoryType.Transfer, "#95A5A6") },
         };
 }

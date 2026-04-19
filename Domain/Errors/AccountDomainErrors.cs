@@ -8,11 +8,11 @@ public static class AccountDomainErrors
             message: "Идентификатор пользователя обязателен.",
             field: "userId");
 
-    public static readonly DomainError CurrencyIdRequired =
+    public static readonly DomainError CurrencyCodeRequired =
         DomainError.Validation(
-            code: "Account.CurrencyIdRequired",
-            message: "Идентификатор валюты обязателен.",
-            field: "currencyId");
+            code: "Account.CurrencyCodeRequired",
+            message: "Код валюты обязателен.",
+            field: "currencyCode");
 
     public static readonly DomainError NameRequired =
         DomainError.Validation(
@@ -37,18 +37,12 @@ public static class AccountDomainErrors
             message: "Счёт с таким названием уже существует.",
             field: "name");
 
-    public static readonly DomainError AccountNotFound =
+    public static readonly DomainError NotFound =
         DomainError.NotFound(
             code: "Account.NotFound",
             message: "Счёт не найден.");
 
-    public static readonly DomainError AccountAlreadyArchived =
-        DomainError.Validation(
-            code: "Account.AlreadyArchived",
-            message: "Счёт уже находится в архиве.",
-            field: "id");
-
-    public static readonly DomainError AccountAlreadyActive =
+    public static readonly DomainError AlreadyActive =
         DomainError.Validation(
             code: "Account.AlreadyActive",
             message: "Счёт уже активен.",
@@ -63,4 +57,10 @@ public static class AccountDomainErrors
         DomainError.Conflict(
             code: "Account.PrimaryAccountCannotBeArchived",
             message: "Основной счёт не может быть архивирован.");
+
+    public static readonly DomainError AccountArchived =
+        DomainError.Validation(
+            code: "Account.Archived",
+            message: "Архивный счёт нельзя использовать в операции.",
+            field: "accountId");
 }

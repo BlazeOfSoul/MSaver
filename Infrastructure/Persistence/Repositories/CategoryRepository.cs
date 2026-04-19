@@ -1,4 +1,6 @@
-﻿namespace MSaver.Infrastructure.Persistence.Repositories;
+﻿using MSaver.Domain.Enums;
+
+namespace MSaver.Infrastructure.Persistence.Repositories;
 
 public sealed class CategoryRepository(ApplicationDbContext dbContext) : ICategoryRepository
 {
@@ -47,6 +49,18 @@ public sealed class CategoryRepository(ApplicationDbContext dbContext) : ICatego
         return await _dbContext.Categories
             .Where(x => x.UserId == userId && ids.Contains(x.Id) && !x.IsDeleted)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Category?> GetTransferCategoryAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Categories
+            .FirstOrDefaultAsync(
+                x => x.UserId == userId &&
+                     x.Type == CategoryType.Transfer &&
+                     !x.IsDeleted,
+                cancellationToken);
     }
 
     public async Task<bool> ExistsByNameAsync(

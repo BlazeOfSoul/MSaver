@@ -6,9 +6,9 @@ public sealed class CreateAccountRequestValidator : AbstractValidator<CreateAcco
 {
     public CreateAccountRequestValidator()
     {
-        RuleFor(x => x.CurrencyId)
+        RuleFor(x => x.CurrencyCode)
             .NotEmpty()
-            .WithMessage(ValidationMessages.InvalidId);
+            .WithMessage(ValidationMessages.Required);
 
         RuleFor(x => x.Name)
             .NotEmpty()

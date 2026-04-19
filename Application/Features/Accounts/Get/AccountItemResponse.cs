@@ -8,10 +8,6 @@ public sealed class AccountItemResponse
 
     public string CurrencyCode { get; init; } = string.Empty;
 
-    public Guid CurrencyId { get; init; }
-
-    public decimal InitialBalance { get; init; }
-
     public decimal CurrentBalance { get; init; }
 
     public string? Color { get; init; }
