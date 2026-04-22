@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using Microsoft.Extensions.Options;
 
@@ -35,21 +37,89 @@ public sealed class ExchangeRateApiService(
 
         var url = $"{_options.ApiKey}/pair/{from}/{to}";
 
-        var response = await _httpClient.GetFromJsonAsync<PairExchangeRateResponse>(
-            url,
-            cancellationToken);
+        using var httpResponse = await _httpClient.GetAsync(url, cancellationToken);
+        var content = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
 
-        if (response is null)
-            throw new InvalidOperationException("Не удалось получить ответ от сервиса курсов валют.");
+        if (!httpResponse.IsSuccessStatusCode)
+            throw CreateHttpException(httpResponse.StatusCode, httpResponse.ReasonPhrase, content);
+
+        var response = Deserialize<PairExchangeRateResponse>(content,
+            "Не удалось разобрать успешный ответ сервиса курсов валют.");
 
         if (!string.Equals(response.Result, "success", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Внешний сервис курсов валют вернул ошибку.");
+        {
+            var apiError = TryDeserialize<ExchangeRateApiErrorResponse>(content);
+
+            throw new InvalidOperationException(
+                apiError is null
+                    ? "Внешний сервис курсов валют вернул ошибку."
+                    : MapApiError(apiError.ErrorType));
+        }
 
         if (response.ConversionRate <= 0)
             throw new InvalidOperationException("Внешний сервис вернул некорректный курс валют.");
 
         return response.ConversionRate;
     }
+
+    private static InvalidOperationException CreateHttpException(
+        HttpStatusCode statusCode,
+        string? reasonPhrase,
+        string? content)
+    {
+        var apiError = TryDeserialize<ExchangeRateApiErrorResponse>(content);
+
+        if (apiError is not null)
+            return new InvalidOperationException(MapApiError(apiError.ErrorType));
+
+        var message = string.IsNullOrWhiteSpace(content)
+            ? $"Ошибка HTTP при обращении к сервису курсов валют: {(int)statusCode} ({reasonPhrase})."
+            : $"Ошибка HTTP при обращении к сервису курсов валют: {(int)statusCode} ({reasonPhrase}). Ответ: {content}";
+
+        return new InvalidOperationException(message);
+    }
+
+    private static T Deserialize<T>(string content, string errorMessage)
+    {
+        try
+        {
+            var result = JsonSerializer.Deserialize<T>(content);
+
+            return result ?? throw new InvalidOperationException(errorMessage);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException(errorMessage, ex);
+        }
+    }
+
+    private static T? TryDeserialize<T>(string? content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            return default;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(content);
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
+    private static string MapApiError(string? errorType) =>
+        errorType?.ToLowerInvariant() switch
+        {
+            "unsupported-code" => "Сервис курсов валют не поддерживает указанный код валюты.",
+            "unknown-code" => "Сервис курсов валют не распознал код валюты.",
+            "malformed-request" => "Сервис курсов валют получил некорректный запрос.",
+            "invalid-key" => "Указан некорректный API-ключ сервиса курсов валют.",
+            "inactive-account" => "Аккаунт сервиса курсов валют не активирован.",
+            "quota-reached" => "Превышен лимит запросов к сервису курсов валют.",
+            null or "" => "Внешний сервис курсов валют вернул ошибку.",
+            _ => $"Внешний сервис курсов валют вернул ошибку: {errorType}."
+        };
 
     private sealed class PairExchangeRateResponse
     {
@@ -64,17 +134,14 @@ public sealed class ExchangeRateApiService(
 
         [JsonPropertyName("conversion_rate")]
         public decimal ConversionRate { get; init; }
+    }
 
-        [JsonPropertyName("time_last_update_unix")]
-        public long TimeLastUpdateUnix { get; init; }
+    private sealed class ExchangeRateApiErrorResponse
+    {
+        [JsonPropertyName("result")]
+        public string Result { get; init; } = string.Empty;
 
-        [JsonPropertyName("time_last_update_utc")]
-        public string TimeLastUpdateUtc { get; init; } = string.Empty;
-
-        [JsonPropertyName("time_next_update_unix")]
-        public long TimeNextUpdateUnix { get; init; }
-
-        [JsonPropertyName("time_next_update_utc")]
-        public string TimeNextUpdateUtc { get; init; } = string.Empty;
+        [JsonPropertyName("error-type")]
+        public string ErrorType { get; init; } = string.Empty;
     }
 }

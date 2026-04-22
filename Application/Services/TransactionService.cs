@@ -150,18 +150,12 @@ public sealed class TransactionService(
         var userId = _currentUserService.UserId;
 
         var fromAccount = await _accountRepository.GetByIdAsync(request.FromAccountId, cancellationToken);
-        if (fromAccount is null || fromAccount.UserId != userId)
+        if (fromAccount is null || fromAccount.UserId != userId || fromAccount.IsArchived)
             return Result<CreateTransferResponse>.Failure(AccountDomainErrors.NotFound);
 
         var toAccount = await _accountRepository.GetByIdAsync(request.ToAccountId, cancellationToken);
-        if (toAccount is null || toAccount.UserId != userId)
+        if (toAccount is null || toAccount.UserId != userId || toAccount.IsArchived)
             return Result<CreateTransferResponse>.Failure(AccountDomainErrors.NotFound);
-
-        if (fromAccount.IsArchived)
-            return Result<CreateTransferResponse>.Failure(AccountDomainErrors.AccountArchived);
-
-        if (toAccount.IsArchived)
-            return Result<CreateTransferResponse>.Failure(AccountDomainErrors.AccountArchived);
 
         if (fromAccount.Id == toAccount.Id)
             return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferAccountsMustBeDifferent);

@@ -57,10 +57,4 @@ public static class AccountDomainErrors
         DomainError.Conflict(
             code: "Account.PrimaryAccountCannotBeArchived",
             message: "Основной счёт не может быть архивирован.");
-
-    public static readonly DomainError AccountArchived =
-        DomainError.Validation(
-            code: "Account.Archived",
-            message: "Архивный счёт нельзя использовать в операции.",
-            field: "accountId");
 }
