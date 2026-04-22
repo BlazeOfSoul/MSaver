@@ -189,22 +189,26 @@ public sealed class TransactionService(
             precision,
             MidpointRounding.AwayFromZero);
 
-        var transferCategory = await _categoryRepository.GetTransferCategoryAsync(userId, cancellationToken);
-        if (transferCategory is null)
+        var transferExpenseCategory = await _categoryRepository.GetTransferExpenseCategoryAsync(userId, cancellationToken);
+        if (transferExpenseCategory is null)
+            return Result<CreateTransferResponse>.Failure(CategoryDomainErrors.NotFound);
+
+        var transferIncomeCategory = await _categoryRepository.GetTransferIncomeCategoryAsync(userId, cancellationToken);
+        if (transferIncomeCategory is null)
             return Result<CreateTransferResponse>.Failure(CategoryDomainErrors.NotFound);
 
         var expenseTransaction = Transaction.Create(
             userId: userId,
             accountId: fromAccount.Id,
-            categoryId: transferCategory.Id,
-            amount: -request.Amount,
+            categoryId: transferExpenseCategory.Id,
+            amount: request.Amount,
             date: request.Date,
             description: request.Description);
 
         var incomeTransaction = Transaction.Create(
             userId: userId,
             accountId: toAccount.Id,
-            categoryId: transferCategory.Id,
+            categoryId: transferIncomeCategory.Id,
             amount: depositAmount,
             date: request.Date,
             description: request.Description);

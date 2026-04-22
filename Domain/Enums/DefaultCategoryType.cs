@@ -24,5 +24,6 @@ public enum DefaultCategoryType
     Cashback = 19,
     GiftIncome = 20,
     OtherIncome = 21,
-    Transfer = 999
+    TransferIncome = 998,
+    TransferExpense = 999
 }

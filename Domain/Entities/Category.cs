@@ -24,7 +24,8 @@ public sealed class Category : Entity
 
     [NotMapped]
     public bool IsSystem =>
-        Type == CategoryType.Transfer;
+        Type == CategoryType.TransferIncome ||
+        Type == CategoryType.TransferExpense;
 
     public IReadOnlyCollection<Transaction> Transactions => _transactions;
 

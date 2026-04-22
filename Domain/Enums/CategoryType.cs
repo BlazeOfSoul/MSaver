@@ -4,5 +4,6 @@ public enum CategoryType
 {
     Debit = 1,
     Credit = 2,
-    Transfer = 3
+    TransferIncome = 3,
+    TransferExpense = 4
 }

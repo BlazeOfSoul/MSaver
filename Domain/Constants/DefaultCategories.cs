@@ -31,6 +31,7 @@ public static class DefaultCategories
             { DefaultCategoryType.GiftIncome, ("Подарок", CategoryType.Credit, "#F39C12") },
             { DefaultCategoryType.OtherIncome, ("Другое", CategoryType.Credit, "#BDC3C7") },
 
-            { DefaultCategoryType.Transfer, ("Переводы", CategoryType.Transfer, "#95A5A6") },
+            { DefaultCategoryType.TransferIncome, ("Перевод (поступление)", CategoryType.TransferIncome, "#95A5A6") },
+            { DefaultCategoryType.TransferExpense, ("Перевод (выбытие)", CategoryType.TransferExpense, "#95A5A6") },
         };
 }

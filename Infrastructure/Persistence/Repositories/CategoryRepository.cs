@@ -1,4 +1,7 @@
-﻿using MSaver.Domain.Enums;
+﻿using Microsoft.EntityFrameworkCore;
+
+using MSaver.Domain.Entities;
+using MSaver.Domain.Enums;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
@@ -51,14 +54,26 @@ public sealed class CategoryRepository(ApplicationDbContext dbContext) : ICatego
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Category?> GetTransferCategoryAsync(
+    public async Task<Category?> GetTransferExpenseCategoryAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.Categories
             .FirstOrDefaultAsync(
                 x => x.UserId == userId &&
-                     x.Type == CategoryType.Transfer &&
+                     x.Type == CategoryType.TransferExpense &&
+                     !x.IsDeleted,
+                cancellationToken);
+    }
+
+    public async Task<Category?> GetTransferIncomeCategoryAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Categories
+            .FirstOrDefaultAsync(
+                x => x.UserId == userId &&
+                     x.Type == CategoryType.TransferIncome &&
                      !x.IsDeleted,
                 cancellationToken);
     }
