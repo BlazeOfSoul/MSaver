@@ -75,7 +75,7 @@ public static class ServiceCollectionExtensions
                     .AllowAnyMethod());
         });
 
-        services.AddApplicationServices();
+        services.AddApplicationServices(configuration);
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -21,6 +21,14 @@ public interface ICategoryRepository
         IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken = default);
 
+    Task<Category?> GetTransferExpenseCategoryAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<Category?> GetTransferIncomeCategoryAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsByNameAsync(
         Guid userId,
         string name,

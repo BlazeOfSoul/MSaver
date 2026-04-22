@@ -16,9 +16,6 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(x => x.UserId)
             .IsRequired();
 
-        builder.Property(x => x.ParentId)
-            .IsRequired(false);
-
         builder.Property(x => x.Name)
             .IsRequired()
             .HasMaxLength(100);
@@ -40,11 +37,6 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .WithMany(x => x.Categories)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(x => x.Parent)
-            .WithMany(x => x.Children)
-            .HasForeignKey(x => x.ParentId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(x => x.Transactions)
             .WithOne(x => x.Category)

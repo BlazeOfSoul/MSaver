@@ -1,3 +1,5 @@
+using MSaver.Domain.Enums;
+
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
 public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITransactionRepository
@@ -63,7 +65,6 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .AsNoTracking()
             .Include(t => t.Category)
             .Include(t => t.Account!)
-                .ThenInclude(a => a.Currency)
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.Date)
             .ToListAsync(cancellationToken);
@@ -82,7 +83,11 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .Select(g => new
             {
                 AccountId = g.Key,
-                Total = g.Sum(x => x.Amount)
+                Total = g.Sum(t =>
+                    t.Category!.Type == CategoryType.Debit ||
+                    t.Category.Type == CategoryType.TransferExpense
+                        ? -t.Amount
+                        : t.Amount)
             })
             .ToDictionaryAsync(
                 x => x.AccountId,

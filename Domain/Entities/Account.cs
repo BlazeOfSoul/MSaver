@@ -1,3 +1,5 @@
+using MSaver.Domain.Constants;
+
 namespace MSaver.Domain.Entities;
 
 public sealed class Account : Entity
@@ -9,8 +11,7 @@ public sealed class Account : Entity
     public Guid UserId { get; private set; }
     public User? User { get; private set; }
 
-    public Guid CurrencyId { get; private set; }
-    public Currency? Currency { get; private set; }
+    public string CurrencyCode { get; private set; } = null!;
 
     public string Name { get; private set; } = null!;
 
@@ -26,7 +27,7 @@ public sealed class Account : Entity
 
     public static Account Create(
         Guid userId,
-        Guid currencyId,
+        string currencyCode,
         string name,
         string? color = null,
         bool isPrimary = false)
@@ -34,17 +35,18 @@ public sealed class Account : Entity
         if (userId == Guid.Empty)
             throw new DomainException(AccountDomainErrors.UserIdRequired);
 
-        if (currencyId == Guid.Empty)
-            throw new DomainException(AccountDomainErrors.CurrencyIdRequired);
+        if (string.IsNullOrWhiteSpace(currencyCode))
+            throw new DomainException(AccountDomainErrors.CurrencyCodeRequired);
 
         var account = new Account
         {
             UserId = userId,
-            CurrencyId = currencyId,
             IsPrimary = isPrimary,
-            IsArchived = false
+            IsArchived = false,
+            CreatedAtUtc = DateTime.UtcNow,
         };
 
+        account.SetCurrencyCode(currencyCode);
         account.SetName(name);
         account.SetColor(color);
 
@@ -85,5 +87,18 @@ public sealed class Account : Entity
         Color = string.IsNullOrWhiteSpace(color)
             ? null
             : color.Trim();
+    }
+
+    private void SetCurrencyCode(string currencyCode)
+    {
+        if (string.IsNullOrWhiteSpace(currencyCode))
+            throw new DomainException(AccountDomainErrors.CurrencyCodeRequired);
+
+        var normalizedCode = currencyCode.Trim().ToUpperInvariant();
+
+        if (!CurrencyDefinitions.Exists(normalizedCode))
+            throw new DomainException(AccountDomainErrors.CurrencyNotFound);
+
+        CurrencyCode = normalizedCode;
     }
 }

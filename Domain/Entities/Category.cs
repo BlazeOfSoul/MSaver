@@ -1,10 +1,11 @@
-﻿using MSaver.Domain.Enums;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+using MSaver.Domain.Enums;
 
 namespace MSaver.Domain.Entities;
 
 public sealed class Category : Entity
 {
-    private readonly List<Category> _children = [];
     private readonly List<Transaction> _transactions = [];
     private readonly List<TagCategory> _tagCategories = [];
 
@@ -12,9 +13,6 @@ public sealed class Category : Entity
 
     public Guid UserId { get; private set; }
     public User? User { get; private set; }
-
-    public Guid? ParentId { get; private set; }
-    public Category? Parent { get; private set; }
 
     public string Name { get; private set; } = null!;
 
@@ -24,7 +22,10 @@ public sealed class Category : Entity
 
     public bool IsDeleted { get; private set; }
 
-    public IReadOnlyCollection<Category> Children => _children;
+    [NotMapped]
+    public bool IsSystem =>
+        Type == CategoryType.TransferIncome ||
+        Type == CategoryType.TransferExpense;
 
     public IReadOnlyCollection<Transaction> Transactions => _transactions;
 
@@ -34,8 +35,7 @@ public sealed class Category : Entity
         Guid userId,
         string name,
         CategoryType type,
-        string color,
-        Guid? parentId = null)
+        string color)
     {
         if (userId == Guid.Empty)
             throw new DomainException(CategoryDomainErrors.UserIdRequired);
@@ -44,7 +44,6 @@ public sealed class Category : Entity
         {
             UserId = userId,
             Type = type,
-            ParentId = parentId,
             IsDeleted = false
         };
 
@@ -57,23 +56,22 @@ public sealed class Category : Entity
     public void Update(
         string name,
         string color,
-        CategoryType type,
-        Guid? parentId = null)
+        CategoryType type)
     {
+        if (IsSystem)
+            throw new DomainException(CategoryDomainErrors.SystemCategoryCannotBeModified);
+
         SetName(name);
         SetColor(color);
-        SetParent(parentId);
 
         Type = type;
     }
 
-    public void SetParent(Guid? parentId)
-    {
-        ParentId = parentId;
-    }
-
     public void SoftDelete()
     {
+        if (IsSystem)
+            throw new DomainException(CategoryDomainErrors.SystemCategoryCannotBeDeleted);
+
         IsDeleted = true;
     }
 

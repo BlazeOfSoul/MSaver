@@ -75,7 +75,7 @@ public sealed class CategoryService(
         var category = await _categoryRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (category is null)
-            return Result<Guid>.Failure(CategoryDomainErrors.CategoryNotFound);
+            return Result<Guid>.Failure(CategoryDomainErrors.NotFound);
 
         if (category.IsDeleted)
             return Result<Guid>.Failure(CategoryDomainErrors.CategoryDeleted);
@@ -115,7 +115,7 @@ public sealed class CategoryService(
         var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
 
         if (category is null)
-            return Result<Guid>.Failure(CategoryDomainErrors.CategoryNotFound);
+            return Result<Guid>.Failure(CategoryDomainErrors.NotFound);
 
         if (category.IsDeleted)
             return Result<Guid>.Failure(CategoryDomainErrors.CategoryDeleted);

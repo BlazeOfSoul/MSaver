@@ -23,5 +23,7 @@ public enum DefaultCategoryType
     SideJob = 18,
     Cashback = 19,
     GiftIncome = 20,
-    OtherIncome = 21
+    OtherIncome = 21,
+    TransferIncome = 998,
+    TransferExpense = 999
 }
