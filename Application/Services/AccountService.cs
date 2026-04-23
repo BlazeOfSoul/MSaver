@@ -183,7 +183,7 @@ public sealed class AccountService(
         if (account is null || account.UserId != userId)
             return Result<GetMonthBalanceResponse>.Failure(AccountDomainErrors.NotFound);
 
-        var monthStart = new DateTime(request.Year, request.Month, 1);
+        var monthStart = new DateTime(request.Year, request.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEnd = monthStart.AddMonths(1);
 
         var beforeTotal = await _transactionRepository.GetBalanceBeforeAsync(
