@@ -1,6 +1,4 @@
-﻿using MSaver.Application.Common.Models;
-
-namespace MSaver.Application.Common.Validation;
+﻿namespace MSaver.Application.Common.Validation;
 
 public static class CommonValidationExtensions
 {

@@ -8,8 +8,9 @@ global using FluentValidation;
 
 global using MSaver.Application.Abstractions.Auth;
 global using MSaver.Application.Abstractions.Services;
-// Application
+global using MSaver.Application.Common.Models;
 global using MSaver.Application.Common.Results;
-// Domain
+global using MSaver.Application.Common.Validation;
+
 global using MSaver.Domain.Common;
 global using MSaver.Domain.Errors;

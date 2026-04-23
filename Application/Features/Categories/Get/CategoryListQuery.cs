@@ -1,5 +1,4 @@
-﻿using MSaver.Application.Common.Models;
-using MSaver.Domain.Enums;
+﻿using MSaver.Domain.Enums;
 
 namespace MSaver.Application.Features.Categories.Get;
 

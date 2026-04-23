@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Categories.Update;
 
 public sealed class UpdateCategoryRequestValidator : AbstractValidator<UpdateCategoryRequest>

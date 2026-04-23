@@ -1,5 +1,4 @@
 ﻿using MSaver.Api.Contracts.Common;
-using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Transactions.Get;
 
 namespace MSaver.Api.Contracts.Transactions;

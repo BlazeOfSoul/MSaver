@@ -1,5 +1,4 @@
 using MSaver.Api.Contracts.Transactions;
-using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Get;
 using MSaver.Application.Features.Transactions.GetById;

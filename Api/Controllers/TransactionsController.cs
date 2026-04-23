@@ -31,7 +31,7 @@ public sealed class TransactionsController(
         return ValidateAndExecuteAsync(
             request,
             _getValidator,
-            ct => _transactionService.GetAsync(request, ct),
+            cancellationToken => _transactionService.GetAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -52,7 +52,7 @@ public sealed class TransactionsController(
         return ValidateAndExecuteAsync(
             request,
             _createValidator,
-            ct => _transactionService.CreateAsync(request, ct),
+            cancellationToken => _transactionService.CreateAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -72,7 +72,7 @@ public sealed class TransactionsController(
         return ValidateAndExecuteAsync(
             request,
             _transferValidator,
-            ct => _transactionService.TransferAsync(request, ct),
+            cancellationToken => _transactionService.TransferAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -92,7 +92,7 @@ public sealed class TransactionsController(
         return ValidateAndExecuteAsync(
             request,
             _updateValidator,
-            ct => _transactionService.UpdateAsync(request, ct),
+            cancellationToken => _transactionService.UpdateAsync(request, cancellationToken),
             cancellationToken);
     }
 

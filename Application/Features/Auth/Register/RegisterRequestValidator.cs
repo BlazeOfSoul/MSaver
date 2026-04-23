@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Auth.Register;
 
 public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest>

@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Transactions.Create;
 
 public sealed class CreateTransactionRequestValidator : AbstractValidator<CreateTransactionRequest>

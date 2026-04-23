@@ -1,5 +1,4 @@
-﻿using MSaver.Application.Common.Models;
-using MSaver.Application.Features.Categories.Get;
+﻿using MSaver.Application.Features.Categories.Get;
 using MSaver.Domain.Enums;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;

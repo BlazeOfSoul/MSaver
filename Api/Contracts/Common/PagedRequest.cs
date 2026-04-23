@@ -1,6 +1,4 @@
-﻿using MSaver.Application.Common.Models;
-
-namespace MSaver.Api.Contracts.Common;
+﻿namespace MSaver.Api.Contracts.Common;
 
 public abstract class PagedRequest
 {

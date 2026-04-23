@@ -1,5 +1,4 @@
-﻿using MSaver.Application.Common.Models;
-using MSaver.Application.Features.Categories.Get;
+﻿using MSaver.Application.Features.Categories.Get;
 
 namespace MSaver.Domain.Repositories;
 

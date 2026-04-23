@@ -1,3 +1,5 @@
+using MSaver.Application.Features.Tags.Get;
+
 namespace MSaver.Domain.Repositories;
 
 public interface ITagRepository
@@ -8,8 +10,8 @@ public interface ITagRepository
         Guid id,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Tag>> GetAsync(
-        Guid userId,
+    Task<PagedResult<Tag>> GetPagedAsync(
+        TagListQuery query,
         CancellationToken cancellationToken = default);
 
     Task<bool> ExistsByNameAsync(

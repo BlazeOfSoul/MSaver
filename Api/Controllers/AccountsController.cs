@@ -31,7 +31,7 @@ public sealed class AccountsController(
         return ValidateAndExecuteAsync(
             request,
             _getAccountsValidator,
-            ct => _accountService.GetAccountsAsync(request, ct),
+            cancellationToken => _accountService.GetAccountsAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -59,7 +59,7 @@ public sealed class AccountsController(
         return ValidateAndExecuteAsync(
             request,
             _getMonthBalanceValidator,
-            ct => _accountService.GetMonthBalanceAsync(request, ct),
+            cancellationToken => _accountService.GetMonthBalanceAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -71,7 +71,7 @@ public sealed class AccountsController(
         return ValidateAndExecuteAsync(
             request,
             _createValidator,
-            ct => _accountService.CreateAsync(request, ct),
+            cancellationToken => _accountService.CreateAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -89,7 +89,7 @@ public sealed class AccountsController(
         return ValidateAndExecuteAsync(
             request,
             _updateValidator,
-            ct => _accountService.UpdateAsync(request, ct),
+            cancellationToken => _accountService.UpdateAsync(request, cancellationToken),
             cancellationToken);
     }
 

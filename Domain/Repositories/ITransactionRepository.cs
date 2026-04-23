@@ -1,4 +1,3 @@
-using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Transactions.Get;
 
 namespace MSaver.Domain.Repositories;

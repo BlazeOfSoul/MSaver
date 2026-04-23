@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Auth.Refresh;
 
 public sealed class RefreshTokenRequestValidator : AbstractValidator<RefreshTokenRequest>

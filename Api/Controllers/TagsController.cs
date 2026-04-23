@@ -12,19 +12,35 @@ namespace MSaver.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class TagsController(
     ITagService tagService,
+    IValidator<GetTagsRequest> getValidator,
     IValidator<CreateTagRequest> createValidator,
     IValidator<UpdateTagRequest> updateValidator,
     IValidator<AssignTagCategoriesRequest> assignTagCategoriesValidator) : ApiControllerBase
 {
     private readonly ITagService _tagService = tagService;
+    private readonly IValidator<GetTagsRequest> _getValidator = getValidator;
     private readonly IValidator<CreateTagRequest> _createValidator = createValidator;
     private readonly IValidator<UpdateTagRequest> _updateValidator = updateValidator;
     private readonly IValidator<AssignTagCategoriesRequest> _assignTagCategoriesValidator = assignTagCategoriesValidator;
 
     [HttpGet]
-    public async Task<IActionResult> Get(CancellationToken cancellationToken)
+    public Task<IActionResult> Get(
+        [FromQuery] GetTagsRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _tagService.GetAsync(cancellationToken);
+        return ValidateAndExecuteAsync(
+            request,
+            _getValidator,
+            cancellationToken => _tagService.GetAsync(request, cancellationToken),
+            cancellationToken);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _tagService.GetByIdAsync(id, cancellationToken);
         return FromResult(result);
     }
 
@@ -36,7 +52,7 @@ public sealed class TagsController(
         return ValidateAndExecuteAsync(
             request,
             _createValidator,
-            ct => _tagService.CreateAsync(request, ct),
+            cancellationToken => _tagService.CreateAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -54,7 +70,7 @@ public sealed class TagsController(
         return ValidateAndExecuteAsync(
             request,
             _updateValidator,
-            ct => _tagService.UpdateAsync(request, ct),
+            cancellationToken => _tagService.UpdateAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -82,7 +98,7 @@ public sealed class TagsController(
         return ValidateAndExecuteAsync(
             request,
             _assignTagCategoriesValidator,
-            ct => _tagService.AssignCategoriesAsync(request, ct),
+            cancellationToken => _tagService.AssignCategoriesAsync(request, cancellationToken),
             cancellationToken);
     }
 }

@@ -1,6 +1,4 @@
 ﻿using MSaver.Api.Contracts.Categories;
-using MSaver.Application.Common.Models;
-using MSaver.Application.Common.Validation;
 using MSaver.Application.Features.Categories.Common;
 
 namespace MSaver.Application.Features.Categories.Get;

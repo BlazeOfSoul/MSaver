@@ -1,4 +1,3 @@
-using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Accounts.Get;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;

@@ -28,7 +28,7 @@ public sealed class CategoriesController(
         return ValidateAndExecuteAsync(
             request,
             _getValidator,
-            ct => _categoryService.GetAsync(request, ct),
+            cancellationToken => _categoryService.GetAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -49,7 +49,7 @@ public sealed class CategoriesController(
         return ValidateAndExecuteAsync(
             request,
             _createValidator,
-            ct => _categoryService.CreateAsync(request, ct),
+            cancellationToken => _categoryService.CreateAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -68,7 +68,7 @@ public sealed class CategoriesController(
         return ValidateAndExecuteAsync(
             request,
             _updateValidator,
-            ct => _categoryService.UpdateAsync(request, ct),
+            cancellationToken => _categoryService.UpdateAsync(request, cancellationToken),
             cancellationToken);
     }
 

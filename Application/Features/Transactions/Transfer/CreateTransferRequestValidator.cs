@@ -1,6 +1,4 @@
-﻿using MSaver.Application.Common.Validation;
-
-namespace MSaver.Application.Features.Transactions.Transfer;
+﻿namespace MSaver.Application.Features.Transactions.Transfer;
 
 public sealed class CreateTransferRequestValidator : AbstractValidator<CreateTransferRequest>
 {

@@ -1,5 +1,4 @@
 using MSaver.Api.Contracts.Accounts;
-using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Accounts.Create;
 using MSaver.Application.Features.Accounts.Get;
 using MSaver.Application.Features.Accounts.GetById;

@@ -27,7 +27,7 @@ public sealed class AuthController(
         => ValidateAndExecuteAsync(
             request,
             _registerValidator,
-            ct => _authService.RegisterAsync(request, ct),
+            cancellationToken => _authService.RegisterAsync(request, cancellationToken),
             cancellationToken);
 
     [HttpPost("login")]
@@ -38,7 +38,7 @@ public sealed class AuthController(
         => ValidateAndExecuteAsync(
             request,
             _loginValidator,
-            ct => _authService.LoginAsync(request, ct),
+            cancellationToken => _authService.LoginAsync(request, cancellationToken),
             cancellationToken);
 
     [HttpPost("refresh")]
@@ -49,6 +49,6 @@ public sealed class AuthController(
         => ValidateAndExecuteAsync(
             request,
             _refreshValidator,
-            ct => _authService.RefreshAsync(request, ct),
+            cancellationToken => _authService.RefreshAsync(request, cancellationToken),
             cancellationToken);
 }

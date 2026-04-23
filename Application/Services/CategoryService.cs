@@ -1,5 +1,4 @@
 using MSaver.Api.Contracts.Categories;
-using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Categories.Common;
 using MSaver.Application.Features.Categories.Create;
 using MSaver.Application.Features.Categories.Get;

@@ -1,6 +1,4 @@
-﻿using MSaver.Application.Common.Models;
-
-namespace MSaver.Application.Features.Transactions.Get;
+﻿namespace MSaver.Application.Features.Transactions.Get;
 
 public sealed class TransactionListQuery
 {
