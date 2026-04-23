@@ -1,6 +1,5 @@
-﻿namespace MSaver.Application.Features.Categories.Get;
+﻿using MSaver.Application.Common.Models;
 
-public sealed class GetCategoriesResponse
-{
-    public IReadOnlyCollection<CategoryItemResponse> Items { get; init; } = [];
-}
+namespace MSaver.Application.Features.Categories.Get;
+
+public sealed class GetCategoriesResponse : PagedResponse<CategoryItemResponse>;

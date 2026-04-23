@@ -1,3 +1,6 @@
+using MSaver.Application.Common.Models;
+using MSaver.Application.Features.Transactions.Get;
+
 namespace MSaver.Domain.Repositories;
 
 public interface ITransactionRepository
@@ -12,8 +15,8 @@ public interface ITransactionRepository
 
     Task<Transaction?> GetByIdWithCategoryAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Transaction>> GetByUserIdWithDetailsAsync(
-        Guid userId,
+    Task<PagedResult<Transaction>> GetPagedWithDetailsAsync(
+        TransactionListQuery query,
         CancellationToken cancellationToken = default);
 
     Task<Dictionary<Guid, decimal>> SumByAccountIdsAsync(

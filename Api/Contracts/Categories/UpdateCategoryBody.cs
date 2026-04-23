@@ -1,6 +1,8 @@
-﻿namespace MSaver.Api.Contracts.Categories;
+﻿using MSaver.Domain.Enums;
+
+namespace MSaver.Api.Contracts.Categories;
 
 public sealed record UpdateCategoryBody(
     string Name,
     string Color,
-    string Type);
+    CategoryType Type);

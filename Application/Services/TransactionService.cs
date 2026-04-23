@@ -1,3 +1,5 @@
+using MSaver.Api.Contracts.Transactions;
+using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Get;
 using MSaver.Application.Features.Transactions.Transfer;
@@ -23,6 +25,64 @@ public sealed class TransactionService(
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ICurrentUserService _currentUserService = currentUserService;
     private readonly IExchangeRateService _exchangeRateService = exchangeRateService;
+
+    public async Task<Result<GetTransactionsResponse>> GetAsync(
+        GetTransactionsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        var query = new TransactionListQuery
+        {
+            UserId = userId,
+            AccountId = request.AccountId,
+            CategoryId = request.CategoryId,
+            FromDate = request.FromDate,
+            ToDate = request.ToDate,
+            Search = ListQueryHelper.NormalizeSearch(request.Search),
+            SortBy = ListQueryHelper.NormalizeSortBy(request.SortBy, TransactionSortFields.Date),
+            SortDirection = ListQueryHelper.NormalizeSortDirection(request.SortDirection),
+            Page = request.Page,
+            Size = request.Size
+        };
+
+        var pagedTransactions = await _transactionRepository.GetPagedWithDetailsAsync(query, cancellationToken);
+
+        var items = pagedTransactions.Items
+            .Select(x => new TransactionItemResponse
+            {
+                Id = x.Id,
+                Account = new TransactionAccountResponse
+                {
+                    Id = x.AccountId,
+                    Name = x.Account!.Name,
+                    Color = x.Account.Color,
+                    CurrencyCode = x.Account.CurrencyCode,
+                    IsArchived = x.Account.IsArchived
+                },
+                Category = new TransactionCategoryResponse
+                {
+                    Id = x.CategoryId,
+                    Name = x.Category!.Name,
+                    Color = x.Category.Color
+                },
+                Amount = x.Amount,
+                Date = x.Date,
+                Description = x.Description
+            })
+            .ToArray();
+
+        return Result<GetTransactionsResponse>.Success(new GetTransactionsResponse
+        {
+            Items = items,
+            Page = pagedTransactions.Page,
+            Size = pagedTransactions.Size,
+            TotalCount = pagedTransactions.TotalCount,
+            TotalPages = pagedTransactions.TotalPages,
+            HasPreviousPage = pagedTransactions.HasPreviousPage,
+            HasNextPage = pagedTransactions.HasNextPage
+        });
+    }
 
     public async Task<Result<Guid>> CreateAsync(
         CreateTransactionRequest request,
@@ -102,45 +162,6 @@ public sealed class TransactionService(
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<Guid>.Success(transaction.Id);
-    }
-
-    public async Task<Result<GetTransactionsResponse>> GetByUserAsync(
-        CancellationToken cancellationToken = default)
-    {
-        var userId = _currentUserService.UserId;
-
-        var transactions = await _transactionRepository
-            .GetByUserIdWithDetailsAsync(userId, cancellationToken);
-
-        var items = transactions
-            .OrderByDescending(x => x.Date)
-            .Select(x => new TransactionItemResponse
-            {
-                Id = x.Id,
-                Account = new TransactionAccountResponse
-                {
-                    Id = x.AccountId,
-                    Name = x.Account!.Name,
-                    Color = x.Account.Color,
-                    CurrencyCode = x.Account.CurrencyCode,
-                    IsArchived = x.Account.IsArchived
-                },
-                Category = new TransactionCategoryResponse
-                {
-                    Id = x.CategoryId,
-                    Name = x.Category!.Name,
-                    Color = x.Category.Color
-                },
-                Amount = x.Amount,
-                Date = x.Date,
-                Description = x.Description
-            })
-            .ToArray();
-
-        return Result<GetTransactionsResponse>.Success(new GetTransactionsResponse
-        {
-            Items = items
-        });
     }
 
     public async Task<Result<CreateTransferResponse>> TransferAsync(

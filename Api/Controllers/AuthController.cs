@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using MSaver.Api.Common;
 using MSaver.Application.Features.Auth.Login;
 using MSaver.Application.Features.Auth.Refresh;
 using MSaver.Application.Features.Auth.Register;

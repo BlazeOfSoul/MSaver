@@ -12,20 +12,27 @@ namespace MSaver.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class TransactionsController(
     ITransactionService transactionService,
+    IValidator<GetTransactionsRequest> getValidator,
     IValidator<CreateTransactionRequest> createValidator,
     IValidator<CreateTransferRequest> transferValidator,
     IValidator<UpdateTransactionRequest> updateValidator) : ApiControllerBase
 {
     private readonly ITransactionService _transactionService = transactionService;
+    private readonly IValidator<GetTransactionsRequest> _getValidator = getValidator;
     private readonly IValidator<CreateTransactionRequest> _createValidator = createValidator;
     private readonly IValidator<CreateTransferRequest> _transferValidator = transferValidator;
     private readonly IValidator<UpdateTransactionRequest> _updateValidator = updateValidator;
 
     [HttpGet]
-    public async Task<IActionResult> Get(CancellationToken cancellationToken)
+    public Task<IActionResult> Get(
+        [FromQuery] GetTransactionsRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _transactionService.GetByUserAsync(cancellationToken);
-        return FromResult(result);
+        return ValidateAndExecuteAsync(
+            request,
+            _getValidator,
+            ct => _transactionService.GetAsync(request, ct),
+            cancellationToken);
     }
 
     [HttpPost]

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using MSaver.Api.Common;
 using MSaver.Api.Contracts.Accounts;
 using MSaver.Application.Features.Accounts.Create;
 using MSaver.Application.Features.Accounts.GetMonthBalance;
@@ -13,19 +12,35 @@ namespace MSaver.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class AccountsController(
     IAccountService accountService,
+    IValidator<GetAccountsRequest> getAccountsValidator,
     IValidator<CreateAccountRequest> createValidator,
     IValidator<UpdateAccountRequest> updateValidator,
     IValidator<GetMonthBalanceRequest> getMonthBalanceValidator) : ApiControllerBase
 {
     private readonly IAccountService _accountService = accountService;
+    private readonly IValidator<GetAccountsRequest> _getAccountsValidator = getAccountsValidator;
     private readonly IValidator<CreateAccountRequest> _createValidator = createValidator;
     private readonly IValidator<UpdateAccountRequest> _updateValidator = updateValidator;
     private readonly IValidator<GetMonthBalanceRequest> _getMonthBalanceValidator = getMonthBalanceValidator;
 
     [HttpGet]
-    public async Task<IActionResult> GetAccounts(CancellationToken cancellationToken)
+    public Task<IActionResult> GetAccounts(
+        [FromQuery] GetAccountsRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _accountService.GetAccountsAsync(cancellationToken);
+        return ValidateAndExecuteAsync(
+            request,
+            _getAccountsValidator,
+            ct => _accountService.GetAccountsAsync(request, ct),
+            cancellationToken);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _accountService.GetByIdAsync(id, cancellationToken);
         return FromResult(result);
     }
 
@@ -79,7 +94,9 @@ public sealed class AccountsController(
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(
+        Guid id,
+        CancellationToken cancellationToken)
     {
         var result = await _accountService.DeleteAsync(id, cancellationToken);
         return FromResult(result);

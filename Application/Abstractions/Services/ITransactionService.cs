@@ -1,3 +1,4 @@
+using MSaver.Api.Contracts.Transactions;
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Get;
 using MSaver.Application.Features.Transactions.Transfer;
@@ -19,7 +20,8 @@ public interface ITransactionService
         Guid id,
         CancellationToken cancellationToken = default);
 
-    Task<Result<GetTransactionsResponse>> GetByUserAsync(
+    Task<Result<GetTransactionsResponse>> GetAsync(
+        GetTransactionsRequest request,
         CancellationToken cancellationToken = default);
 
     Task<Result<CreateTransferResponse>> TransferAsync(

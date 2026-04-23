@@ -1,4 +1,7 @@
-﻿namespace MSaver.Domain.Repositories;
+﻿using MSaver.Application.Common.Models;
+using MSaver.Application.Features.Categories.Get;
+
+namespace MSaver.Domain.Repositories;
 
 public interface ICategoryRepository
 {
@@ -8,8 +11,8 @@ public interface ICategoryRepository
         IEnumerable<Category> categories,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Category>> GetAsync(
-        Guid userId,
+    Task<PagedResult<Category>> GetPagedAsync(
+        CategoryListQuery query,
         CancellationToken cancellationToken = default);
 
     Task<Category?> GetByIdAsync(

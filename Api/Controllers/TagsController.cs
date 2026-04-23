@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using MSaver.Api.Common;
 using MSaver.Api.Contracts.Tags;
 using MSaver.Application.Features.Tags.AssignCategories;
 using MSaver.Application.Features.Tags.Create;
