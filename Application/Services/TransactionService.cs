@@ -2,6 +2,7 @@ using MSaver.Api.Contracts.Transactions;
 using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Get;
+using MSaver.Application.Features.Transactions.GetById;
 using MSaver.Application.Features.Transactions.Transfer;
 using MSaver.Application.Features.Transactions.Update;
 using MSaver.Domain.Constants;
@@ -82,6 +83,42 @@ public sealed class TransactionService(
             HasPreviousPage = pagedTransactions.HasPreviousPage,
             HasNextPage = pagedTransactions.HasNextPage
         });
+    }
+
+    public async Task<Result<GetTransactionByIdResponse>> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        var transaction = await _transactionRepository.GetByIdWithDetailsAsync(id, cancellationToken);
+
+        if (transaction is null || transaction.UserId != userId)
+            return Result<GetTransactionByIdResponse>.Failure(TransactionDomainErrors.TransactionNotFound);
+
+        var response = new GetTransactionByIdResponse
+        {
+            Id = transaction.Id,
+            Account = new TransactionAccountResponse
+            {
+                Id = transaction.AccountId,
+                Name = transaction.Account!.Name,
+                Color = transaction.Account.Color,
+                CurrencyCode = transaction.Account.CurrencyCode,
+                IsArchived = transaction.Account.IsArchived
+            },
+            Category = new TransactionCategoryResponse
+            {
+                Id = transaction.CategoryId,
+                Name = transaction.Category!.Name,
+                Color = transaction.Category.Color
+            },
+            Amount = transaction.Amount,
+            Date = transaction.Date,
+            Description = transaction.Description
+        };
+
+        return Result<GetTransactionByIdResponse>.Success(response);
     }
 
     public async Task<Result<Guid>> CreateAsync(

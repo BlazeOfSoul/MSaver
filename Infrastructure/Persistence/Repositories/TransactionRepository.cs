@@ -39,6 +39,17 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
+    public async Task<Transaction?> GetByIdWithDetailsAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Transactions
+            .AsNoTracking()
+            .Include(t => t.Category)
+            .Include(t => t.Account)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+    }
+
     public async Task<Transaction?> GetByIdWithCategoryAsync(
         Guid id,
         CancellationToken cancellationToken = default)

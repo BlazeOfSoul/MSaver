@@ -35,6 +35,15 @@ public sealed class TransactionsController(
             cancellationToken);
     }
 
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(
+    Guid id,
+    CancellationToken cancellationToken)
+    {
+        var result = await _transactionService.GetByIdAsync(id, cancellationToken);
+        return FromResult(result);
+    }
+
     [HttpPost]
     public Task<IActionResult> Create(
         [FromBody] CreateTransactionRequest request,

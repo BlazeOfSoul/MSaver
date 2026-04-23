@@ -13,6 +13,8 @@ public interface ITransactionRepository
 
     Task<Transaction?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<Transaction?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<Transaction?> GetByIdWithCategoryAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<PagedResult<Transaction>> GetPagedWithDetailsAsync(
