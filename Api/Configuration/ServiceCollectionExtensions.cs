@@ -9,6 +9,8 @@ using MSaver.Api.Common;
 using MSaver.Application.Features.Auth.Register;
 using MSaver.Infrastructure;
 using MSaver.Infrastructure.DependencyInjection;
+using MSaver.Infrastructure.Persistence;
+using MSaver.Infrastructure.Persistence.Interceptors;
 
 namespace MSaver.Api.Configuration;
 
@@ -65,8 +67,13 @@ public static class ServiceCollectionExtensions
             });
         });
 
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        services.AddScoped<AuditableEntitiesInterceptor>();
+
+        services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+        {
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+            options.AddInterceptors(serviceProvider.GetRequiredService<AuditableEntitiesInterceptor>());
+        });
 
         var frontendOrigin = configuration["Cors:FrontendOrigin"]
             ?? throw new InvalidOperationException("Cors:FrontendOrigin configuration is missing.");

@@ -1,6 +1,6 @@
 namespace MSaver.Domain.Entities;
 
-public sealed class Tag : Entity
+public sealed class Tag : AuditableEntity
 {
     private readonly List<TagCategory> _tagCategories = [];
 
