@@ -12,6 +12,4 @@ public sealed class GetCategoriesRequest : PagedRequest
     public string? SortDirection { get; init; } = ListQueryDefaults.SortAscending;
 
     public string? Type { get; init; }
-
-    public bool IncludeDeleted { get; init; } = false;
 }

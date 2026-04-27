@@ -14,8 +14,6 @@ public sealed class CategoryListQuery
 
     public CategoryType? Type { get; init; }
 
-    public bool IncludeDeleted { get; init; }
-
     public int Page { get; init; } = ListQueryDefaults.DefaultPage;
 
     public int Size { get; init; } = ListQueryDefaults.DefaultPageSize;

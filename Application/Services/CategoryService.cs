@@ -37,7 +37,6 @@ public sealed class CategoryService(
             SortBy = ListQueryHelper.NormalizeSortBy(request.SortBy, CategorySortFields.Name),
             SortDirection = ListQueryHelper.NormalizeSortDirection(request.SortDirection),
             Type = type,
-            IncludeDeleted = request.IncludeDeleted,
             Page = request.Page,
             Size = request.Size
         };

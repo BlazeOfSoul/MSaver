@@ -33,9 +33,6 @@ public sealed class TagRepository(ApplicationDbContext dbContext) : ITagReposito
             .AsNoTracking()
             .Where(x => x.UserId == query.UserId);
 
-        if (!query.IncludeDeleted)
-            dbQuery = dbQuery.Where(x => !x.IsDeleted);
-
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var search = query.Search.Trim();

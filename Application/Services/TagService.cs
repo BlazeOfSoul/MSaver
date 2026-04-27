@@ -30,7 +30,6 @@ public sealed class TagService(
         {
             UserId = userId,
             Search = ListQueryHelper.NormalizeSearch(request.Search),
-            IncludeDeleted = request.IncludeDeleted ?? false,
             SortBy = ListQueryHelper.NormalizeSortBy(request.SortBy, TagSortFields.Name),
             SortDirection = ListQueryHelper.NormalizeSortDirection(request.SortDirection),
             Page = request.Page,

@@ -29,9 +29,6 @@ public sealed class CategoryRepository(ApplicationDbContext dbContext) : ICatego
             .AsNoTracking()
             .Where(x => x.UserId == query.UserId);
 
-        if (!query.IncludeDeleted)
-            dbQuery = dbQuery.Where(x => !x.IsDeleted);
-
         if (query.Type.HasValue)
             dbQuery = dbQuery.Where(x => x.Type == query.Type.Value);
 

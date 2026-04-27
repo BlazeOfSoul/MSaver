@@ -6,8 +6,6 @@ public sealed class TagListQuery
 
     public string? Search { get; init; }
 
-    public bool IncludeDeleted { get; init; }
-
     public string SortBy { get; init; } = TagSortFields.Name;
 
     public string SortDirection { get; init; } = ListQueryDefaults.SortAscending;

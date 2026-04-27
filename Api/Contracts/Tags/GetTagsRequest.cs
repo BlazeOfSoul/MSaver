@@ -10,6 +10,4 @@ public sealed class GetTagsRequest : PagedRequest
     public string? SortBy { get; init; } = TagSortFields.Name;
 
     public string? SortDirection { get; init; } = ListQueryDefaults.SortAscending;
-
-    public bool? IncludeDeleted { get; init; } = false;
 }
