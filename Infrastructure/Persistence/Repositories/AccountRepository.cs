@@ -1,48 +1,29 @@
 using MSaver.Application.Features.Accounts.Get;
+using MSaver.Application.Features.Accounts.Specifications;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class AccountRepository(ApplicationDbContext context) : IAccountRepository
+public sealed class AccountRepository(ApplicationDbContext context)
+    : EfRepositoryBase<Account>(context), IAccountRepository
 {
-    private readonly ApplicationDbContext _context = context;
-
-    public async Task<Account?> GetByIdAsync(
+    public Task<Account?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Accounts
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return FirstOrDefaultAsync(
+            new AccountByIdSpecification(id),
+            cancellationToken);
     }
 
     public async Task<PagedResult<Account>> GetPagedAsync(
         AccountListQuery query,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Account> dbQuery = _context.Accounts
-            .AsNoTracking()
-            .Where(x => x.UserId == query.UserId);
+        var listSpecification = new AccountsListSpecification(query);
+        var countSpecification = new AccountsCountSpecification(query);
 
-        if (query.IsArchived.HasValue)
-            dbQuery = dbQuery.Where(x => x.IsArchived == query.IsArchived.Value);
-
-        if (!string.IsNullOrWhiteSpace(query.CurrencyCode))
-            dbQuery = dbQuery.Where(x => x.CurrencyCode == query.CurrencyCode);
-
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var search = query.Search.Trim();
-            dbQuery = dbQuery.Where(x => x.Name.Contains(search));
-        }
-
-        dbQuery = ApplySorting(dbQuery, query.SortBy, query.SortDirection);
-
-        var totalCount = await dbQuery.CountAsync(cancellationToken);
-
-        var items = await dbQuery
-            .Skip((query.Page - 1) * query.Size)
-            .Take(query.Size)
-            .ToListAsync(cancellationToken);
+        var totalCount = await CountAsync(countSpecification, cancellationToken);
+        var items = await ListAsync(listSpecification, cancellationToken);
 
         return new PagedResult<Account>
         {
@@ -57,14 +38,14 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
         Account account,
         CancellationToken cancellationToken = default)
     {
-        await _context.Accounts.AddAsync(account, cancellationToken);
+        await Context.Accounts.AddAsync(account, cancellationToken);
     }
 
     public Task UpdateAsync(
         Account account,
         CancellationToken cancellationToken = default)
     {
-        _context.Accounts.Update(account);
+        Context.Accounts.Update(account);
         return Task.CompletedTask;
     }
 
@@ -76,7 +57,7 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
     {
         var normalizedName = name.Trim();
 
-        var query = _context.Accounts
+        var query = Context.Accounts
             .Where(x => x.UserId == userId && x.Name == normalizedName);
 
         if (excludeId.HasValue)
@@ -89,60 +70,6 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        return _context.Accounts.AnyAsync(x => x.UserId == userId, cancellationToken);
-    }
-
-    private static IQueryable<Account> ApplySorting(
-        IQueryable<Account> query,
-        string? sortBy,
-        string? sortDirection)
-    {
-        var normalizedSortBy = ListQueryHelper.NormalizeSortBy(
-            sortBy,
-            AccountSortFields.CreatedAt);
-
-        var normalizedSortDirection = ListQueryHelper.NormalizeSortDirection(sortDirection);
-
-        return (normalizedSortBy, normalizedSortDirection) switch
-        {
-            (var field, var direction)
-                when field.Equals(AccountSortFields.Name, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortAscending
-                    => query
-                        .OrderBy(x => x.Name)
-                        .ThenBy(x => x.Id),
-
-            (var field, var direction)
-                when field.Equals(AccountSortFields.Name, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortDescending
-                    => query
-                        .OrderByDescending(x => x.Name)
-                        .ThenByDescending(x => x.Id),
-
-            (var field, var direction)
-                when field.Equals(AccountSortFields.CurrencyCode, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortAscending
-                    => query
-                        .OrderBy(x => x.CurrencyCode)
-                        .ThenBy(x => x.Id),
-
-            (var field, var direction)
-                when field.Equals(AccountSortFields.CurrencyCode, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortDescending
-                    => query
-                        .OrderByDescending(x => x.CurrencyCode)
-                        .ThenByDescending(x => x.Id),
-
-            (var field, var direction)
-                when field.Equals(AccountSortFields.CreatedAt, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortAscending
-                    => query
-                        .OrderBy(x => x.CreatedAtUtc)
-                        .ThenBy(x => x.Id),
-
-            _ => query
-                .OrderByDescending(x => x.CreatedAtUtc)
-                .ThenByDescending(x => x.Id)
-        };
+        return Context.Accounts.AnyAsync(x => x.UserId == userId, cancellationToken);
     }
 }

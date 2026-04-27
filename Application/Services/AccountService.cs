@@ -168,8 +168,7 @@ public sealed class AccountService(
             CurrentBalance = currentBalance,
             Color = account.Color,
             IsArchived = account.IsArchived,
-            IsPrimary = account.IsPrimary,
-            CreatedAtUtc = account.CreatedAtUtc
+            IsPrimary = account.IsPrimary
         });
     }
 

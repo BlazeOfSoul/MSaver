@@ -9,7 +9,6 @@ using MSaver.Api.Common;
 using MSaver.Application.Features.Auth.Register;
 using MSaver.Infrastructure;
 using MSaver.Infrastructure.DependencyInjection;
-using MSaver.Infrastructure.Persistence;
 using MSaver.Infrastructure.Persistence.Interceptors;
 
 namespace MSaver.Api.Configuration;

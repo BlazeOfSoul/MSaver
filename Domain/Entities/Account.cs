@@ -21,8 +21,6 @@ public sealed class Account : AuditableEntity
 
     public bool IsArchived { get; private set; }
 
-    public DateTime CreatedAtUtc { get; private set; }
-
     public IReadOnlyCollection<Transaction> Transactions => _transactions;
 
     public static Account Create(
@@ -42,8 +40,7 @@ public sealed class Account : AuditableEntity
         {
             UserId = userId,
             IsPrimary = isPrimary,
-            IsArchived = false,
-            CreatedAtUtc = DateTime.UtcNow,
+            IsArchived = false
         };
 
         account.SetCurrencyCode(currencyCode);

@@ -1,55 +1,33 @@
 using MSaver.Application.Features.Tags.Get;
+using MSaver.Application.Features.Tags.Specifications;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class TagRepository(ApplicationDbContext dbContext) : ITagRepository
+public sealed class TagRepository(ApplicationDbContext context) : EfRepositoryBase<Tag>(context), ITagRepository
 {
-    private readonly ApplicationDbContext _dbContext = dbContext;
-
-    public async Task<Tag?> GetByIdAsync(
+    public Task<Tag?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Tags
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return FirstOrDefaultAsync(new TagByIdSpecification(id), cancellationToken);
     }
 
-    public async Task<Tag?> GetByIdWithCategoriesAsync(
+    public Task<Tag?> GetByIdWithCategoriesAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Tags
-            .AsNoTracking()
-            .Include(x => x.TagCategories)
-            .ThenInclude(x => x.Category)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return FirstOrDefaultAsync(new TagByIdSpecification(id), cancellationToken);
     }
 
     public async Task<PagedResult<Tag>> GetPagedAsync(
         TagListQuery query,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Tag> dbQuery = _dbContext.Tags
-            .AsNoTracking()
-            .Where(x => x.UserId == query.UserId);
+        var listSpecification = new TagsListSpecification(query);
+        var countSpecification = new TagsCountSpecification(query);
 
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var search = query.Search.Trim();
-            dbQuery = dbQuery.Where(x => x.Name.Contains(search));
-        }
-
-        dbQuery = ApplySorting(
-            dbQuery,
-            query.SortBy,
-            query.SortDirection);
-
-        var totalCount = await dbQuery.CountAsync(cancellationToken);
-
-        var items = await dbQuery
-            .Skip((query.Page - 1) * query.Size)
-            .Take(query.Size)
-            .ToListAsync(cancellationToken);
+        var totalCount = await CountAsync(countSpecification, cancellationToken);
+        var items = await ListAsync(listSpecification, cancellationToken);
 
         return new PagedResult<Tag>
         {
@@ -60,59 +38,35 @@ public sealed class TagRepository(ApplicationDbContext dbContext) : ITagReposito
         };
     }
 
-    public async Task<bool> ExistsByNameAsync(
-        Guid userId,
-        string name,
-        CancellationToken cancellationToken = default,
-        Guid? excludeId = null)
-    {
-        var query = _dbContext.Tags
-            .Where(x => x.UserId == userId && x.Name == name && !x.IsDeleted);
-
-        if (excludeId.HasValue)
-            query = query.Where(x => x.Id != excludeId.Value);
-
-        return await query.AnyAsync(cancellationToken);
-    }
-
     public async Task AddAsync(
         Tag tag,
         CancellationToken cancellationToken = default)
     {
-        await _dbContext.Tags.AddAsync(tag, cancellationToken);
+        await Context.Tags.AddAsync(tag, cancellationToken);
     }
 
     public Task UpdateAsync(
         Tag tag,
         CancellationToken cancellationToken = default)
     {
-        _dbContext.Tags.Update(tag);
+        Context.Tags.Update(tag);
         return Task.CompletedTask;
     }
 
-    private static IQueryable<Tag> ApplySorting(
-        IQueryable<Tag> query,
-        string? sortBy,
-        string? sortDirection)
+    public async Task<bool> ExistsByNameAsync(
+        Guid userId,
+        string name,
+        CancellationToken cancellationToken = default,
+        Guid? excludeId = null)
     {
-        var normalizedSortBy = ListQueryHelper.NormalizeSortBy(
-            sortBy,
-            TagSortFields.Name);
+        var normalizedName = name.Trim();
 
-        var normalizedSortDirection = ListQueryHelper.NormalizeSortDirection(sortDirection);
+        var query = Context.Tags
+            .Where(x => x.UserId == userId && x.Name == normalizedName);
 
-        return (normalizedSortBy, normalizedSortDirection) switch
-        {
-            (var field, var direction)
-                when field.Equals(TagSortFields.Name, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortDescending
-                    => query
-                        .OrderByDescending(x => x.Name)
-                        .ThenBy(x => x.Id),
+        if (excludeId.HasValue)
+            query = query.Where(x => x.Id != excludeId.Value);
 
-            _ => query
-                .OrderBy(x => x.Name)
-                .ThenBy(x => x.Id)
-        };
+        return await query.AnyAsync(cancellationToken);
     }
 }
