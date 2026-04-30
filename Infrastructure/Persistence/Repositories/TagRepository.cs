@@ -1,35 +1,56 @@
+using MSaver.Application.Features.Tags.Get;
+using MSaver.Application.Features.Tags.Specifications;
+
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class TagRepository(ApplicationDbContext dbContext) : ITagRepository
+public sealed class TagRepository(ApplicationDbContext context) : EfRepositoryBase<Tag>(context), ITagRepository
 {
-    private readonly ApplicationDbContext _dbContext = dbContext;
-
-    public async Task<Tag?> GetByIdAsync(
+    public Task<Tag?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Tags
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return FirstOrDefaultAsync(new TagByIdSpecification(id), cancellationToken);
     }
 
-    public async Task<Tag?> GetByIdWithCategoriesAsync(
+    public Task<Tag?> GetByIdWithCategoriesAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Tags
-            .Include(x => x.TagCategories)
-            .ThenInclude(x => x.Category)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return FirstOrDefaultAsync(new TagByIdSpecification(id), cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Tag>> GetAsync(
-        Guid userId,
+    public async Task<PagedResult<Tag>> GetPagedAsync(
+        TagListQuery query,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Tags
-            .Where(x => x.UserId == userId)
-            .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
+        var listSpecification = new TagsListSpecification(query);
+        var countSpecification = new TagsCountSpecification(query);
+
+        var totalCount = await CountAsync(countSpecification, cancellationToken);
+        var items = await ListAsync(listSpecification, cancellationToken);
+
+        return new PagedResult<Tag>
+        {
+            Items = items,
+            Page = query.Page,
+            Size = query.Size,
+            TotalCount = totalCount
+        };
+    }
+
+    public async Task AddAsync(
+        Tag tag,
+        CancellationToken cancellationToken = default)
+    {
+        await Context.Tags.AddAsync(tag, cancellationToken);
+    }
+
+    public Task UpdateAsync(
+        Tag tag,
+        CancellationToken cancellationToken = default)
+    {
+        Context.Tags.Update(tag);
+        return Task.CompletedTask;
     }
 
     public async Task<bool> ExistsByNameAsync(
@@ -38,29 +59,14 @@ public sealed class TagRepository(ApplicationDbContext dbContext) : ITagReposito
         CancellationToken cancellationToken = default,
         Guid? excludeId = null)
     {
-        var query = _dbContext.Tags
-            .Where(x => x.UserId == userId && x.Name == name && !x.IsDeleted);
+        var normalizedName = name.Trim();
+
+        var query = Context.Tags
+            .Where(x => x.UserId == userId && x.Name == normalizedName);
 
         if (excludeId.HasValue)
-        {
             query = query.Where(x => x.Id != excludeId.Value);
-        }
 
         return await query.AnyAsync(cancellationToken);
-    }
-
-    public async Task AddAsync(
-        Tag tag,
-        CancellationToken cancellationToken = default)
-    {
-        await _dbContext.Tags.AddAsync(tag, cancellationToken);
-    }
-
-    public Task UpdateAsync(
-        Tag tag,
-        CancellationToken cancellationToken = default)
-    {
-        _dbContext.Tags.Update(tag);
-        return Task.CompletedTask;
     }
 }

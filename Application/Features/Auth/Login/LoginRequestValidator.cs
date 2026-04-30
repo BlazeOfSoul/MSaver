@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Auth.Login;
 
 public sealed class LoginRequestValidator : AbstractValidator<LoginRequest>

@@ -1,11 +1,13 @@
+using MSaver.Application.Features.Accounts.Get;
+
 namespace MSaver.Domain.Repositories;
 
 public interface IAccountRepository
 {
     Task<Account?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Account>> GetAsync(
-        Guid userId,
+    Task<PagedResult<Account>> GetPagedAsync(
+        AccountListQuery query,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(Account account, CancellationToken cancellationToken = default);

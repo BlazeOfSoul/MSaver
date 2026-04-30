@@ -1,39 +1,51 @@
+using MSaver.Application.Features.Accounts.Get;
+using MSaver.Application.Features.Accounts.Specifications;
+
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class AccountRepository(ApplicationDbContext context) : IAccountRepository
+public sealed class AccountRepository(ApplicationDbContext context)
+    : EfRepositoryBase<Account>(context), IAccountRepository
 {
-    private readonly ApplicationDbContext _context = context;
-
-    public async Task<Account?> GetByIdAsync(
+    public Task<Account?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Accounts
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return FirstOrDefaultAsync(
+            new AccountByIdSpecification(id),
+            cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Account>> GetAsync(
-        Guid userId,
+    public async Task<PagedResult<Account>> GetPagedAsync(
+        AccountListQuery query,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Accounts
-            .Where(x => x.UserId == userId)
-            .OrderBy(x => x.CreatedAtUtc)
-            .ToListAsync(cancellationToken);
+        var listSpecification = new AccountsListSpecification(query);
+        var countSpecification = new AccountsCountSpecification(query);
+
+        var totalCount = await CountAsync(countSpecification, cancellationToken);
+        var items = await ListAsync(listSpecification, cancellationToken);
+
+        return new PagedResult<Account>
+        {
+            Items = items,
+            Page = query.Page,
+            Size = query.Size,
+            TotalCount = totalCount
+        };
     }
 
     public async Task AddAsync(
         Account account,
         CancellationToken cancellationToken = default)
     {
-        await _context.Accounts.AddAsync(account, cancellationToken);
+        await Context.Accounts.AddAsync(account, cancellationToken);
     }
 
     public Task UpdateAsync(
         Account account,
         CancellationToken cancellationToken = default)
     {
-        _context.Accounts.Update(account);
+        Context.Accounts.Update(account);
         return Task.CompletedTask;
     }
 
@@ -43,7 +55,10 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
         CancellationToken cancellationToken = default,
         Guid? excludeId = null)
     {
-        var query = _context.Accounts.Where(x => x.UserId == userId && x.Name == name);
+        var normalizedName = name.Trim();
+
+        var query = Context.Accounts
+            .Where(x => x.UserId == userId && x.Name == normalizedName);
 
         if (excludeId.HasValue)
             query = query.Where(x => x.Id != excludeId.Value);
@@ -55,6 +70,6 @@ public sealed class AccountRepository(ApplicationDbContext context) : IAccountRe
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        return _context.Accounts.AnyAsync(x => x.UserId == userId, cancellationToken);
+        return Context.Accounts.AnyAsync(x => x.UserId == userId, cancellationToken);
     }
 }

@@ -34,9 +34,6 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.IsArchived)
             .IsRequired();
 
-        builder.Property(x => x.CreatedAtUtc)
-            .IsRequired();
-
         builder.HasIndex(x => new { x.UserId, x.Name });
 
         builder.HasIndex(x => x.UserId)

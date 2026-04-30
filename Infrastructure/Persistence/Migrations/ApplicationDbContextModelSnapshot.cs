@@ -31,7 +31,7 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<DateTime>("CreatedAtUtc")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CurrencyCode")
@@ -51,6 +51,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -77,6 +80,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -87,6 +93,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -133,6 +142,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -140,6 +152,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -181,6 +196,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
@@ -188,6 +206,9 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");

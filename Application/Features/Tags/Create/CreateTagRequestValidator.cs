@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Tags.Create;
 
 public sealed class CreateTagRequestValidator : AbstractValidator<CreateTagRequest>

@@ -4,7 +4,7 @@ using MSaver.Domain.Enums;
 
 namespace MSaver.Domain.Entities;
 
-public sealed class Category : Entity
+public sealed class Category : AuditableEntity
 {
     private readonly List<Transaction> _transactions = [];
     private readonly List<TagCategory> _tagCategories = [];

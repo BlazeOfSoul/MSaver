@@ -1,44 +1,57 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-using MSaver.Domain.Entities;
+﻿using MSaver.Application.Features.Categories.Get;
+using MSaver.Application.Features.Categories.Specifications;
 using MSaver.Domain.Enums;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class CategoryRepository(ApplicationDbContext dbContext) : ICategoryRepository
+public sealed class CategoryRepository(ApplicationDbContext context) : EfRepositoryBase<Category>(context), ICategoryRepository
 {
-    private readonly ApplicationDbContext _dbContext = dbContext;
+    public Task<Category?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return FirstOrDefaultAsync(new CategoryByIdSpecification(id), cancellationToken);
+    }
+
+    public async Task<PagedResult<Category>> GetPagedAsync(
+        CategoryListQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var listSpecification = new CategoriesListSpecification(query);
+        var countSpecification = new CategoriesCountSpecification(query);
+
+        var totalCount = await CountAsync(countSpecification, cancellationToken);
+        var items = await ListAsync(listSpecification, cancellationToken);
+
+        return new PagedResult<Category>
+        {
+            Items = items,
+            Page = query.Page,
+            Size = query.Size,
+            TotalCount = totalCount
+        };
+    }
 
     public async Task AddAsync(
         Category category,
         CancellationToken cancellationToken = default)
     {
-        await _dbContext.Categories.AddAsync(category, cancellationToken);
+        await Context.Categories.AddAsync(category, cancellationToken);
     }
 
     public async Task AddRangeAsync(
         IEnumerable<Category> categories,
         CancellationToken cancellationToken = default)
     {
-        await _dbContext.Categories.AddRangeAsync(categories, cancellationToken);
+        await Context.Categories.AddRangeAsync(categories, cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Category>> GetAsync(
-        Guid userId,
+    public Task UpdateAsync(
+        Category category,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Categories
-            .Where(x => x.UserId == userId)
-            .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<Category?> GetByIdAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.Categories
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        Context.Categories.Update(category);
+        return Task.CompletedTask;
     }
 
     public async Task<IReadOnlyCollection<Category>> GetByIdsAsync(
@@ -46,35 +59,28 @@ public sealed class CategoryRepository(ApplicationDbContext dbContext) : ICatego
         IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken = default)
     {
-        if (ids.Count == 0)
-            return [];
-
-        return await _dbContext.Categories
-            .Where(x => x.UserId == userId && ids.Contains(x.Id) && !x.IsDeleted)
+        return await Context.Categories
+            .Where(x => x.UserId == userId && ids.Contains(x.Id))
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Category?> GetTransferExpenseCategoryAsync(
+    public Task<Category?> GetTransferExpenseCategoryAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Categories
+        return Context.Categories
             .FirstOrDefaultAsync(
-                x => x.UserId == userId &&
-                     x.Type == CategoryType.TransferExpense &&
-                     !x.IsDeleted,
+                x => x.UserId == userId && x.Type == CategoryType.TransferExpense,
                 cancellationToken);
     }
 
-    public async Task<Category?> GetTransferIncomeCategoryAsync(
+    public Task<Category?> GetTransferIncomeCategoryAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Categories
+        return Context.Categories
             .FirstOrDefaultAsync(
-                x => x.UserId == userId &&
-                     x.Type == CategoryType.TransferIncome &&
-                     !x.IsDeleted,
+                x => x.UserId == userId && x.Type == CategoryType.TransferIncome,
                 cancellationToken);
     }
 
@@ -84,22 +90,14 @@ public sealed class CategoryRepository(ApplicationDbContext dbContext) : ICatego
         CancellationToken cancellationToken = default,
         Guid? excludeId = null)
     {
-        var query = _dbContext.Categories
-            .Where(x => x.UserId == userId && x.Name == name && !x.IsDeleted);
+        var normalizedName = name.Trim();
+
+        var query = Context.Categories
+            .Where(x => x.UserId == userId && x.Name == normalizedName);
 
         if (excludeId.HasValue)
-        {
             query = query.Where(x => x.Id != excludeId.Value);
-        }
 
         return await query.AnyAsync(cancellationToken);
-    }
-
-    public Task UpdateAsync(
-        Category category,
-        CancellationToken cancellationToken = default)
-    {
-        _dbContext.Categories.Update(category);
-        return Task.CompletedTask;
     }
 }

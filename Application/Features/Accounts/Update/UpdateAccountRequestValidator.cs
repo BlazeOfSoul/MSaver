@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Accounts.Update;
 
 public sealed class UpdateAccountRequestValidator : AbstractValidator<UpdateAccountRequest>

@@ -2,7 +2,7 @@ using MSaver.Domain.Constants;
 
 namespace MSaver.Domain.Entities;
 
-public sealed class Account : Entity
+public sealed class Account : AuditableEntity
 {
     private readonly List<Transaction> _transactions = [];
 
@@ -20,8 +20,6 @@ public sealed class Account : Entity
     public bool IsPrimary { get; private set; }
 
     public bool IsArchived { get; private set; }
-
-    public DateTime CreatedAtUtc { get; private set; }
 
     public IReadOnlyCollection<Transaction> Transactions => _transactions;
 
@@ -42,8 +40,7 @@ public sealed class Account : Entity
         {
             UserId = userId,
             IsPrimary = isPrimary,
-            IsArchived = false,
-            CreatedAtUtc = DateTime.UtcNow,
+            IsArchived = false
         };
 
         account.SetCurrencyCode(currencyCode);

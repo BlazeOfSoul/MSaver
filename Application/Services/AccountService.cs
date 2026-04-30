@@ -1,5 +1,7 @@
+using MSaver.Api.Contracts.Accounts;
 using MSaver.Application.Features.Accounts.Create;
 using MSaver.Application.Features.Accounts.Get;
+using MSaver.Application.Features.Accounts.GetById;
 using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
 
@@ -93,37 +95,80 @@ public sealed class AccountService(
         return Result<Guid>.Success(account.Id);
     }
 
-    public async Task<Result<GetAccountsResponse>> GetAccountsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<GetAccountsResponse>> GetAccountsAsync(
+        GetAccountsRequest request,
+        CancellationToken cancellationToken = default)
     {
         var userId = _currentUserService.UserId;
 
-        var accounts = await _accountRepository.GetAsync(userId, cancellationToken);
-        var accountIds = accounts.Select(x => x.Id).ToArray();
+        var query = new AccountListQuery
+        {
+            UserId = userId,
+            Search = ListQueryHelper.NormalizeSearch(request.Search),
+            SortBy = ListQueryHelper.NormalizeSortBy(request.SortBy, AccountSortFields.CreatedAt),
+            SortDirection = ListQueryHelper.NormalizeSortDirection(request.SortDirection),
+            IsArchived = request.IsArchived,
+            CurrencyCode = ListQueryHelper.NormalizeUpperInvariant(request.CurrencyCode),
+            Page = request.Page,
+            Size = request.Size
+        };
+
+        var pagedAccounts = await _accountRepository.GetPagedAsync(query, cancellationToken);
+        var accountIds = pagedAccounts.Items.Select(x => x.Id).ToArray();
 
         var totalsByAccountId = await _transactionRepository.SumByAccountIdsAsync(
             accountIds,
             cancellationToken);
 
-        var items = accounts
-            .Select(account =>
+        var items = pagedAccounts.Items
+            .Select(account => new AccountItemResponse
             {
-                var total = totalsByAccountId.GetValueOrDefault(account.Id, 0m);
-
-                return new AccountItemResponse
-                {
-                    Id = account.Id,
-                    Name = account.Name,
-                    CurrencyCode = account.CurrencyCode,
-                    CurrentBalance = total,
-                    Color = account.Color,
-                    IsArchived = account.IsArchived
-                };
+                Id = account.Id,
+                Name = account.Name,
+                CurrencyCode = account.CurrencyCode,
+                CurrentBalance = totalsByAccountId.GetValueOrDefault(account.Id, 0m),
+                Color = account.Color,
+                IsArchived = account.IsArchived
             })
             .ToArray();
 
         return Result<GetAccountsResponse>.Success(new GetAccountsResponse
         {
-            Items = items
+            Items = items,
+            Page = pagedAccounts.Page,
+            Size = pagedAccounts.Size,
+            TotalCount = pagedAccounts.TotalCount,
+            TotalPages = pagedAccounts.TotalPages,
+            HasPreviousPage = pagedAccounts.HasPreviousPage,
+            HasNextPage = pagedAccounts.HasNextPage
+        });
+    }
+
+    public async Task<Result<GetAccountByIdResponse>> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        var account = await _accountRepository.GetByIdAsync(id, cancellationToken);
+        if (account is null || account.UserId != userId)
+            return Result<GetAccountByIdResponse>.Failure(AccountDomainErrors.NotFound);
+
+        var totalsByAccountId = await _transactionRepository.SumByAccountIdsAsync(
+            [account.Id],
+            cancellationToken);
+
+        var currentBalance = totalsByAccountId.GetValueOrDefault(account.Id, 0m);
+
+        return Result<GetAccountByIdResponse>.Success(new GetAccountByIdResponse
+        {
+            Id = account.Id,
+            Name = account.Name,
+            CurrencyCode = account.CurrencyCode,
+            CurrentBalance = currentBalance,
+            Color = account.Color,
+            IsArchived = account.IsArchived,
+            IsPrimary = account.IsPrimary
         });
     }
 
@@ -137,7 +182,7 @@ public sealed class AccountService(
         if (account is null || account.UserId != userId)
             return Result<GetMonthBalanceResponse>.Failure(AccountDomainErrors.NotFound);
 
-        var monthStart = new DateTime(request.Year, request.Month, 1);
+        var monthStart = new DateTime(request.Year, request.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEnd = monthStart.AddMonths(1);
 
         var beforeTotal = await _transactionRepository.GetBalanceBeforeAsync(

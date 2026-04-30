@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using MSaver.Api.Common;
 using MSaver.Application.Features.Auth.Login;
 using MSaver.Application.Features.Auth.Refresh;
 using MSaver.Application.Features.Auth.Register;
@@ -28,7 +27,7 @@ public sealed class AuthController(
         => ValidateAndExecuteAsync(
             request,
             _registerValidator,
-            ct => _authService.RegisterAsync(request, ct),
+            cancellationToken => _authService.RegisterAsync(request, cancellationToken),
             cancellationToken);
 
     [HttpPost("login")]
@@ -39,7 +38,7 @@ public sealed class AuthController(
         => ValidateAndExecuteAsync(
             request,
             _loginValidator,
-            ct => _authService.LoginAsync(request, ct),
+            cancellationToken => _authService.LoginAsync(request, cancellationToken),
             cancellationToken);
 
     [HttpPost("refresh")]
@@ -50,6 +49,6 @@ public sealed class AuthController(
         => ValidateAndExecuteAsync(
             request,
             _refreshValidator,
-            ct => _authService.RefreshAsync(request, ct),
+            cancellationToken => _authService.RefreshAsync(request, cancellationToken),
             cancellationToken);
 }

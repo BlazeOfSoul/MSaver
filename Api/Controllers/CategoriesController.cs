@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using MSaver.Api.Common;
 using MSaver.Api.Contracts.Categories;
 using MSaver.Application.Features.Categories.Create;
 using MSaver.Application.Features.Categories.Update;
@@ -12,17 +11,33 @@ namespace MSaver.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class CategoriesController(
     ICategoryService categoryService,
+    IValidator<GetCategoriesRequest> getValidator,
     IValidator<CreateCategoryRequest> createValidator,
     IValidator<UpdateCategoryRequest> updateValidator) : ApiControllerBase
 {
     private readonly ICategoryService _categoryService = categoryService;
+    private readonly IValidator<GetCategoriesRequest> _getValidator = getValidator;
     private readonly IValidator<CreateCategoryRequest> _createValidator = createValidator;
     private readonly IValidator<UpdateCategoryRequest> _updateValidator = updateValidator;
 
     [HttpGet]
-    public async Task<IActionResult> Get(CancellationToken cancellationToken)
+    public Task<IActionResult> Get(
+        [FromQuery] GetCategoriesRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _categoryService.GetAsync(cancellationToken);
+        return ValidateAndExecuteAsync(
+            request,
+            _getValidator,
+            cancellationToken => _categoryService.GetAsync(request, cancellationToken),
+            cancellationToken);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _categoryService.GetByIdAsync(id, cancellationToken);
         return FromResult(result);
     }
 
@@ -34,7 +49,7 @@ public sealed class CategoriesController(
         return ValidateAndExecuteAsync(
             request,
             _createValidator,
-            ct => _categoryService.CreateAsync(request, ct),
+            cancellationToken => _categoryService.CreateAsync(request, cancellationToken),
             cancellationToken);
     }
 
@@ -53,7 +68,7 @@ public sealed class CategoriesController(
         return ValidateAndExecuteAsync(
             request,
             _updateValidator,
-            ct => _categoryService.UpdateAsync(request, ct),
+            cancellationToken => _categoryService.UpdateAsync(request, cancellationToken),
             cancellationToken);
     }
 

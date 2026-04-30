@@ -1,6 +1,6 @@
 ﻿namespace MSaver.Domain.Entities;
 
-public sealed class Transaction : Entity
+public sealed class Transaction : AuditableEntity
 {
     private Transaction() { }
 

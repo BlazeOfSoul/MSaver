@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Accounts.Create;
 
 public sealed class CreateAccountRequestValidator : AbstractValidator<CreateAccountRequest>

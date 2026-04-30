@@ -1,5 +1,3 @@
-using MSaver.Application.Common.Validation;
-
 namespace MSaver.Application.Features.Accounts.GetMonthBalance;
 
 public sealed class GetMonthBalanceRequestValidator : AbstractValidator<GetMonthBalanceRequest>
