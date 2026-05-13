@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [ master ]
+  push:
+    branches: [ master ]
+  merge_group:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore ./MSaver.sln
+
+      - name: Build
+        run: dotnet build ./MSaver.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ./MSaver.UnitTests/MSaver.UnitTests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/*.trx
+            **/coverage.cobertura.xml
