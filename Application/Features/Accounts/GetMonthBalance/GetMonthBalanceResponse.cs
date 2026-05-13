@@ -1,3 +1,5 @@
+namespace MSaver.Application.Features.Accounts.GetMonthBalance;
+
 public sealed class GetMonthBalanceResponse
 {
     public Guid AccountId { get; init; }

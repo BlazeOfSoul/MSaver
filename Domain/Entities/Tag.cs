@@ -51,14 +51,6 @@ public sealed class Tag : AuditableEntity
         IsDeleted = true;
     }
 
-    public void Restore()
-    {
-        if (!IsDeleted)
-            throw new DomainException(TagDomainErrors.TagAlreadyActive);
-
-        IsDeleted = false;
-    }
-
     public void ReplaceCategories(IEnumerable<Guid> categoryIds)
     {
         if (IsDeleted)
