@@ -8,6 +8,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<TagCategory> TagCategories => Set<TagCategory>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

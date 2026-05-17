@@ -15,7 +15,7 @@ public sealed class AuthService(
     IUnitOfWork unitOfWork,
     IPasswordHasher<User> passwordHasher) : IAuthService
 {
-    private const int MaxActiveRefreshTokensPerUser = 3;
+    private const int MaxActiveSessionsPerUser = 3;
 
     private readonly IUserRepository _userRepository = userRepository;
     private readonly ICategoryRepository _categoryRepository = categoryRepository;
@@ -40,21 +40,48 @@ public sealed class AuthService(
         if (verification == PasswordVerificationResult.Failed)
             return Result<LoginResponse>.Failure(AuthDomainErrors.InvalidPassword);
 
+        await _refreshTokenRepository.DeleteExpiredByUserAsync(user.Id, cancellationToken);
+
+        var existingTokens = await _refreshTokenRepository.GetAsync(user.Id, cancellationToken);
+
+        var activeSessions = existingTokens
+            .Where(x => !x.IsExpired)
+            .OrderBy(x => x.CreatedAt)
+            .ToList();
+
+        while (activeSessions.Count >= MaxActiveSessionsPerUser)
+        {
+            var oldestSession = activeSessions[0];
+            await _refreshTokenRepository.DeleteAsync(oldestSession, cancellationToken);
+            activeSessions.RemoveAt(0);
+        }
+
+        var clientId = Guid.NewGuid().ToString("N");
+
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(
             user.Id,
             user.Name,
-            user.Email);
+            user.Email,
+            clientId);
 
         var (refreshTokenValue, refreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
             user.Id,
             user.Name,
-            user.Email);
+            user.Email,
+            clientId);
 
-        await AddRefreshTokenAsync(user.Id, refreshTokenValue, refreshExpiresAt, cancellationToken);
+        var refreshEntity = RefreshToken.Create(
+            user.Id,
+            clientId,
+            refreshTokenValue,
+            refreshExpiresAt);
+
+        await _refreshTokenRepository.AddAsync(refreshEntity, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var response = new LoginResponse(
             user.Id,
+            clientId,
             accessToken,
             refreshTokenValue);
 
@@ -69,7 +96,7 @@ public sealed class AuthService(
         if (existingUser is not null)
             return Result<Guid>.Failure(AuthDomainErrors.RepeatedEmail);
 
-        User user = CreateUser(request);
+        var user = CreateUser(request);
 
         await _userRepository.AddAsync(user, cancellationToken);
         await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
@@ -89,35 +116,72 @@ public sealed class AuthService(
             return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.RefreshTokenInvalid);
 
         if (storedToken.IsExpired)
+        {
+            await _refreshTokenRepository.DeleteAsync(storedToken, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.RefreshTokenExpired);
+        }
 
         var user = await _userRepository.GetByIdAsync(storedToken.UserId, cancellationToken);
         if (user is null)
             return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.InvalidEmail);
 
-        await _refreshTokenRepository.RevokeAsync(storedToken, cancellationToken);
-
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(
             user.Id,
             user.Name,
-            user.Email);
+            user.Email,
+            storedToken.ClientId);
 
         var (newRefreshTokenValue, newRefreshExpiresAt) = _jwtTokenGenerator.GenerateRefreshToken(
             user.Id,
             user.Name,
-            user.Email);
+            user.Email,
+            storedToken.ClientId);
 
-        await AddRefreshTokenAsync(user.Id, newRefreshTokenValue, newRefreshExpiresAt, cancellationToken);
+        storedToken.Replace(newRefreshTokenValue, newRefreshExpiresAt);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var response = new RefreshTokenResponse(
             user.Id,
             user.Name,
             user.Email,
+            storedToken.ClientId,
             accessToken,
             newRefreshTokenValue);
 
         return Result<RefreshTokenResponse>.Success(response);
+    }
+
+    public async Task<Result> LogoutClientAsync(
+        Guid userId,
+        string clientId,
+        CancellationToken cancellationToken = default)
+    {
+        var session = await _refreshTokenRepository
+            .GetByClientIdAsync(userId, clientId, cancellationToken);
+
+        if (session is null)
+            return Result.Success();
+
+        await _refreshTokenRepository.DeleteAsync(session, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> LogoutAllAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var sessions = await _refreshTokenRepository.GetAsync(userId, cancellationToken);
+
+        foreach (var session in sessions)
+            await _refreshTokenRepository.DeleteAsync(session, cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
     }
 
     private User CreateUser(RegisterRequest request)
@@ -129,8 +193,7 @@ public sealed class AuthService(
 
         var hash = _passwordHasher.HashPassword(tempUser, request.Password);
 
-        var user = User.Create(request.Username, request.Email, hash);
-        return user;
+        return User.Create(request.Username, request.Email, hash);
     }
 
     private async Task CreateDefaultCategoriesAsync(Guid userId, CancellationToken cancellationToken)
@@ -144,30 +207,5 @@ public sealed class AuthService(
             .ToList();
 
         await _categoryRepository.AddRangeAsync(defaultCategories, cancellationToken);
-    }
-
-    private async Task AddRefreshTokenAsync(
-        Guid userId,
-        string tokenValue,
-        DateTime expiresAt,
-        CancellationToken cancellationToken)
-    {
-        var existingTokens = await _refreshTokenRepository
-            .GetAsync(userId, cancellationToken);
-
-        var activeTokens = existingTokens
-            .Where(t => !t.IsExpired)
-            .OrderBy(t => t.CreatedAt)
-            .ToList();
-
-        while (activeTokens.Count >= MaxActiveRefreshTokensPerUser)
-        {
-            var oldest = activeTokens[0];
-            await _refreshTokenRepository.RevokeAsync(oldest, cancellationToken);
-            activeTokens.RemoveAt(0);
-        }
-
-        var refreshEntity = RefreshToken.Create(userId, tokenValue, expiresAt);
-        await _refreshTokenRepository.AddAsync(refreshEntity, cancellationToken);
     }
 }

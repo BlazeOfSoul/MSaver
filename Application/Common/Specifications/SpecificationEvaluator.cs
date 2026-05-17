@@ -1,6 +1,4 @@
-﻿using MSaver.Application.Common.Specifications;
-
-namespace MSaver.Infrastructure.Persistence.Specifications;
+﻿namespace MSaver.Application.Common.Specifications;
 
 public static class SpecificationEvaluator
 {
