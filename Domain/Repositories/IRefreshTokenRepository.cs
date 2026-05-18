@@ -8,5 +8,12 @@ public interface IRefreshTokenRepository
 
     Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default);
 
-    Task RevokeAsync(RefreshToken token, CancellationToken cancellationToken = default);
+    Task<RefreshToken?> GetByClientIdAsync(
+        Guid userId,
+        string clientId,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(RefreshToken token, CancellationToken cancellationToken = default);
+
+    Task DeleteExpiredByUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }

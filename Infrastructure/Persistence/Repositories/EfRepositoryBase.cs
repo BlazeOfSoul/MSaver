@@ -1,5 +1,4 @@
 ﻿using MSaver.Application.Common.Specifications;
-using MSaver.Infrastructure.Persistence.Specifications;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;
 

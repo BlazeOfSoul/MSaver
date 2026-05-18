@@ -1,35 +1,52 @@
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class RefreshTokenRepository(ApplicationDbContext dbContext) : IRefreshTokenRepository
+public sealed class RefreshTokenRepository(ApplicationDbContext context) : IRefreshTokenRepository
 {
-    private readonly ApplicationDbContext _dbContext = dbContext;
+    private readonly ApplicationDbContext _context = context;
 
     public async Task AddAsync(RefreshToken token, CancellationToken cancellationToken = default)
-    {
-        await _dbContext.Set<RefreshToken>().AddAsync(token, cancellationToken);
-    }
+        => await _context.RefreshTokens.AddAsync(token, cancellationToken);
 
     public async Task<IEnumerable<RefreshToken>> GetAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.Set<RefreshToken>()
-            .Where(t => t.UserId == userId)
+        => await _context.RefreshTokens
+            .Where(x => x.UserId == userId)
+            .OrderBy(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
-    }
 
     public async Task<RefreshToken?> GetByTokenAsync(
         string token,
         CancellationToken cancellationToken = default)
+        => await _context.RefreshTokens
+            .FirstOrDefaultAsync(x => x.Token == token, cancellationToken);
+
+    public async Task<RefreshToken?> GetByClientIdAsync(
+        Guid userId,
+        string clientId,
+        CancellationToken cancellationToken = default)
+        => await _context.RefreshTokens
+            .FirstOrDefaultAsync(
+                x => x.UserId == userId && x.ClientId == clientId,
+                cancellationToken);
+
+    public Task DeleteAsync(RefreshToken token, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Set<RefreshToken>()
-            .FirstOrDefaultAsync(t => t.Token == token, cancellationToken);
+        _context.RefreshTokens.Remove(token);
+        return Task.CompletedTask;
     }
 
-    public Task RevokeAsync(RefreshToken token, CancellationToken cancellationToken = default)
+    public async Task DeleteExpiredByUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
     {
-        token.Revoke();
-        _dbContext.Set<RefreshToken>().Update(token);
-        return Task.CompletedTask;
+        var expiredTokens = await _context.RefreshTokens
+            .Where(x => x.UserId == userId && x.ExpiresAt <= DateTime.UtcNow)
+            .ToListAsync(cancellationToken);
+
+        if (expiredTokens.Count == 0)
+            return;
+
+        _context.RefreshTokens.RemoveRange(expiredTokens);
     }
 }

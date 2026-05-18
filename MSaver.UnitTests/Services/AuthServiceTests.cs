@@ -1,15 +1,7 @@
-﻿using FluentAssertions;
+﻿using Microsoft.AspNetCore.Identity;
 
-using Microsoft.AspNetCore.Identity;
-
-using Moq;
-
-using MSaver.Domain.Entities;
-using MSaver.Domain.Errors;
 using MSaver.UnitTests.Common;
 using MSaver.UnitTests.Common.TestData;
-
-using Xunit;
 
 namespace MSaver.UnitTests.Services;
 
@@ -35,6 +27,10 @@ public sealed class AuthServiceTests : AuthServiceTestBase
                 It.IsAny<User>(),
                 It.IsAny<string>(),
                 It.IsAny<string>()),
+            Times.Never);
+
+        RefreshTokenRepositoryMock.Verify(
+            x => x.DeleteExpiredByUserAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
 
         UnitOfWorkMock.Verify(
@@ -65,7 +61,19 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         result.Error.Should().Be(AuthDomainErrors.InvalidPassword);
 
         JwtTokenGeneratorMock.Verify(
-            x => x.GenerateAccessToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()),
+            x => x.GenerateAccessToken(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()),
+            Times.Never);
+
+        JwtTokenGeneratorMock.Verify(
+            x => x.GenerateRefreshToken(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()),
             Times.Never);
 
         RefreshTokenRepositoryMock.Verify(
@@ -78,7 +86,7 @@ public sealed class AuthServiceTests : AuthServiceTestBase
     }
 
     [Fact]
-    public async Task LoginAsync_ShouldReturnTokens_WhenCredentialsAreValid()
+    public async Task LoginAsync_ShouldReturnTokensAndClientId_WhenCredentialsAreValid()
     {
         var sut = CreateSut();
         var request = AuthTestData.CreateLoginRequest();
@@ -87,6 +95,8 @@ public sealed class AuthServiceTests : AuthServiceTestBase
             passwordHash: "stored-hash");
 
         var refreshExpiresAt = new DateTime(2026, 06, 01, 0, 0, 0, DateTimeKind.Utc);
+        string? capturedClientId = null;
+        RefreshToken? createdRefreshToken = null;
 
         UserRepositoryMock
             .Setup(x => x.GetByEmailAsync(request.Email, It.IsAny<CancellationToken>()))
@@ -96,20 +106,38 @@ public sealed class AuthServiceTests : AuthServiceTestBase
             .Setup(x => x.VerifyHashedPassword(user, user.PasswordHash, request.Password))
             .Returns(PasswordVerificationResult.Success);
 
-        JwtTokenGeneratorMock
-            .Setup(x => x.GenerateAccessToken(user.Id, user.Name, user.Email))
-            .Returns("access-token");
-
-        JwtTokenGeneratorMock
-            .Setup(x => x.GenerateRefreshToken(user.Id, user.Name, user.Email))
-            .Returns(("refresh-token", refreshExpiresAt));
+        RefreshTokenRepositoryMock
+            .Setup(x => x.DeleteExpiredByUserAsync(user.Id, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         RefreshTokenRepositoryMock
             .Setup(x => x.GetAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
+        JwtTokenGeneratorMock
+            .Setup(x => x.GenerateAccessToken(
+                user.Id,
+                user.Name,
+                user.Email,
+                It.IsAny<string>()))
+            .Callback<Guid, string, string, string>((_, _, _, clientId) => capturedClientId = clientId)
+            .Returns("access-token");
+
+        JwtTokenGeneratorMock
+            .Setup(x => x.GenerateRefreshToken(
+                user.Id,
+                user.Name,
+                user.Email,
+                It.IsAny<string>()))
+            .Returns<Guid, string, string, string>((_, _, _, clientId) =>
+            {
+                capturedClientId ??= clientId;
+                return ("refresh-token", refreshExpiresAt);
+            });
+
         RefreshTokenRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()))
+            .Callback<RefreshToken, CancellationToken>((token, _) => createdRefreshToken = token)
             .Returns(Task.CompletedTask);
 
         UnitOfWorkMock
@@ -123,6 +151,20 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         result.Value!.Id.Should().Be(user.Id);
         result.Value.AccessToken.Should().Be("access-token");
         result.Value.RefreshToken.Should().Be("refresh-token");
+        result.Value.ClientId.Should().NotBeNullOrWhiteSpace();
+        result.Value.ClientId.Should().HaveLength(32);
+
+        capturedClientId.Should().Be(result.Value.ClientId);
+
+        createdRefreshToken.Should().NotBeNull();
+        createdRefreshToken!.UserId.Should().Be(user.Id);
+        createdRefreshToken.ClientId.Should().Be(result.Value.ClientId);
+        createdRefreshToken.Token.Should().Be("refresh-token");
+        createdRefreshToken.ExpiresAt.Should().Be(refreshExpiresAt);
+
+        RefreshTokenRepositoryMock.Verify(
+            x => x.DeleteExpiredByUserAsync(user.Id, It.IsAny<CancellationToken>()),
+            Times.Once);
 
         RefreshTokenRepositoryMock.Verify(
             x => x.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()),
@@ -134,7 +176,7 @@ public sealed class AuthServiceTests : AuthServiceTestBase
     }
 
     [Fact]
-    public async Task LoginAsync_ShouldRevokeOldestActiveRefreshToken_WhenUserAlreadyHasThreeActiveTokens()
+    public async Task LoginAsync_ShouldDeleteOldestActiveSession_WhenUserAlreadyHasThreeActiveSessions()
     {
         var sut = CreateSut();
         var request = AuthTestData.CreateLoginRequest();
@@ -142,14 +184,30 @@ public sealed class AuthServiceTests : AuthServiceTestBase
             email: request.Email,
             passwordHash: "stored-hash");
 
-        var firstToken = AuthTestData.CreateActiveRefreshToken(user.Id, "token-1", DateTime.UtcNow.AddDays(10));
+        var firstToken = AuthTestData.CreateActiveRefreshToken(
+            user.Id,
+            "client-1",
+            "token-1",
+            DateTime.UtcNow.AddDays(10));
+
         await Task.Delay(5);
-        var secondToken = AuthTestData.CreateActiveRefreshToken(user.Id, "token-2", DateTime.UtcNow.AddDays(11));
+
+        var secondToken = AuthTestData.CreateActiveRefreshToken(
+            user.Id,
+            "client-2",
+            "token-2",
+            DateTime.UtcNow.AddDays(11));
+
         await Task.Delay(5);
-        var thirdToken = AuthTestData.CreateActiveRefreshToken(user.Id, "token-3", DateTime.UtcNow.AddDays(12));
+
+        var thirdToken = AuthTestData.CreateActiveRefreshToken(
+            user.Id,
+            "client-3",
+            "token-3",
+            DateTime.UtcNow.AddDays(12));
 
         var existingTokens = new[] { firstToken, secondToken, thirdToken };
-        var newRefreshExpiresAt = DateTime.UtcNow.AddDays(30);
+        var refreshExpiresAt = DateTime.UtcNow.AddDays(30);
 
         UserRepositoryMock
             .Setup(x => x.GetByEmailAsync(request.Email, It.IsAny<CancellationToken>()))
@@ -159,20 +217,24 @@ public sealed class AuthServiceTests : AuthServiceTestBase
             .Setup(x => x.VerifyHashedPassword(user, user.PasswordHash, request.Password))
             .Returns(PasswordVerificationResult.Success);
 
-        JwtTokenGeneratorMock
-            .Setup(x => x.GenerateAccessToken(user.Id, user.Name, user.Email))
-            .Returns("access-token");
-
-        JwtTokenGeneratorMock
-            .Setup(x => x.GenerateRefreshToken(user.Id, user.Name, user.Email))
-            .Returns(("new-refresh-token", newRefreshExpiresAt));
+        RefreshTokenRepositoryMock
+            .Setup(x => x.DeleteExpiredByUserAsync(user.Id, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         RefreshTokenRepositoryMock
             .Setup(x => x.GetAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingTokens);
 
+        JwtTokenGeneratorMock
+            .Setup(x => x.GenerateAccessToken(user.Id, user.Name, user.Email, It.IsAny<string>()))
+            .Returns("access-token");
+
+        JwtTokenGeneratorMock
+            .Setup(x => x.GenerateRefreshToken(user.Id, user.Name, user.Email, It.IsAny<string>()))
+            .Returns(("new-refresh-token", refreshExpiresAt));
+
         RefreshTokenRepositoryMock
-            .Setup(x => x.RevokeAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DeleteAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         RefreshTokenRepositoryMock
@@ -188,7 +250,7 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         result.IsSuccess.Should().BeTrue();
 
         RefreshTokenRepositoryMock.Verify(
-            x => x.RevokeAsync(firstToken, It.IsAny<CancellationToken>()),
+            x => x.DeleteAsync(firstToken, It.IsAny<CancellationToken>()),
             Times.Once);
 
         RefreshTokenRepositoryMock.Verify(
@@ -308,16 +370,24 @@ public sealed class AuthServiceTests : AuthServiceTestBase
     }
 
     [Fact]
-    public async Task RefreshAsync_ShouldReturnFailure_WhenRefreshTokenIsExpired()
+    public async Task RefreshAsync_ShouldDeleteExpiredTokenAndReturnFailure_WhenRefreshTokenIsExpired()
     {
         var sut = CreateSut();
         var request = AuthTestData.CreateRefreshTokenRequest();
         var user = AuthTestData.CreateUser();
-        var expiredToken = AuthTestData.CreateExpiredRefreshToken(user.Id, request.RefreshToken);
+        var expiredToken = AuthTestData.CreateExpiredRefreshToken(user.Id, "client-1", request.RefreshToken);
 
         RefreshTokenRepositoryMock
             .Setup(x => x.GetByTokenAsync(request.RefreshToken, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expiredToken);
+
+        RefreshTokenRepositoryMock
+            .Setup(x => x.DeleteAsync(expiredToken, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        UnitOfWorkMock
+            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
         var result = await sut.RefreshAsync(request);
 
@@ -325,8 +395,12 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         result.Error.Should().Be(AuthDomainErrors.RefreshTokenExpired);
 
         RefreshTokenRepositoryMock.Verify(
-            x => x.RevokeAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+            x => x.DeleteAsync(expiredToken, It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -335,7 +409,7 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         var sut = CreateSut();
         var request = AuthTestData.CreateRefreshTokenRequest("refresh-token");
         var userId = Guid.NewGuid();
-        var storedToken = AuthTestData.CreateActiveRefreshToken(userId, request.RefreshToken);
+        var storedToken = AuthTestData.CreateActiveRefreshToken(userId, "client-1", request.RefreshToken);
 
         RefreshTokenRepositoryMock
             .Setup(x => x.GetByTokenAsync(request.RefreshToken, It.IsAny<CancellationToken>()))
@@ -350,22 +424,23 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(AuthDomainErrors.InvalidEmail);
 
-        RefreshTokenRepositoryMock.Verify(
-            x => x.RevokeAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-
         UnitOfWorkMock.Verify(
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task RefreshAsync_ShouldReturnNewTokens_WhenRefreshTokenIsValid()
+    public async Task RefreshAsync_ShouldReplaceStoredTokenAndReturnNewTokens_WhenRefreshTokenIsValid()
     {
         var sut = CreateSut();
         var request = AuthTestData.CreateRefreshTokenRequest("old-refresh-token");
         var user = AuthTestData.CreateUser();
-        var storedToken = AuthTestData.CreateActiveRefreshToken(user.Id, request.RefreshToken);
+        var storedToken = AuthTestData.CreateActiveRefreshToken(
+            user.Id,
+            "client-1",
+            request.RefreshToken,
+            DateTime.UtcNow.AddDays(10));
+
         var newRefreshExpiresAt = DateTime.UtcNow.AddDays(30);
 
         RefreshTokenRepositoryMock
@@ -376,46 +451,97 @@ public sealed class AuthServiceTests : AuthServiceTestBase
             .Setup(x => x.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        RefreshTokenRepositoryMock
-            .Setup(x => x.RevokeAsync(storedToken, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         JwtTokenGeneratorMock
-            .Setup(x => x.GenerateAccessToken(user.Id, user.Name, user.Email))
+            .Setup(x => x.GenerateAccessToken(user.Id, user.Name, user.Email, storedToken.ClientId))
             .Returns("new-access-token");
 
         JwtTokenGeneratorMock
-            .Setup(x => x.GenerateRefreshToken(user.Id, user.Name, user.Email))
+            .Setup(x => x.GenerateRefreshToken(user.Id, user.Name, user.Email, storedToken.ClientId))
             .Returns(("new-refresh-token", newRefreshExpiresAt));
-
-        RefreshTokenRepositoryMock
-            .Setup(x => x.GetAsync(user.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-
-        RefreshTokenRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
 
         UnitOfWorkMock
             .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
+
+        var oldTokenValue = storedToken.Token;
 
         var result = await sut.RefreshAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value!.Id.Should().Be(user.Id);
-        result.Value.Username.Should().Be(user.Name);
+        result.Value.Name.Should().Be(user.Name);
         result.Value.Email.Should().Be(user.Email);
+        result.Value.ClientId.Should().Be(storedToken.ClientId);
         result.Value.AccessToken.Should().Be("new-access-token");
         result.Value.RefreshToken.Should().Be("new-refresh-token");
 
-        RefreshTokenRepositoryMock.Verify(
-            x => x.RevokeAsync(storedToken, It.IsAny<CancellationToken>()),
-            Times.Once);
+        storedToken.Token.Should().NotBe(oldTokenValue);
+        storedToken.Token.Should().Be("new-refresh-token");
+        storedToken.ExpiresAt.Should().Be(newRefreshExpiresAt);
 
         RefreshTokenRepositoryMock.Verify(
             x => x.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        RefreshTokenRepositoryMock.Verify(
+            x => x.DeleteAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task LogoutClientAsync_ShouldReturnSuccess_WhenSessionWasNotFound()
+    {
+        var sut = CreateSut();
+        var userId = Guid.NewGuid();
+        var clientId = "client-1";
+
+        RefreshTokenRepositoryMock
+            .Setup(x => x.GetByClientIdAsync(userId, clientId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RefreshToken?)null);
+
+        var result = await sut.LogoutClientAsync(userId, clientId);
+
+        result.IsSuccess.Should().BeTrue();
+
+        RefreshTokenRepositoryMock.Verify(
+            x => x.DeleteAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task LogoutClientAsync_ShouldDeleteSession_WhenSessionWasFound()
+    {
+        var sut = CreateSut();
+        var user = AuthTestData.CreateUser();
+        var session = AuthTestData.CreateActiveRefreshToken(user.Id, "client-1", "refresh-token");
+
+        RefreshTokenRepositoryMock
+            .Setup(x => x.GetByClientIdAsync(user.Id, "client-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session);
+
+        RefreshTokenRepositoryMock
+            .Setup(x => x.DeleteAsync(session, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        UnitOfWorkMock
+            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var result = await sut.LogoutClientAsync(user.Id, "client-1");
+
+        result.IsSuccess.Should().BeTrue();
+
+        RefreshTokenRepositoryMock.Verify(
+            x => x.DeleteAsync(session, It.IsAny<CancellationToken>()),
             Times.Once);
 
         UnitOfWorkMock.Verify(
@@ -424,65 +550,40 @@ public sealed class AuthServiceTests : AuthServiceTestBase
     }
 
     [Fact]
-    public async Task RefreshAsync_ShouldRevokeOldestActiveRefreshToken_WhenUserAlreadyHasThreeActiveTokens()
+    public async Task LogoutAllAsync_ShouldDeleteAllSessions()
     {
         var sut = CreateSut();
-        var request = AuthTestData.CreateRefreshTokenRequest("old-refresh-token");
         var user = AuthTestData.CreateUser();
-        var storedToken = AuthTestData.CreateActiveRefreshToken(user.Id, request.RefreshToken);
 
-        var firstToken = AuthTestData.CreateActiveRefreshToken(user.Id, "token-1", DateTime.UtcNow.AddDays(5));
-        await Task.Delay(5);
-        var secondToken = AuthTestData.CreateActiveRefreshToken(user.Id, "token-2", DateTime.UtcNow.AddDays(6));
-        await Task.Delay(5);
-        var thirdToken = AuthTestData.CreateActiveRefreshToken(user.Id, "token-3", DateTime.UtcNow.AddDays(7));
-
-        var existingTokens = new[] { firstToken, secondToken, thirdToken };
-        var newRefreshExpiresAt = DateTime.UtcNow.AddDays(30);
-
-        RefreshTokenRepositoryMock
-            .Setup(x => x.GetByTokenAsync(request.RefreshToken, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(storedToken);
-
-        UserRepositoryMock
-            .Setup(x => x.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(user);
-
-        RefreshTokenRepositoryMock
-            .Setup(x => x.RevokeAsync(storedToken, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        JwtTokenGeneratorMock
-            .Setup(x => x.GenerateAccessToken(user.Id, user.Name, user.Email))
-            .Returns("new-access-token");
-
-        JwtTokenGeneratorMock
-            .Setup(x => x.GenerateRefreshToken(user.Id, user.Name, user.Email))
-            .Returns(("new-refresh-token", newRefreshExpiresAt));
+        var sessions = new[]
+        {
+            AuthTestData.CreateActiveRefreshToken(user.Id, "client-1", "token-1"),
+            AuthTestData.CreateActiveRefreshToken(user.Id, "client-2", "token-2"),
+            AuthTestData.CreateActiveRefreshToken(user.Id, "client-3", "token-3")
+        };
 
         RefreshTokenRepositoryMock
             .Setup(x => x.GetAsync(user.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingTokens);
+            .ReturnsAsync(sessions);
 
         RefreshTokenRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DeleteAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         UnitOfWorkMock
             .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
-        var result = await sut.RefreshAsync(request);
+        var result = await sut.LogoutAllAsync(user.Id);
 
         result.IsSuccess.Should().BeTrue();
 
-        RefreshTokenRepositoryMock.Verify(
-            x => x.RevokeAsync(firstToken, It.IsAny<CancellationToken>()),
-            Times.Once);
-
-        RefreshTokenRepositoryMock.Verify(
-            x => x.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        foreach (var session in sessions)
+        {
+            RefreshTokenRepositoryMock.Verify(
+                x => x.DeleteAsync(session, It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
 
         UnitOfWorkMock.Verify(
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),

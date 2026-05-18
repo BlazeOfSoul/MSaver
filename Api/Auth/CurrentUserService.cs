@@ -22,7 +22,10 @@ public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
             if (string.IsNullOrWhiteSpace(userIdClaim))
                 throw new DomainException(UserDomainErrors.IdNotFound);
 
-            return Guid.Parse(userIdClaim);
+            if (!Guid.TryParse(userIdClaim, out var userId))
+                throw new DomainException(UserDomainErrors.IdNotFound);
+
+            return userId;
         }
     }
 

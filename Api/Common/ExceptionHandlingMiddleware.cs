@@ -1,4 +1,4 @@
-using MSaver.Api.Common;
+namespace MSaver.Api.Common;
 
 public sealed class ExceptionHandlingMiddleware(
     RequestDelegate next,

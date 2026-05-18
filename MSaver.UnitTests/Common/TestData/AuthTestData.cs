@@ -33,21 +33,25 @@ public static class AuthTestData
 
     public static RefreshToken CreateActiveRefreshToken(
         Guid userId,
+        string clientId = "client-1",
         string token = "refresh-token",
         DateTime? expiresAt = null)
     {
         return RefreshToken.Create(
             userId,
+            clientId,
             token,
             expiresAt ?? DateTime.UtcNow.AddDays(7));
     }
 
     public static RefreshToken CreateExpiredRefreshToken(
         Guid userId,
+        string clientId = "client-1",
         string token = "expired-refresh-token")
     {
         return RefreshToken.Create(
             userId,
+            clientId,
             token,
             DateTime.UtcNow.AddMinutes(-1));
     }

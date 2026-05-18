@@ -1,3 +1,5 @@
+using MSaver.Api.Common;
+
 namespace MSaver.Api.Extensions;
 
 public static class ExceptionHandlingMiddlewareExtensions
