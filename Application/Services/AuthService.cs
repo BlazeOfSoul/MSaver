@@ -81,6 +81,8 @@ public sealed class AuthService(
 
         var response = new LoginResponse(
             user.Id,
+            user.Name,
+            user.Email,
             clientId,
             accessToken,
             refreshTokenValue);
