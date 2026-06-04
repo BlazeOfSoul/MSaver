@@ -1,4 +1,5 @@
 using MSaver.Api.Contracts.Transactions;
+using MSaver.Application.Common.Models;
 using MSaver.Application.Features.Transactions.Create;
 using MSaver.Application.Features.Transactions.Get;
 using MSaver.Application.Features.Transactions.GetById;
@@ -37,8 +38,8 @@ public sealed class TransactionService(
             UserId = userId,
             AccountId = request.AccountId,
             CategoryId = request.CategoryId,
-            FromDate = request.FromDate,
-            ToDate = request.ToDate,
+            FromDate = DateTimeUtc.Normalize(request.FromDate),
+            ToDate = DateTimeUtc.Normalize(request.ToDate),
             Search = ListQueryHelper.NormalizeSearch(request.Search),
             SortBy = ListQueryHelper.NormalizeSortBy(request.SortBy, TransactionSortFields.Date),
             SortDirection = ListQueryHelper.NormalizeSortDirection(request.SortDirection),
@@ -64,6 +65,7 @@ public sealed class TransactionService(
                 {
                     Id = x.CategoryId,
                     Name = x.Category!.Name,
+                    Type = x.Category.Type,
                     Color = x.Category.Color
                 },
                 Amount = x.Amount,
@@ -110,6 +112,7 @@ public sealed class TransactionService(
             {
                 Id = transaction.CategoryId,
                 Name = transaction.Category!.Name,
+                Type = transaction.Category.Type,
                 Color = transaction.Category.Color
             },
             Amount = transaction.Amount,
@@ -144,7 +147,7 @@ public sealed class TransactionService(
             accountId: request.AccountId,
             categoryId: request.CategoryId,
             amount: request.Amount,
-            date: request.Date,
+            date: DateTimeUtc.Normalize(request.Date),
             description: request.Description);
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);
@@ -175,7 +178,7 @@ public sealed class TransactionService(
         transaction.Update(
             categoryId: request.CategoryId,
             amount: request.Amount,
-            date: request.Date,
+            date: DateTimeUtc.Normalize(request.Date),
             description: request.Description);
 
         await _transactionRepository.UpdateAsync(transaction, cancellationToken);
@@ -258,8 +261,8 @@ public sealed class TransactionService(
             userId: userId,
             accountId: fromAccount.Id,
             categoryId: transferExpenseCategory.Id,
-            amount: request.Amount,
-            date: request.Date,
+            amount: -request.Amount,
+            date: DateTimeUtc.Normalize(request.Date),
             description: request.Description);
 
         var incomeTransaction = Transaction.Create(
@@ -267,7 +270,7 @@ public sealed class TransactionService(
             accountId: toAccount.Id,
             categoryId: transferIncomeCategory.Id,
             amount: depositAmount,
-            date: request.Date,
+            date: DateTimeUtc.Normalize(request.Date),
             description: request.Description);
 
         await _transactionRepository.AddAsync(expenseTransaction, cancellationToken);
@@ -306,8 +309,11 @@ public sealed class TransactionService(
         if (amount == 0)
             return (true, TransactionDomainErrors.AmountMustNotBeZero, null);
 
-        if (category.Type == CategoryType.Debit && amount > 0 ||
-            category.Type == CategoryType.Credit && amount < 0)
+        var isExpenseCategory = category.Type is CategoryType.Debit or CategoryType.TransferExpense;
+        var isIncomeCategory = category.Type is CategoryType.Credit or CategoryType.TransferIncome;
+
+        if (isExpenseCategory && amount > 0 ||
+            isIncomeCategory && amount < 0)
         {
             return (true, TransactionDomainErrors.AmountSignMismatchWithCategoryType, null);
         }
