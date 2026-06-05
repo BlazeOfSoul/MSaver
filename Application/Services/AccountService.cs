@@ -87,6 +87,9 @@ public sealed class AccountService(
         if (account is null || account.UserId != userId)
             return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
+        if (account.IsPrimary)
+            return Result<Guid>.Failure(AccountDomainErrors.PrimaryAccountCannotBeArchived);
+
         account.Archive();
 
         await _accountRepository.UpdateAsync(account, cancellationToken);

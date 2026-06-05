@@ -421,7 +421,7 @@ public sealed class AccountServiceTests : AccountServiceTestBase
     }
 
     [Fact]
-    public async Task DeleteAsync_ShouldThrow_WhenAccountIsPrimary()
+    public async Task DeleteAsync_ShouldReturnFailure_WhenAccountIsPrimary()
     {
         var sut = CreateSut();
         var userId = AccountTestData.UserId;
@@ -435,7 +435,11 @@ public sealed class AccountServiceTests : AccountServiceTestBase
             .Setup(x => x.GetByIdAsync(account.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
 
-        await Assert.ThrowsAsync<DomainException>(() => sut.DeleteAsync(account.Id));
+        var result = await sut.DeleteAsync(account.Id);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.PrimaryAccountCannotBeArchived);
+        account.IsArchived.Should().BeFalse();
 
         AccountRepositoryMock.Verify(
             x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
