@@ -13,4 +13,6 @@ public sealed class AccountItemResponse
     public string? Color { get; init; }
 
     public bool IsArchived { get; init; }
+
+    public bool IsPrimary { get; init; }
 }

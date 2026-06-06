@@ -131,7 +131,8 @@ public sealed class AccountService(
                 CurrencyCode = account.CurrencyCode,
                 CurrentBalance = totalsByAccountId.GetValueOrDefault(account.Id, 0m),
                 Color = account.Color,
-                IsArchived = account.IsArchived
+                IsArchived = account.IsArchived,
+                IsPrimary = account.IsPrimary
             })
             .ToArray();
 

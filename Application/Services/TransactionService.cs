@@ -203,6 +203,34 @@ public sealed class TransactionService(
         return Result<Guid>.Success(transaction.Id);
     }
 
+    public async Task<Result<GetTransferRateResponse>> GetTransferRateAsync(
+        GetTransferRateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        var fromAccount = await _accountRepository.GetByIdAsync(request.FromAccountId, cancellationToken);
+        if (fromAccount is null || fromAccount.UserId != userId || fromAccount.IsArchived)
+            return Result<GetTransferRateResponse>.Failure(AccountDomainErrors.NotFound);
+
+        var toAccount = await _accountRepository.GetByIdAsync(request.ToAccountId, cancellationToken);
+        if (toAccount is null || toAccount.UserId != userId || toAccount.IsArchived)
+            return Result<GetTransferRateResponse>.Failure(AccountDomainErrors.NotFound);
+
+        var rate = fromAccount.CurrencyCode == toAccount.CurrencyCode
+            ? 1m
+            : await _exchangeRateService.GetRateAsync(
+                fromAccount.CurrencyCode,
+                toAccount.CurrencyCode,
+                cancellationToken);
+
+        return Result<GetTransferRateResponse>.Success(
+            new GetTransferRateResponse(
+                rate,
+                fromAccount.CurrencyCode,
+                toAccount.CurrencyCode));
+    }
+
     public async Task<Result<CreateTransferResponse>> TransferAsync(
         CreateTransferRequest request,
         CancellationToken cancellationToken = default)

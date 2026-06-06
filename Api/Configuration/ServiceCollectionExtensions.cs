@@ -74,14 +74,26 @@ public static class ServiceCollectionExtensions
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableEntitiesInterceptor>());
         });
 
-        var frontendOrigin = configuration["Cors:FrontendOrigin"]
-            ?? throw new InvalidOperationException("Cors:FrontendOrigin configuration is missing.");
+        var configuredOrigins = configuration
+            .GetSection("Cors:FrontendOrigins")
+            .Get<string[]>() ?? [];
+
+        var frontendOrigin = configuration["Cors:FrontendOrigin"];
+        var frontendOrigins = configuredOrigins
+            .Append(frontendOrigin)
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .Select(origin => origin!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (frontendOrigins.Length == 0)
+            throw new InvalidOperationException("Cors:FrontendOrigin configuration is missing.");
 
         services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend",
                 policy => policy
-                    .WithOrigins(frontendOrigin)
+                    .WithOrigins(frontendOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod());
         });

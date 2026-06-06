@@ -339,6 +339,10 @@ public sealed class AuthServiceTests : AuthServiceTestBase
 
         createdCategories.Should().NotBeNull();
         createdCategories.Should().NotBeEmpty();
+        createdCategories!.Single(x => x.Name == "Продукты").Color.Should().Be("#F97373");
+        createdCategories.Single(x => x.Name == "Кафе и рестораны").Color.Should().Be("#FB923C");
+        createdCategories.Single(x => x.Name == "Для дома(Интерьер)").Color.Should().Be("#818CF8");
+        createdCategories.Single(x => x.Name == "Зарплата").Color.Should().Be("#22C55E");
 
         CategoryRepositoryMock.Verify(
             x => x.AddRangeAsync(It.IsAny<IEnumerable<Category>>(), It.IsAny<CancellationToken>()),

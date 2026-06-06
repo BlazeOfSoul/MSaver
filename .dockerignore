@@ -1,0 +1,10 @@
+.git
+.gitignore
+.vs
+.vscode
+bin
+obj
+MSaver.UnitTests/bin
+MSaver.UnitTests/obj
+Dockerfile
+*.user

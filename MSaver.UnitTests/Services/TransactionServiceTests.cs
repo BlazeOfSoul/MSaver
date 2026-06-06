@@ -1,5 +1,6 @@
 ﻿using MSaver.Api.Contracts.Transactions;
 using MSaver.Application.Features.Transactions.Get;
+using MSaver.Application.Features.Transactions.Transfer;
 using MSaver.Domain.Enums;
 using MSaver.UnitTests.Common;
 using MSaver.UnitTests.Common.TestData;
@@ -671,6 +672,31 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
 
         TransactionRepositoryMock.Verify(x => x.RemoveAsync(transaction, It.IsAny<CancellationToken>()), Times.Once);
         UnitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTransferRateAsync_ShouldReturnRateFromBackend_WhenAccountsUseDifferentCurrencies()
+    {
+        var sut = CreateSut();
+        var userId = TransactionTestData.UserId;
+        var fromAccount = TransactionTestData.CreateAccount(userId, currencyCode: "BYN");
+        var toAccount = TransactionTestData.CreateAccount(userId, currencyCode: "USD");
+        var request = new GetTransferRateRequest(fromAccount.Id, toAccount.Id);
+
+        CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(fromAccount.Id, It.IsAny<CancellationToken>())).ReturnsAsync(fromAccount);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(toAccount.Id, It.IsAny<CancellationToken>())).ReturnsAsync(toAccount);
+        ExchangeRateServiceMock.Setup(x => x.GetRateAsync("BYN", "USD", It.IsAny<CancellationToken>())).ReturnsAsync(0.31m);
+
+        var result = await sut.GetTransferRateAsync(request);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Rate.Should().Be(0.31m);
+        result.Value.FromCurrencyCode.Should().Be("BYN");
+        result.Value.ToCurrencyCode.Should().Be("USD");
+
+        ExchangeRateServiceMock.Verify(x => x.GetRateAsync("BYN", "USD", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

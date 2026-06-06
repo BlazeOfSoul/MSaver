@@ -44,6 +44,17 @@ public sealed class TransactionsController(
         return FromResult(result);
     }
 
+    [HttpGet("transfer-rate")]
+    public async Task<IActionResult> GetTransferRate(
+        [FromQuery] Guid fromAccountId,
+        [FromQuery] Guid toAccountId,
+        CancellationToken cancellationToken)
+    {
+        var request = new GetTransferRateRequest(fromAccountId, toAccountId);
+        var result = await _transactionService.GetTransferRateAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
     [HttpPost]
     public Task<IActionResult> Create(
         [FromBody] CreateTransactionRequest request,

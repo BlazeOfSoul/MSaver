@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 using MSaver.Infrastructure.Configuration;
@@ -10,10 +11,12 @@ namespace MSaver.Infrastructure.Services;
 
 public sealed class ExchangeRateApiService(
     HttpClient httpClient,
-    IOptions<ExchangeRateApiOptions> options) : IExchangeRateService
+    IOptions<ExchangeRateApiOptions> options,
+    IMemoryCache cache) : IExchangeRateService
 {
     private readonly HttpClient _httpClient = httpClient;
     private readonly ExchangeRateApiOptions _options = options.Value;
+    private readonly IMemoryCache _cache = cache;
 
     public async Task<decimal> GetRateAsync(
         string fromCurrencyCode,
@@ -35,6 +38,24 @@ public sealed class ExchangeRateApiService(
         if (from == to)
             return 1m;
 
+        var cacheKey = GetCacheKey(from, to);
+
+        if (_cache.TryGetValue<decimal>(cacheKey, out var cachedRate))
+            return cachedRate;
+
+        var rate = await FetchRateFromApiAsync(from, to, cancellationToken);
+
+        CacheRate(from, to, rate);
+        CacheRate(to, from, 1m / rate);
+
+        return rate;
+    }
+
+    private async Task<decimal> FetchRateFromApiAsync(
+        string from,
+        string to,
+        CancellationToken cancellationToken)
+    {
         var url = $"{_options.ApiKey}/pair/{from}/{to}";
 
         using var httpResponse = await _httpClient.GetAsync(url, cancellationToken);
@@ -61,6 +82,27 @@ public sealed class ExchangeRateApiService(
 
         return response.ConversionRate;
     }
+
+    private void CacheRate(string from, string to, decimal rate)
+    {
+        _cache.Set(
+            GetCacheKey(from, to),
+            rate,
+            new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = GetCacheDuration()
+            });
+    }
+
+    private TimeSpan GetCacheDuration()
+    {
+        var hours = _options.CacheDurationHours > 0 ? _options.CacheDurationHours : 24;
+
+        return TimeSpan.FromHours(hours);
+    }
+
+    private static string GetCacheKey(string from, string to) =>
+        $"exchange-rate:{from}:{to}";
 
     private static InvalidOperationException CreateHttpException(
         HttpStatusCode statusCode,

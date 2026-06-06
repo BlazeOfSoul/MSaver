@@ -58,7 +58,7 @@ public sealed class AccountRepository(ApplicationDbContext context)
         var normalizedName = name.Trim();
 
         var query = Context.Accounts
-            .Where(x => x.UserId == userId && x.Name == normalizedName);
+            .Where(x => x.UserId == userId && !x.IsArchived && x.Name == normalizedName);
 
         if (excludeId.HasValue)
             query = query.Where(x => x.Id != excludeId.Value);

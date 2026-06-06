@@ -558,16 +558,19 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         response.HasPreviousPage.Should().BeTrue();
         response.HasNextPage.Should().BeTrue();
 
-var items = response.Items.ToArray();
+        var items = response.Items.ToArray();
 
-items[0].Id.Should().Be(account1.Id);
-items[0].Name.Should().Be("Cash");
-items[0].CurrencyCode.Should().Be(account1.CurrencyCode);
-items[0].CurrentBalance.Should().Be(150.75m);
-items[0].Color.Should().Be("#111111");
+        items[0].Id.Should().Be(account1.Id);
+        items[0].Name.Should().Be("Cash");
+        items[0].CurrencyCode.Should().Be(account1.CurrencyCode);
+        items[0].CurrentBalance.Should().Be(150.75m);
+        items[0].Color.Should().Be("#111111");
+        var isPrimaryProperty = items[0].GetType().GetProperty("IsPrimary");
+        isPrimaryProperty.Should().NotBeNull();
+        isPrimaryProperty!.GetValue(items[0]).Should().Be(account1.IsPrimary);
 
-items[1].Id.Should().Be(account2.Id);
-items[1].CurrentBalance.Should().Be(-20m);
+        items[1].Id.Should().Be(account2.Id);
+        items[1].CurrentBalance.Should().Be(-20m);
     }
 
     [Fact]

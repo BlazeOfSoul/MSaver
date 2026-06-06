@@ -6,4 +6,5 @@ public sealed class ExchangeRateApiOptions
 
     public string ApiKey { get; init; } = string.Empty;
     public string BaseUrl { get; init; } = string.Empty;
+    public int CacheDurationHours { get; init; } = 24;
 }
