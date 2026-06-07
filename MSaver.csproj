@@ -5,7 +5,8 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>MSaver</RootNamespace>
-	</PropertyGroup>
+	  <UserSecretsId>29b333f3-d0b0-42c7-a3cf-05ac3cd24894</UserSecretsId>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<Compile Remove="MSaver.UnitTests\**\*.cs" />
