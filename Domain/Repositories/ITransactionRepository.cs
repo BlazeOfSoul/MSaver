@@ -14,8 +14,6 @@ public interface ITransactionRepository
 
     Task<Transaction?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<Transaction?> GetByIdWithCategoryAsync(Guid id, CancellationToken cancellationToken = default);
-
     Task<PagedResult<Transaction>> GetPagedWithDetailsAsync(
         TransactionListQuery query,
         CancellationToken cancellationToken = default);
@@ -24,12 +22,7 @@ public interface ITransactionRepository
         IReadOnlyCollection<Guid> accountIds,
         CancellationToken cancellationToken = default);
 
-    Task<decimal> GetBalanceBeforeAsync(
-        Guid accountId,
-        DateTime toExclusive,
-        CancellationToken cancellationToken = default);
-
-    Task<decimal> GetBalanceInPeriodAsync(
+    Task<(decimal OpeningBalance, decimal PeriodChange)> GetBalanceForPeriodAsync(
         Guid accountId,
         DateTime fromInclusive,
         DateTime toExclusive,

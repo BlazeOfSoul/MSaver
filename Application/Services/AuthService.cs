@@ -204,7 +204,7 @@ public sealed class AuthService(
             .Select(kv =>
             {
                 var (name, type, color) = kv.Value;
-                return Category.Create(userId, name, type, color);
+                return Category.Create(userId, name, type, color, kv.Key);
             })
             .ToList();
 

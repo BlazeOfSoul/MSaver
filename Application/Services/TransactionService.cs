@@ -162,7 +162,7 @@ public sealed class TransactionService(
     {
         var userId = _currentUserService.UserId;
 
-        var transaction = await _transactionRepository.GetByIdWithCategoryAsync(request.Id, cancellationToken);
+        var transaction = await _transactionRepository.GetByIdAsync(request.Id, cancellationToken);
         if (transaction is null || transaction.UserId != userId)
             return Result<Guid>.Failure(TransactionDomainErrors.TransactionNotFound);
 
@@ -277,11 +277,12 @@ public sealed class TransactionService(
             precision,
             MidpointRounding.AwayFromZero);
 
-        var transferExpenseCategory = await _categoryRepository.GetTransferExpenseCategoryAsync(userId, cancellationToken);
+        var (transferExpenseCategory, transferIncomeCategory) =
+            await _categoryRepository.GetTransferCategoriesAsync(userId, cancellationToken);
+
         if (transferExpenseCategory is null)
             return Result<CreateTransferResponse>.Failure(CategoryDomainErrors.NotFound);
 
-        var transferIncomeCategory = await _categoryRepository.GetTransferIncomeCategoryAsync(userId, cancellationToken);
         if (transferIncomeCategory is null)
             return Result<CreateTransferResponse>.Failure(CategoryDomainErrors.NotFound);
 

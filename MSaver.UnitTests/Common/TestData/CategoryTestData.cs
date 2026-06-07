@@ -15,13 +15,15 @@ public static class CategoryTestData
         Guid? userId = null,
         string name = "Food",
         CategoryType type = CategoryType.Debit,
-        string color = "#FF0000")
+        string color = "#FF0000",
+        DefaultCategoryType? defaultCategoryType = null)
     {
         return Category.Create(
             userId ?? UserId,
             name,
             type,
-            color);
+            color,
+            defaultCategoryType);
     }
 
     public static CreateCategoryRequest CreateCategoryRequest(

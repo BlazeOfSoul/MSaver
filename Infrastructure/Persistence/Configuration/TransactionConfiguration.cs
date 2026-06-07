@@ -37,6 +37,9 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.HasIndex(x => x.AccountId);
         builder.HasIndex(x => x.CategoryId);
         builder.HasIndex(x => x.Date);
+        builder.HasIndex(x => new { x.UserId, x.Date, x.Id });
+        builder.HasIndex(x => new { x.AccountId, x.Date });
+        builder.HasIndex(x => new { x.UserId, x.CategoryId, x.Date });
 
         builder.HasOne(x => x.User)
             .WithMany(x => x.Transactions)

@@ -25,6 +25,11 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(500);
 
+        builder.Property(x => x.ApplicationCurrencyCode)
+            .IsRequired()
+            .HasMaxLength(3)
+            .HasDefaultValue("BYN");
+
         builder.Property(x => x.CreatedAt)
             .IsRequired();
 

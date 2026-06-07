@@ -64,24 +64,20 @@ public sealed class CategoryRepository(ApplicationDbContext context) : EfReposit
             .ToListAsync(cancellationToken);
     }
 
-    public Task<Category?> GetTransferExpenseCategoryAsync(
+    public async Task<(Category? ExpenseCategory, Category? IncomeCategory)> GetTransferCategoriesAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        return Context.Categories
-            .FirstOrDefaultAsync(
-                x => x.UserId == userId && x.Type == CategoryType.TransferExpense,
-                cancellationToken);
-    }
+        var categories = await Context.Categories
+            .AsNoTracking()
+            .Where(x => x.UserId == userId &&
+                        (x.Type == CategoryType.TransferExpense ||
+                         x.Type == CategoryType.TransferIncome))
+            .ToListAsync(cancellationToken);
 
-    public Task<Category?> GetTransferIncomeCategoryAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        return Context.Categories
-            .FirstOrDefaultAsync(
-                x => x.UserId == userId && x.Type == CategoryType.TransferIncome,
-                cancellationToken);
+        return (
+            categories.FirstOrDefault(x => x.Type == CategoryType.TransferExpense),
+            categories.FirstOrDefault(x => x.Type == CategoryType.TransferIncome));
     }
 
     public async Task<bool> ExistsByNameAsync(

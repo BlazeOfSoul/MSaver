@@ -1,3 +1,5 @@
+using MSaver.Domain.Constants;
+
 namespace MSaver.Domain.Entities;
 
 public sealed class User : Entity
@@ -15,6 +17,8 @@ public sealed class User : Entity
     public string Email { get; private set; } = null!;
 
     public string PasswordHash { get; private set; } = null!;
+
+    public string ApplicationCurrencyCode { get; private set; } = "BYN";
 
     public DateTime CreatedAt { get; private set; }
 
@@ -44,6 +48,7 @@ public sealed class User : Entity
             Name = name.Trim(),
             Email = email.Trim(),
             PasswordHash = passwordHash,
+            ApplicationCurrencyCode = "BYN",
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -70,5 +75,12 @@ public sealed class User : Entity
             throw new DomainException(UserDomainErrors.NameRequired);
 
         Name = name.Trim();
+    }
+
+    public void ChangeApplicationCurrency(string currencyCode)
+    {
+        var currency = CurrencyDefinitions.Get(currencyCode);
+
+        ApplicationCurrencyCode = currency.Code;
     }
 }

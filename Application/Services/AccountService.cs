@@ -189,12 +189,7 @@ public sealed class AccountService(
         var monthStart = new DateTime(request.Year, request.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEnd = monthStart.AddMonths(1);
 
-        var beforeTotal = await _transactionRepository.GetBalanceBeforeAsync(
-            account.Id,
-            monthStart,
-            cancellationToken);
-
-        var monthChange = await _transactionRepository.GetBalanceInPeriodAsync(
+        var (beforeTotal, monthChange) = await _transactionRepository.GetBalanceForPeriodAsync(
             account.Id,
             monthStart,
             monthEnd,

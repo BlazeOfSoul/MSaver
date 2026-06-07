@@ -24,6 +24,10 @@ public enum DefaultCategoryType
     Cashback = 19,
     GiftIncome = 20,
     OtherIncome = 21,
+    DebtTaken = 990,
+    DebtReturned = 991,
+    DebtGiven = 992,
+    DebtPaidBack = 993,
     TransferIncome = 998,
     TransferExpense = 999
 }

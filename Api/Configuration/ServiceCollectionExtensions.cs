@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using MSaver.Api.Common;
 using MSaver.Application.Features.Auth.Register;
 using MSaver.Infrastructure;
+using MSaver.Infrastructure.Configuration;
 using MSaver.Infrastructure.DependencyInjection;
 using MSaver.Infrastructure.Persistence.Interceptors;
 
@@ -19,6 +19,9 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        ValidateRequiredConfiguration(configuration);
+        var frontendOrigins = GetFrontendOrigins(configuration);
+
         services.AddControllers()
             .AddJsonOptions(options =>
             {
@@ -74,21 +77,6 @@ public static class ServiceCollectionExtensions
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableEntitiesInterceptor>());
         });
 
-        var configuredOrigins = configuration
-            .GetSection("Cors:FrontendOrigins")
-            .Get<string[]>() ?? [];
-
-        var frontendOrigin = configuration["Cors:FrontendOrigin"];
-        var frontendOrigins = configuredOrigins
-            .Append(frontendOrigin)
-            .Where(origin => !string.IsNullOrWhiteSpace(origin))
-            .Select(origin => origin!)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (frontendOrigins.Length == 0)
-            throw new InvalidOperationException("Cors:FrontendOrigin configuration is missing.");
-
         services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend",
@@ -107,13 +95,12 @@ public static class ServiceCollectionExtensions
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = configuration["JwtSettings:Issuer"],
+                    ValidIssuer = JwtSettings.GetIssuer(configuration),
                     ValidateAudience = true,
-                    ValidAudience = configuration["JwtSettings:Audience"],
+                    ValidAudience = JwtSettings.GetAudience(configuration),
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]!))
+                    IssuerSigningKey = JwtSettings.CreateSigningKey(configuration)
                 };
 
                 options.Events = new JwtBearerEvents
@@ -142,5 +129,47 @@ public static class ServiceCollectionExtensions
             });
 
         return services;
+    }
+
+    private static void ValidateRequiredConfiguration(IConfiguration configuration)
+    {
+        if (string.IsNullOrWhiteSpace(configuration.GetConnectionString("DefaultConnection")))
+            throw new InvalidOperationException("ConnectionStrings:DefaultConnection configuration is missing.");
+
+        JwtSettings.GetIssuer(configuration);
+        JwtSettings.GetAudience(configuration);
+        JwtSettings.GetAccessTokenMinutes(configuration);
+        JwtSettings.GetRefreshTokenDays(configuration);
+        JwtSettings.CreateSigningKey(configuration);
+    }
+
+    private static string[] GetFrontendOrigins(IConfiguration configuration)
+    {
+        var configuredOrigins = configuration
+            .GetSection("Cors:FrontendOrigins")
+            .Get<string[]>() ?? [];
+
+        var frontendOrigin = configuration["Cors:FrontendOrigin"];
+        var frontendOrigins = configuredOrigins
+            .Append(frontendOrigin)
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .Select(origin => origin!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (frontendOrigins.Length == 0)
+            throw new InvalidOperationException("Cors:FrontendOrigin configuration is missing.");
+
+        if (frontendOrigins.Any(origin => origin == "*"))
+            throw new InvalidOperationException("Cors configuration cannot contain wildcard origins.");
+
+        if (frontendOrigins.Any(origin =>
+                !Uri.TryCreate(origin, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)))
+        {
+            throw new InvalidOperationException("Cors frontend origins must be absolute HTTP or HTTPS URLs.");
+        }
+
+        return frontendOrigins;
     }
 }

@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+
 namespace MSaver.Domain.Entities;
 
 public sealed class RefreshToken : Entity
@@ -31,10 +34,19 @@ public sealed class RefreshToken : Entity
         {
             UserId = userId,
             ClientId = clientId,
-            Token = token,
+            Token = HashToken(token),
             ExpiresAt = expiresAt,
             CreatedAt = DateTime.UtcNow
         };
+    }
+
+    public static string HashToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            throw new DomainException(AuthDomainErrors.RefreshTokenInvalid);
+
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     public void Replace(string token, DateTime expiresAt)
@@ -42,7 +54,7 @@ public sealed class RefreshToken : Entity
         if (string.IsNullOrWhiteSpace(token))
             throw new DomainException(AuthDomainErrors.RefreshTokenInvalid);
 
-        Token = token;
+        Token = HashToken(token);
         ExpiresAt = expiresAt;
     }
 

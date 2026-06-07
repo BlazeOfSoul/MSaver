@@ -48,16 +48,6 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
-    public async Task<Transaction?> GetByIdWithCategoryAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.Transactions
-            .Include(t => t.Category)
-            .Include(t => t.Account)
-            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
-    }
-
     public async Task<PagedResult<Transaction>> GetPagedWithDetailsAsync(
         TransactionListQuery query,
         CancellationToken cancellationToken = default)
@@ -128,31 +118,29 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
                 cancellationToken);
     }
 
-    public async Task<decimal> GetBalanceBeforeAsync(
-        Guid accountId,
-        DateTime toExclusive,
-        CancellationToken cancellationToken = default)
-    {
-        var total = await _dbContext.Transactions
-            .Where(t => t.AccountId == accountId && t.Date < toExclusive)
-            .SumAsync(t => (decimal?)t.Amount, cancellationToken);
-
-        return total ?? 0m;
-    }
-
-    public async Task<decimal> GetBalanceInPeriodAsync(
+    public async Task<(decimal OpeningBalance, decimal PeriodChange)> GetBalanceForPeriodAsync(
         Guid accountId,
         DateTime fromInclusive,
         DateTime toExclusive,
         CancellationToken cancellationToken = default)
     {
-        var total = await _dbContext.Transactions
-            .Where(t => t.AccountId == accountId
-                        && t.Date >= fromInclusive
-                        && t.Date < toExclusive)
-            .SumAsync(t => (decimal?)t.Amount, cancellationToken);
+        var totals = await _dbContext.Transactions
+            .Where(t => t.AccountId == accountId && t.Date < toExclusive)
+            .GroupBy(t => t.AccountId)
+            .Select(g => new
+            {
+                OpeningBalance = g
+                    .Where(t => t.Date < fromInclusive)
+                    .Sum(t => (decimal?)t.Amount) ?? 0m,
+                PeriodChange = g
+                    .Where(t => t.Date >= fromInclusive)
+                    .Sum(t => (decimal?)t.Amount) ?? 0m
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return total ?? 0m;
+        return totals is null
+            ? (0m, 0m)
+            : (totals.OpeningBalance, totals.PeriodChange);
     }
 
     private static IQueryable<Transaction> ApplySorting(

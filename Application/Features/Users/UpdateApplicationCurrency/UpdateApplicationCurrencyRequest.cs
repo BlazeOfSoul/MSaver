@@ -1,0 +1,3 @@
+namespace MSaver.Application.Features.Users.UpdateApplicationCurrency;
+
+public sealed record UpdateApplicationCurrencyRequest(string ApplicationCurrencyCode);

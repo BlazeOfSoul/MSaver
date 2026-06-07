@@ -49,7 +49,8 @@ public sealed class CategoryService(
                 Id = x.Id,
                 Name = x.Name,
                 Type = x.Type,
-                Color = x.Color
+                Color = x.Color,
+                IsSystem = x.IsSystem
             })
             .ToArray();
 

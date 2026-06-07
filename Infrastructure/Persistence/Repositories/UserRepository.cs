@@ -28,4 +28,10 @@ public sealed class UserRepository(ApplicationDbContext dbContext) : IUserReposi
     {
         await _dbContext.Users.AddAsync(user, cancellationToken);
     }
+
+    public Task UpdateAsync(User user, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Users.Update(user);
+        return Task.CompletedTask;
+    }
 }

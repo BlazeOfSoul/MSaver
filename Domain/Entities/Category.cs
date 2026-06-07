@@ -20,12 +20,18 @@ public sealed class Category : AuditableEntity
 
     public string Color { get; private set; } = null!;
 
+    public DefaultCategoryType? DefaultCategoryType { get; private set; }
+
     public bool IsDeleted { get; private set; }
 
     [NotMapped]
     public bool IsSystem =>
         Type == CategoryType.TransferIncome ||
-        Type == CategoryType.TransferExpense;
+        Type == CategoryType.TransferExpense ||
+        DefaultCategoryType is Domain.Enums.DefaultCategoryType.DebtTaken
+            or Domain.Enums.DefaultCategoryType.DebtReturned
+            or Domain.Enums.DefaultCategoryType.DebtGiven
+            or Domain.Enums.DefaultCategoryType.DebtPaidBack;
 
     public IReadOnlyCollection<Transaction> Transactions => _transactions;
 
@@ -35,7 +41,8 @@ public sealed class Category : AuditableEntity
         Guid userId,
         string name,
         CategoryType type,
-        string color)
+        string color,
+        DefaultCategoryType? defaultCategoryType = null)
     {
         if (userId == Guid.Empty)
             throw new DomainException(CategoryDomainErrors.UserIdRequired);
@@ -44,6 +51,7 @@ public sealed class Category : AuditableEntity
         {
             UserId = userId,
             Type = type,
+            DefaultCategoryType = defaultCategoryType,
             IsDeleted = false
         };
 

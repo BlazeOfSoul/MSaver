@@ -786,19 +786,12 @@ public sealed class AccountServiceTests : AccountServiceTestBase
             .ReturnsAsync(account);
 
         TransactionRepositoryMock
-            .Setup(x => x.GetBalanceBeforeAsync(
-                account.Id,
-                expectedMonthStart,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(100m);
-
-        TransactionRepositoryMock
-            .Setup(x => x.GetBalanceInPeriodAsync(
+            .Setup(x => x.GetBalanceForPeriodAsync(
                 account.Id,
                 expectedMonthStart,
                 expectedMonthEnd,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(25m);
+            .ReturnsAsync((100m, 25m));
 
         var result = await sut.GetMonthBalanceAsync(request);
 
@@ -813,5 +806,6 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         result.Value.ClosingBalance.Should().Be(125m);
         result.Value.Year.Should().Be(2026);
         result.Value.Month.Should().Be(5);
+
     }
 }

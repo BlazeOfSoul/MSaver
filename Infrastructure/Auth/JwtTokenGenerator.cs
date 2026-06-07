@@ -1,8 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
-
 using Microsoft.IdentityModel.Tokens;
+
+using MSaver.Infrastructure.Configuration;
 
 namespace MSaver.Infrastructure.Auth;
 
@@ -13,7 +13,7 @@ public sealed class JwtTokenGenerator(IConfiguration configuration) : IJwtTokenG
     public string GenerateAccessToken(Guid userId, string username, string email, string clientId)
     {
         var expires = DateTime.UtcNow.AddMinutes(
-            int.Parse(_configuration["JwtSettings:AccessTokenMinutes"] ?? "60"));
+            JwtSettings.GetAccessTokenMinutes(_configuration));
 
         return GenerateToken(userId, username, email, clientId, expires, "access");
     }
@@ -25,7 +25,7 @@ public sealed class JwtTokenGenerator(IConfiguration configuration) : IJwtTokenG
         string clientId)
     {
         var expires = DateTime.UtcNow.AddDays(
-            int.Parse(_configuration["JwtSettings:RefreshTokenDays"] ?? "30"));
+            JwtSettings.GetRefreshTokenDays(_configuration));
 
         var token = GenerateToken(userId, username, email, clientId, expires, "refresh");
 
@@ -46,17 +46,17 @@ public sealed class JwtTokenGenerator(IConfiguration configuration) : IJwtTokenG
             new(JwtRegisteredClaimNames.UniqueName, username),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Typ, tokenType),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
             new("client_id", clientId)
         };
 
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]!));
-
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var creds = new SigningCredentials(
+            JwtSettings.CreateSigningKey(_configuration),
+            SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: _configuration["JwtSettings:Issuer"],
-            audience: _configuration["JwtSettings:Audience"],
+            issuer: JwtSettings.GetIssuer(_configuration),
+            audience: JwtSettings.GetAudience(_configuration),
             claims: claims,
             expires: expires,
             signingCredentials: creds);

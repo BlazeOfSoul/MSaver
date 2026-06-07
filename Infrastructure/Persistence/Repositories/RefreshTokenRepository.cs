@@ -18,8 +18,18 @@ public sealed class RefreshTokenRepository(ApplicationDbContext context) : IRefr
     public async Task<RefreshToken?> GetByTokenAsync(
         string token,
         CancellationToken cancellationToken = default)
-        => await _context.RefreshTokens
+    {
+        var tokenHash = RefreshToken.HashToken(token);
+
+        var storedToken = await _context.RefreshTokens
+            .FirstOrDefaultAsync(x => x.Token == tokenHash, cancellationToken);
+
+        if (storedToken is not null || LooksLikeSha256Hash(token))
+            return storedToken;
+
+        return await _context.RefreshTokens
             .FirstOrDefaultAsync(x => x.Token == token, cancellationToken);
+    }
 
     public async Task<RefreshToken?> GetByClientIdAsync(
         Guid userId,
@@ -48,5 +58,13 @@ public sealed class RefreshTokenRepository(ApplicationDbContext context) : IRefr
             return;
 
         _context.RefreshTokens.RemoveRange(expiredTokens);
+    }
+
+    private static bool LooksLikeSha256Hash(string token)
+    {
+        if (token.Length != 64)
+            return false;
+
+        return token.All(Uri.IsHexDigit);
     }
 }

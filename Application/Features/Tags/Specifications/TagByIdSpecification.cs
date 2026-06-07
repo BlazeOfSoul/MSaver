@@ -7,6 +7,5 @@ public sealed class TagByIdSpecification : BaseSpecification<Tag>
     public TagByIdSpecification(Guid id)
     {
         AddCriteria(x => x.Id == id);
-        AddInclude(x => x.TagCategories);
     }
 }

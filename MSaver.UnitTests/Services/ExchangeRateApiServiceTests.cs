@@ -12,6 +12,7 @@ public sealed class ExchangeRateApiServiceTests
     public async Task GetRateAsync_ShouldCacheDirectAndInverseCurrencyPairs()
     {
         var handler = new StubHttpMessageHandler(
+            HttpStatusCode.OK,
             """
             {
                 "result": "success",
@@ -42,7 +43,34 @@ public sealed class ExchangeRateApiServiceTests
         handler.RequestCount.Should().Be(1);
     }
 
-    private sealed class StubHttpMessageHandler(string responseContent) : HttpMessageHandler
+    [Fact]
+    public async Task GetRateAsync_ShouldNotExposeRawProviderResponse_WhenHttpErrorOccurs()
+    {
+        const string providerResponse = "provider-secret-details";
+        var handler = new StubHttpMessageHandler(HttpStatusCode.BadRequest, providerResponse);
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://api.example.test/")
+        };
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var options = Options.Create(new ExchangeRateApiOptions
+        {
+            ApiKey = "test-key",
+            BaseUrl = "https://api.example.test/"
+        });
+        var sut = new ExchangeRateApiService(httpClient, options, cache);
+
+        var action = async () => await sut.GetRateAsync("BYN", "USD");
+
+        await action.Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("*400*")
+            .Where(ex => !ex.Message.Contains(providerResponse, StringComparison.Ordinal));
+    }
+
+    private sealed class StubHttpMessageHandler(
+        HttpStatusCode statusCode,
+        string responseContent) : HttpMessageHandler
     {
         public int RequestCount { get; private set; }
 
@@ -52,7 +80,7 @@ public sealed class ExchangeRateApiServiceTests
         {
             RequestCount++;
 
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            return Task.FromResult(new HttpResponseMessage(statusCode)
             {
                 Content = new StringContent(responseContent)
             });

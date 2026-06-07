@@ -28,6 +28,9 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .IsRequired()
             .HasMaxLength(20);
 
+        builder.Property(x => x.DefaultCategoryType)
+            .HasConversion<int?>();
+
         builder.Property(x => x.IsDeleted)
             .IsRequired();
 

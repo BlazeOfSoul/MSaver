@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
+using MSaver.Domain.Enums;
+using System.Security.Cryptography;
+using System.Text;
 using MSaver.UnitTests.Common;
 using MSaver.UnitTests.Common.TestData;
 
@@ -159,7 +162,8 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         createdRefreshToken.Should().NotBeNull();
         createdRefreshToken!.UserId.Should().Be(user.Id);
         createdRefreshToken.ClientId.Should().Be(result.Value.ClientId);
-        createdRefreshToken.Token.Should().Be("refresh-token");
+        createdRefreshToken.Token.Should().Be(TokenHash("refresh-token"));
+        createdRefreshToken.Token.Should().NotBe("refresh-token");
         createdRefreshToken.ExpiresAt.Should().Be(refreshExpiresAt);
 
         RefreshTokenRepositoryMock.Verify(
@@ -341,8 +345,15 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         createdCategories.Should().NotBeEmpty();
         createdCategories!.Single(x => x.Name == "Продукты").Color.Should().Be("#F97373");
         createdCategories.Single(x => x.Name == "Кафе и рестораны").Color.Should().Be("#FB923C");
-        createdCategories.Single(x => x.Name == "Для дома(Интерьер)").Color.Should().Be("#818CF8");
+        createdCategories.Single(x => x.Name == "Для дома (Интерьер)").Color.Should().Be("#818CF8");
+        createdCategories.Single(x => x.Name == "Для дома (Бытовое)").Color.Should().Be("#38BDF8");
+        createdCategories.Single(x => x.Name == "Проезд (Метро и Автобусы)").Color.Should().Be("#22D3EE");
+        createdCategories.Single(x => x.Name == "Проезд (Каршеринг и такси)").Color.Should().Be("#0EA5E9");
         createdCategories.Single(x => x.Name == "Зарплата").Color.Should().Be("#22C55E");
+        createdCategories.Single(x => x.Name == "Взято в долг (+)").DefaultCategoryType.Should().Be(DefaultCategoryType.DebtTaken);
+        createdCategories.Single(x => x.Name == "Возвращено по долгу (-)").DefaultCategoryType.Should().Be(DefaultCategoryType.DebtReturned);
+        createdCategories.Single(x => x.Name == "Дано в долг (-)").DefaultCategoryType.Should().Be(DefaultCategoryType.DebtGiven);
+        createdCategories.Single(x => x.Name == "Отдано по долгу (+)").DefaultCategoryType.Should().Be(DefaultCategoryType.DebtPaidBack);
 
         CategoryRepositoryMock.Verify(
             x => x.AddRangeAsync(It.IsAny<IEnumerable<Category>>(), It.IsAny<CancellationToken>()),
@@ -468,6 +479,7 @@ public sealed class AuthServiceTests : AuthServiceTestBase
             .ReturnsAsync(1);
 
         var oldTokenValue = storedToken.Token;
+        oldTokenValue.Should().Be(TokenHash(request.RefreshToken));
 
         var result = await sut.RefreshAsync(request);
 
@@ -481,7 +493,8 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         result.Value.RefreshToken.Should().Be("new-refresh-token");
 
         storedToken.Token.Should().NotBe(oldTokenValue);
-        storedToken.Token.Should().Be("new-refresh-token");
+        storedToken.Token.Should().Be(TokenHash("new-refresh-token"));
+        storedToken.Token.Should().NotBe("new-refresh-token");
         storedToken.ExpiresAt.Should().Be(newRefreshExpiresAt);
 
         RefreshTokenRepositoryMock.Verify(
@@ -592,5 +605,11 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         UnitOfWorkMock.Verify(
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    private static string TokenHash(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 }

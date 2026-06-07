@@ -3,4 +3,5 @@
 public sealed record CurrentUserResponse(
     Guid Id,
     string Username,
-    string Email);
+    string Email,
+    string ApplicationCurrencyCode);

@@ -114,11 +114,8 @@ public sealed class ExchangeRateApiService(
         if (apiError is not null)
             return new InvalidOperationException(MapApiError(apiError.ErrorType));
 
-        var message = string.IsNullOrWhiteSpace(content)
-            ? $"Ошибка HTTP при обращении к сервису курсов валют: {(int)statusCode} ({reasonPhrase})."
-            : $"Ошибка HTTP при обращении к сервису курсов валют: {(int)statusCode} ({reasonPhrase}). Ответ: {content}";
-
-        return new InvalidOperationException(message);
+        return new InvalidOperationException(
+            $"Ошибка HTTP при обращении к сервису курсов валют: {(int)statusCode} ({reasonPhrase}).");
     }
 
     private static T Deserialize<T>(string content, string errorMessage)

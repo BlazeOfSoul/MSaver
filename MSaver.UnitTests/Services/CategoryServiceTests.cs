@@ -60,10 +60,38 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
         response.Items.First().Name.Should().Be("Food");
         response.Items.First().Type.Should().Be(CategoryType.Debit);
         response.Items.First().Color.Should().Be("#FF0000");
+        response.Items.First().IsSystem.Should().BeFalse();
 
         response.Items.Last().Name.Should().Be("Salary");
         response.Items.Last().Type.Should().Be(CategoryType.Credit);
         response.Items.Last().Color.Should().Be("#00FF00");
+        response.Items.Last().IsSystem.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetAsync_ShouldMarkDebtDefaultCategoriesAsSystem()
+    {
+        var sut = CreateSut();
+        var userId = CategoryTestData.UserId;
+        var debtCategory = CategoryTestData.CreateCategory(
+            userId,
+            "Дано в долг (-)",
+            CategoryType.Debit,
+            "#EC4899",
+            DefaultCategoryType.DebtGiven);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        CategoryRepositoryMock
+            .Setup(x => x.GetPagedAsync(It.IsAny<CategoryListQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CategoryTestData.CreatePagedCategories([debtCategory]));
+
+        var result = await sut.GetAsync(CategoryTestData.CreateGetCategoriesRequest());
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Items.Single().IsSystem.Should().BeTrue();
     }
 
     [Fact]
@@ -784,6 +812,41 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
             name: "Transfer Out",
             type: CategoryType.TransferExpense,
             color: "#654321");
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        CategoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(categoryId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(category);
+
+        Func<Task> act = async () => await sut.DeleteAsync(categoryId);
+
+        await act.Should().ThrowAsync<DomainException>();
+
+        CategoryRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldThrowDomainException_WhenDebtCategoryIsSystem()
+    {
+        var sut = CreateSut();
+        var userId = CategoryTestData.UserId;
+        var categoryId = Guid.NewGuid();
+
+        var category = CategoryTestData.CreateCategory(
+            userId: userId,
+            name: "Дано в долг (-)",
+            type: CategoryType.Debit,
+            color: "#EC4899",
+            defaultCategoryType: DefaultCategoryType.DebtGiven);
 
         CurrentUserServiceMock
             .Setup(x => x.UserId)
