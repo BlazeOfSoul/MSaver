@@ -28,11 +28,22 @@ jobs:
       - name: Restore
         run: dotnet restore ./MSaver.sln
 
+      - name: Format
+        run: dotnet format ./MSaver.sln --verify-no-changes --no-restore --verbosity minimal
+
       - name: Build
         run: dotnet build ./MSaver.sln --configuration Release --no-restore
 
       - name: Test
         run: dotnet test ./MSaver.UnitTests/MSaver.UnitTests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"
+
+      - name: Package vulnerability audit
+        run: |
+          dotnet list ./MSaver.csproj package --vulnerable --include-transitive
+          dotnet list ./MSaver.UnitTests/MSaver.UnitTests.csproj package --vulnerable --include-transitive
+
+      - name: Docker build
+        run: docker build -t msaver-api-ci .
 
       - name: Upload test results
         if: always()

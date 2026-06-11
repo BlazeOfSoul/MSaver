@@ -40,6 +40,10 @@ public static class ServiceCollectionExtensions
         {
             var options = sp.GetRequiredService<IOptions<ExchangeRateApiOptions>>().Value;
             client.BaseAddress = new Uri(options.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(
+                options.TimeoutSeconds > 0
+                    ? options.TimeoutSeconds
+                    : ExchangeRateApiOptions.DefaultTimeoutSeconds);
         });
 
         // Auth / current user

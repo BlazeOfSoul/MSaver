@@ -58,6 +58,7 @@ public sealed class AccountRepository(ApplicationDbContext context)
         var normalizedName = name.Trim();
 
         var query = Context.Accounts
+            .AsNoTracking()
             .Where(x => x.UserId == userId && !x.IsArchived && x.Name == normalizedName);
 
         if (excludeId.HasValue)
@@ -70,6 +71,8 @@ public sealed class AccountRepository(ApplicationDbContext context)
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        return Context.Accounts.AnyAsync(x => x.UserId == userId, cancellationToken);
+        return Context.Accounts
+            .AsNoTracking()
+            .AnyAsync(x => x.UserId == userId, cancellationToken);
     }
 }

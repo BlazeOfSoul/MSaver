@@ -50,14 +50,11 @@ public sealed class RefreshTokenRepository(ApplicationDbContext context) : IRefr
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var expiredTokens = await _context.RefreshTokens
-            .Where(x => x.UserId == userId && x.ExpiresAt <= DateTime.UtcNow)
-            .ToListAsync(cancellationToken);
+        var utcNow = DateTime.UtcNow;
 
-        if (expiredTokens.Count == 0)
-            return;
-
-        _context.RefreshTokens.RemoveRange(expiredTokens);
+        await _context.RefreshTokens
+            .Where(x => x.UserId == userId && x.ExpiresAt <= utcNow)
+            .ExecuteDeleteAsync(cancellationToken);
     }
 
     private static bool LooksLikeSha256Hash(string token)

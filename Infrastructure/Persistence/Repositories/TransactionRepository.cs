@@ -1,8 +1,10 @@
 using MSaver.Application.Features.Transactions.Get;
+using MSaver.Application.Features.Transactions.Specifications;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
-public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITransactionRepository
+public sealed class TransactionRepository(ApplicationDbContext dbContext)
+    : EfRepositoryBase<Transaction>(dbContext), ITransactionRepository
 {
     private readonly ApplicationDbContext _dbContext = dbContext;
 
@@ -52,41 +54,11 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         TransactionListQuery query,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Transaction> dbQuery = _dbContext.Transactions
-            .AsNoTracking()
-            .Include(t => t.Category)
-            .Include(t => t.Account!)
-            .Where(t => t.UserId == query.UserId);
+        var listSpecification = new TransactionsListSpecification(query);
+        var countSpecification = new TransactionsCountSpecification(query);
 
-        if (query.AccountId.HasValue)
-            dbQuery = dbQuery.Where(t => t.AccountId == query.AccountId.Value);
-
-        if (query.CategoryId.HasValue)
-            dbQuery = dbQuery.Where(t => t.CategoryId == query.CategoryId.Value);
-
-        if (query.FromDate.HasValue)
-            dbQuery = dbQuery.Where(t => t.Date >= query.FromDate.Value);
-
-        if (query.ToDate.HasValue)
-            dbQuery = dbQuery.Where(t => t.Date < query.ToDate.Value);
-
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var search = query.Search.Trim();
-            dbQuery = dbQuery.Where(t => t.Description.Contains(search));
-        }
-
-        dbQuery = ApplySorting(
-            dbQuery,
-            query.SortBy,
-            query.SortDirection);
-
-        var totalCount = await dbQuery.CountAsync(cancellationToken);
-
-        var items = await dbQuery
-            .Skip((query.Page - 1) * query.Size)
-            .Take(query.Size)
-            .ToListAsync(cancellationToken);
+        var totalCount = await CountAsync(countSpecification, cancellationToken);
+        var items = await ListAsync(listSpecification, cancellationToken);
 
         return new PagedResult<Transaction>
         {
@@ -105,6 +77,7 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             return new Dictionary<Guid, decimal>();
 
         return await _dbContext.Transactions
+            .AsNoTracking()
             .Where(t => accountIds.Contains(t.AccountId))
             .GroupBy(t => t.AccountId)
             .Select(g => new
@@ -125,6 +98,7 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         CancellationToken cancellationToken = default)
     {
         var totals = await _dbContext.Transactions
+            .AsNoTracking()
             .Where(t => t.AccountId == accountId && t.Date < toExclusive)
             .GroupBy(t => t.AccountId)
             .Select(g => new
@@ -141,47 +115,5 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         return totals is null
             ? (0m, 0m)
             : (totals.OpeningBalance, totals.PeriodChange);
-    }
-
-    private static IQueryable<Transaction> ApplySorting(
-        IQueryable<Transaction> query,
-        string? sortBy,
-        string? sortDirection)
-    {
-        var normalizedSortBy = ListQueryHelper.NormalizeSortBy(
-            sortBy,
-            TransactionSortFields.Date);
-
-        var normalizedSortDirection = ListQueryHelper.NormalizeSortDirection(sortDirection);
-
-        return (normalizedSortBy, normalizedSortDirection) switch
-        {
-            (var field, var direction)
-                when field.Equals(TransactionSortFields.Amount, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortAscending
-                    => query
-                        .OrderBy(t => t.Amount)
-                        .ThenBy(t => t.Date)
-                        .ThenBy(t => t.Id),
-
-            (var field, var direction)
-                when field.Equals(TransactionSortFields.Amount, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortDescending
-                    => query
-                        .OrderByDescending(t => t.Amount)
-                        .ThenByDescending(t => t.Date)
-                        .ThenByDescending(t => t.Id),
-
-            (var field, var direction)
-                when field.Equals(TransactionSortFields.Date, StringComparison.OrdinalIgnoreCase)
-                     && direction == ListQueryDefaults.SortAscending
-                    => query
-                        .OrderBy(t => t.Date)
-                        .ThenBy(t => t.Id),
-
-            _ => query
-                .OrderByDescending(t => t.Date)
-                .ThenByDescending(t => t.Id)
-        };
     }
 }

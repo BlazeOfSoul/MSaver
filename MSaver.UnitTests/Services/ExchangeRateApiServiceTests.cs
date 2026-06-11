@@ -1,6 +1,9 @@
 using System.Net;
+
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+
 using MSaver.Infrastructure.Configuration;
 using MSaver.Infrastructure.Services;
 
@@ -31,7 +34,11 @@ public sealed class ExchangeRateApiServiceTests
             ApiKey = "test-key",
             BaseUrl = "https://api.example.test/"
         });
-        var sut = new ExchangeRateApiService(httpClient, options, cache);
+        var sut = new ExchangeRateApiService(
+            httpClient,
+            options,
+            cache,
+            NullLogger<ExchangeRateApiService>.Instance);
 
         var first = await sut.GetRateAsync("BYN", "USD");
         var second = await sut.GetRateAsync("BYN", "USD");
@@ -58,7 +65,11 @@ public sealed class ExchangeRateApiServiceTests
             ApiKey = "test-key",
             BaseUrl = "https://api.example.test/"
         });
-        var sut = new ExchangeRateApiService(httpClient, options, cache);
+        var sut = new ExchangeRateApiService(
+            httpClient,
+            options,
+            cache,
+            NullLogger<ExchangeRateApiService>.Instance);
 
         var action = async () => await sut.GetRateAsync("BYN", "USD");
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 using MSaver.Application.Features.Auth.Login;
 using MSaver.Application.Features.Auth.Refresh;
@@ -13,7 +14,8 @@ public sealed class AuthService(
     IRefreshTokenRepository refreshTokenRepository,
     IJwtTokenGenerator jwtTokenGenerator,
     IUnitOfWork unitOfWork,
-    IPasswordHasher<User> passwordHasher) : IAuthService
+    IPasswordHasher<User> passwordHasher,
+    ILogger<AuthService> logger) : IAuthService
 {
     private const int MaxActiveSessionsPerUser = 3;
 
@@ -23,6 +25,7 @@ public sealed class AuthService(
     private readonly IJwtTokenGenerator _jwtTokenGenerator = jwtTokenGenerator;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
+    private readonly ILogger<AuthService> _logger = logger;
 
     public async Task<Result<LoginResponse>> LoginAsync(
         LoginRequest request,
@@ -30,7 +33,10 @@ public sealed class AuthService(
     {
         var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user is null)
+        {
+            _logger.LogWarning("Login rejected because user was not found");
             return Result<LoginResponse>.Failure(AuthDomainErrors.InvalidEmail);
+        }
 
         var verification = _passwordHasher.VerifyHashedPassword(
             user,
@@ -38,7 +44,13 @@ public sealed class AuthService(
             request.Password);
 
         if (verification == PasswordVerificationResult.Failed)
+        {
+            _logger.LogWarning(
+                "Login rejected because password verification failed for user {UserId}",
+                user.Id);
+
             return Result<LoginResponse>.Failure(AuthDomainErrors.InvalidPassword);
+        }
 
         await _refreshTokenRepository.DeleteExpiredByUserAsync(user.Id, cancellationToken);
 
@@ -54,6 +66,11 @@ public sealed class AuthService(
             var oldestSession = activeSessions[0];
             await _refreshTokenRepository.DeleteAsync(oldestSession, cancellationToken);
             activeSessions.RemoveAt(0);
+
+            _logger.LogInformation(
+                "Removed oldest auth session because active session limit was reached for user {UserId} and client {ClientId}",
+                user.Id,
+                oldestSession.ClientId);
         }
 
         var clientId = Guid.NewGuid().ToString("N");
@@ -87,6 +104,11 @@ public sealed class AuthService(
             accessToken,
             refreshTokenValue);
 
+        _logger.LogInformation(
+            "User logged in with client session {UserId} {ClientId}",
+            user.Id,
+            clientId);
+
         return Result<LoginResponse>.Success(response);
     }
 
@@ -96,13 +118,18 @@ public sealed class AuthService(
     {
         var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (existingUser is not null)
+        {
+            _logger.LogWarning("Registration rejected because user already exists");
             return Result<Guid>.Failure(AuthDomainErrors.RepeatedEmail);
+        }
 
         var user = CreateUser(request);
 
         await _userRepository.AddAsync(user, cancellationToken);
         await CreateDefaultCategoriesAsync(user.Id, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("User registered {UserId}", user.Id);
 
         return Result<Guid>.Success(user.Id);
     }
@@ -115,18 +142,34 @@ public sealed class AuthService(
             .GetByTokenAsync(request.RefreshToken, cancellationToken);
 
         if (storedToken is null)
+        {
+            _logger.LogWarning("Refresh token rejected because it was not found");
             return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.RefreshTokenInvalid);
+        }
 
         if (storedToken.IsExpired)
         {
             await _refreshTokenRepository.DeleteAsync(storedToken, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogWarning(
+                "Expired refresh token removed for user {UserId} and client {ClientId}",
+                storedToken.UserId,
+                storedToken.ClientId);
+
             return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.RefreshTokenExpired);
         }
 
         var user = await _userRepository.GetByIdAsync(storedToken.UserId, cancellationToken);
         if (user is null)
+        {
+            _logger.LogWarning(
+                "Refresh token rejected because user was not found for user {UserId} and client {ClientId}",
+                storedToken.UserId,
+                storedToken.ClientId);
+
             return Result<RefreshTokenResponse>.Failure(AuthDomainErrors.InvalidEmail);
+        }
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(
             user.Id,
@@ -152,6 +195,11 @@ public sealed class AuthService(
             accessToken,
             newRefreshTokenValue);
 
+        _logger.LogInformation(
+            "Refresh token rotated for user {UserId} and client {ClientId}",
+            user.Id,
+            storedToken.ClientId);
+
         return Result<RefreshTokenResponse>.Success(response);
     }
 
@@ -164,10 +212,22 @@ public sealed class AuthService(
             .GetByClientIdAsync(userId, clientId, cancellationToken);
 
         if (session is null)
+        {
+            _logger.LogInformation(
+                "Logout client requested but session was not found for user {UserId} and client {ClientId}",
+                userId,
+                clientId);
+
             return Result.Success();
+        }
 
         await _refreshTokenRepository.DeleteAsync(session, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "User logged out client session for user {UserId} and client {ClientId}",
+            userId,
+            clientId);
 
         return Result.Success();
     }
@@ -176,12 +236,18 @@ public sealed class AuthService(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var sessions = await _refreshTokenRepository.GetAsync(userId, cancellationToken);
+        var sessions = (await _refreshTokenRepository.GetAsync(userId, cancellationToken))
+            .ToList();
 
         foreach (var session in sessions)
             await _refreshTokenRepository.DeleteAsync(session, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "User logged out all sessions for user {UserId}; SessionCount={SessionCount}",
+            userId,
+            sessions.Count);
 
         return Result.Success();
     }

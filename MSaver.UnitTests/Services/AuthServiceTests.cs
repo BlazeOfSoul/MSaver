@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Security.Cryptography;
+using System.Text;
+
+using Microsoft.AspNetCore.Identity;
 
 using MSaver.Domain.Enums;
-using System.Security.Cryptography;
-using System.Text;
 using MSaver.UnitTests.Common;
 using MSaver.UnitTests.Common.TestData;
 

@@ -65,6 +65,7 @@ public sealed class TagRepository(ApplicationDbContext context) : EfRepositoryBa
         var normalizedName = name.Trim();
 
         var query = Context.Tags
+            .AsNoTracking()
             .Where(x => x.UserId == userId && x.Name == normalizedName);
 
         if (excludeId.HasValue)

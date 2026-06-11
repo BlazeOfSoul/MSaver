@@ -1,6 +1,5 @@
-﻿using MSaver.UnitTests.Common;
-
-using MSaver.Application.Features.Users.UpdateApplicationCurrency;
+﻿using MSaver.Application.Features.Users.UpdateApplicationCurrency;
+using MSaver.UnitTests.Common;
 
 namespace MSaver.UnitTests.Services;
 

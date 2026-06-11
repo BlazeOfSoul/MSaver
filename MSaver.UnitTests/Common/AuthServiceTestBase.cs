@@ -1,4 +1,6 @@
-﻿namespace MSaver.UnitTests.Common;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace MSaver.UnitTests.Common;
 
 public abstract class AuthServiceTestBase
 {
@@ -17,6 +19,7 @@ public abstract class AuthServiceTestBase
             RefreshTokenRepositoryMock.Object,
             JwtTokenGeneratorMock.Object,
             UnitOfWorkMock.Object,
-            PasswordHasherMock.Object);
+            PasswordHasherMock.Object,
+            NullLogger<AuthService>.Instance);
     }
 }

@@ -1,6 +1,9 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -9,6 +12,7 @@ using MSaver.Application.Features.Auth.Register;
 using MSaver.Infrastructure;
 using MSaver.Infrastructure.Configuration;
 using MSaver.Infrastructure.DependencyInjection;
+using MSaver.Infrastructure.Health;
 using MSaver.Infrastructure.Persistence.Interceptors;
 
 namespace MSaver.Api.Configuration;
@@ -34,6 +38,14 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient();
         services.AddHttpContextAccessor();
         services.AddEndpointsApiExplorer();
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor |
+                ForwardedHeaders.XForwardedProto;
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
 
         services.AddSwaggerGen(c =>
         {
@@ -77,6 +89,15 @@ public static class ServiceCollectionExtensions
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableEntitiesInterceptor>());
         });
 
+        services.AddHealthChecks()
+            .AddCheck(
+                "self",
+                () => HealthCheckResult.Healthy(),
+                tags: ["live"])
+            .AddCheck<ApplicationDbContextHealthCheck>(
+                "database",
+                tags: ["ready"]);
+
         services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend",
@@ -105,6 +126,18 @@ public static class ServiceCollectionExtensions
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnTokenValidated = context =>
+                    {
+                        var tokenType = context.Principal?
+                            .FindFirst(JwtRegisteredClaimNames.Typ)?
+                            .Value;
+
+                        if (!string.Equals(tokenType, "access", StringComparison.Ordinal))
+                            context.Fail("Only access tokens can be used for bearer authentication.");
+
+                        return Task.CompletedTask;
+                    },
+
                     OnAuthenticationFailed = context =>
                     {
                         var logger = context.HttpContext.RequestServices
@@ -141,6 +174,38 @@ public static class ServiceCollectionExtensions
         JwtSettings.GetAccessTokenMinutes(configuration);
         JwtSettings.GetRefreshTokenDays(configuration);
         JwtSettings.CreateSigningKey(configuration);
+
+        ValidateExchangeRateApiConfiguration(configuration);
+    }
+
+    private static void ValidateExchangeRateApiConfiguration(IConfiguration configuration)
+    {
+        var apiKey = configuration[$"{ExchangeRateApiOptions.SectionName}:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException("ExchangeRateApi:ApiKey configuration is missing.");
+
+        var baseUrl = configuration[$"{ExchangeRateApiOptions.SectionName}:BaseUrl"];
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri) ||
+            (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new InvalidOperationException(
+                "ExchangeRateApi:BaseUrl must be an absolute HTTP or HTTPS URL.");
+        }
+
+        ValidatePositiveOptionalInt(configuration, "CacheDurationHours");
+        ValidatePositiveOptionalInt(configuration, "TimeoutSeconds");
+    }
+
+    private static void ValidatePositiveOptionalInt(IConfiguration configuration, string name)
+    {
+        var key = $"{ExchangeRateApiOptions.SectionName}:{name}";
+        var rawValue = configuration[key];
+
+        if (string.IsNullOrWhiteSpace(rawValue))
+            return;
+
+        if (!int.TryParse(rawValue, out var value) || value <= 0)
+            throw new InvalidOperationException($"{key} must be a positive integer.");
     }
 
     private static string[] GetFrontendOrigins(IConfiguration configuration)

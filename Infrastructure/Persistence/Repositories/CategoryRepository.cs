@@ -60,6 +60,7 @@ public sealed class CategoryRepository(ApplicationDbContext context) : EfReposit
         CancellationToken cancellationToken = default)
     {
         return await Context.Categories
+            .AsNoTracking()
             .Where(x => x.UserId == userId && ids.Contains(x.Id))
             .ToListAsync(cancellationToken);
     }
@@ -89,6 +90,7 @@ public sealed class CategoryRepository(ApplicationDbContext context) : EfReposit
         var normalizedName = name.Trim();
 
         var query = Context.Categories
+            .AsNoTracking()
             .Where(x => x.UserId == userId && x.Name == normalizedName);
 
         if (excludeId.HasValue)

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using MSaver.Infrastructure.Configuration;
@@ -12,11 +13,13 @@ namespace MSaver.Infrastructure.Services;
 public sealed class ExchangeRateApiService(
     HttpClient httpClient,
     IOptions<ExchangeRateApiOptions> options,
-    IMemoryCache cache) : IExchangeRateService
+    IMemoryCache cache,
+    ILogger<ExchangeRateApiService> logger) : IExchangeRateService
 {
     private readonly HttpClient _httpClient = httpClient;
     private readonly ExchangeRateApiOptions _options = options.Value;
     private readonly IMemoryCache _cache = cache;
+    private readonly ILogger<ExchangeRateApiService> _logger = logger;
 
     public async Task<decimal> GetRateAsync(
         string fromCurrencyCode,
@@ -30,23 +33,49 @@ public sealed class ExchangeRateApiService(
             throw new ArgumentException("Код целевой валюты обязателен.", nameof(toCurrencyCode));
 
         if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        {
+            _logger.LogWarning("Exchange rate API key is not configured");
             throw new InvalidOperationException("Не настроен ExchangeRateApi:ApiKey.");
+        }
 
         var from = fromCurrencyCode.Trim().ToUpperInvariant();
         var to = toCurrencyCode.Trim().ToUpperInvariant();
 
         if (from == to)
+        {
+            _logger.LogDebug(
+                "Exchange rate skipped because currencies match for {CurrencyCode}",
+                from);
+
             return 1m;
+        }
 
         var cacheKey = GetCacheKey(from, to);
 
         if (_cache.TryGetValue<decimal>(cacheKey, out var cachedRate))
+        {
+            _logger.LogDebug(
+                "Exchange rate cache hit for {FromCurrencyCode} to {ToCurrencyCode}",
+                from,
+                to);
+
             return cachedRate;
+        }
+
+        _logger.LogInformation(
+            "Fetching exchange rate for {FromCurrencyCode} to {ToCurrencyCode}",
+            from,
+            to);
 
         var rate = await FetchRateFromApiAsync(from, to, cancellationToken);
 
         CacheRate(from, to, rate);
         CacheRate(to, from, 1m / rate);
+
+        _logger.LogInformation(
+            "Exchange rate fetched and cached for {FromCurrencyCode} to {ToCurrencyCode}",
+            from,
+            to);
 
         return rate;
     }
@@ -62,7 +91,15 @@ public sealed class ExchangeRateApiService(
         var content = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
 
         if (!httpResponse.IsSuccessStatusCode)
+        {
+            _logger.LogWarning(
+                "Exchange rate provider returned HTTP error {StatusCode} for {FromCurrencyCode} to {ToCurrencyCode}",
+                (int)httpResponse.StatusCode,
+                from,
+                to);
+
             throw CreateHttpException(httpResponse.StatusCode, httpResponse.ReasonPhrase, content);
+        }
 
         var response = Deserialize<PairExchangeRateResponse>(content,
             "Не удалось разобрать успешный ответ сервиса курсов валют.");
@@ -71,6 +108,12 @@ public sealed class ExchangeRateApiService(
         {
             var apiError = TryDeserialize<ExchangeRateApiErrorResponse>(content);
 
+            _logger.LogWarning(
+                "Exchange rate provider returned API error {ErrorType} for {FromCurrencyCode} to {ToCurrencyCode}",
+                apiError?.ErrorType,
+                from,
+                to);
+
             throw new InvalidOperationException(
                 apiError is null
                     ? "Внешний сервис курсов валют вернул ошибку."
@@ -78,7 +121,15 @@ public sealed class ExchangeRateApiService(
         }
 
         if (response.ConversionRate <= 0)
+        {
+            _logger.LogWarning(
+                "Exchange rate provider returned invalid rate {ConversionRate} for {FromCurrencyCode} to {ToCurrencyCode}",
+                response.ConversionRate,
+                from,
+                to);
+
             throw new InvalidOperationException("Внешний сервис вернул некорректный курс валют.");
+        }
 
         return response.ConversionRate;
     }
