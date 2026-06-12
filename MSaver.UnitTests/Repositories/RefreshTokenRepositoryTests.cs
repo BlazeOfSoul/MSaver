@@ -65,6 +65,46 @@ public sealed class RefreshTokenRepositoryTests
         result.Should().BeNull();
     }
 
+    [Fact]
+    public async Task DeleteExpiredByUserAsync_ShouldStageDeletesUntilUnitOfWorkSaves()
+    {
+        await using var context = CreateContext();
+        var user = User.Create("Rostik", "rostik@example.com", "hash");
+        var expired = RefreshToken.Create(
+            user.Id,
+            "client-expired",
+            "expired-refresh-token",
+            DateTime.UtcNow.AddDays(-1));
+        var active = RefreshToken.Create(
+            user.Id,
+            "client-active",
+            "active-refresh-token",
+            DateTime.UtcNow.AddDays(7));
+
+        await context.Users.AddAsync(user);
+        await context.RefreshTokens.AddRangeAsync(expired, active);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var repository = new RefreshTokenRepository(context);
+
+        await repository.DeleteExpiredByUserAsync(user.Id);
+
+        context.ChangeTracker
+            .Entries<RefreshToken>()
+            .Where(entry => entry.State == EntityState.Deleted)
+            .Select(entry => entry.Entity.Id)
+            .Should()
+            .ContainSingle(id => id == expired.Id);
+
+        context.ChangeTracker
+            .Entries<RefreshToken>()
+            .Where(entry => entry.State == EntityState.Deleted)
+            .Select(entry => entry.Entity.Id)
+            .Should()
+            .NotContain(active.Id);
+    }
+
     private static ApplicationDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()

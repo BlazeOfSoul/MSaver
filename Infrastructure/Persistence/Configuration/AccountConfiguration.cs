@@ -34,7 +34,9 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.IsArchived)
             .IsRequired();
 
-        builder.HasIndex(x => new { x.UserId, x.Name });
+        builder.HasIndex(x => new { x.UserId, x.Name })
+            .IsUnique()
+            .HasFilter("\"IsArchived\" = false");
 
         builder.HasIndex(x => x.UserId)
             .HasDatabaseName("IX_accounts_user_id_primary")

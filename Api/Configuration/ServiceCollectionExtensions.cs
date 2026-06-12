@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -39,13 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddEndpointsApiExplorer();
         services.Configure<ForwardedHeadersOptions>(options =>
-        {
-            options.ForwardedHeaders =
-                ForwardedHeaders.XForwardedFor |
-                ForwardedHeaders.XForwardedProto;
-            options.KnownIPNetworks.Clear();
-            options.KnownProxies.Clear();
-        });
+            ConfigureForwardedHeaders(options, configuration));
 
         services.AddSwaggerGen(c =>
         {
@@ -107,6 +103,23 @@ public static class ServiceCollectionExtensions
                     .AllowAnyMethod());
         });
 
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddFixedWindowLimiter(RateLimitPolicies.Auth, limiterOptions =>
+            {
+                limiterOptions.PermitLimit = GetPositiveInt(
+                    configuration,
+                    "RateLimiting:Auth:PermitLimit",
+                    10);
+                limiterOptions.Window = TimeSpan.FromSeconds(GetPositiveInt(
+                    configuration,
+                    "RateLimiting:Auth:WindowSeconds",
+                    60));
+                limiterOptions.QueueLimit = 0;
+            });
+        });
+
         services.AddApplicationServices(configuration);
 
         services
@@ -162,6 +175,78 @@ public static class ServiceCollectionExtensions
             });
 
         return services;
+    }
+
+    private static void ConfigureForwardedHeaders(
+        ForwardedHeadersOptions options,
+        IConfiguration configuration)
+    {
+        options.ForwardedHeaders =
+            ForwardedHeaders.XForwardedFor |
+            ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = GetPositiveInt(configuration, "ForwardedHeaders:ForwardLimit", 1);
+
+        var knownProxies = configuration
+            .GetSection("ForwardedHeaders:KnownProxies")
+            .Get<string[]>() ?? [];
+        var knownNetworks = configuration
+            .GetSection("ForwardedHeaders:KnownNetworks")
+            .Get<string[]>() ?? [];
+
+        if (knownProxies.Length == 0 && knownNetworks.Length == 0)
+            return;
+
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Clear();
+
+        foreach (var proxy in knownProxies.Where(value => !string.IsNullOrWhiteSpace(value)))
+        {
+            if (!IPAddress.TryParse(proxy.Trim(), out var address))
+                throw new InvalidOperationException("ForwardedHeaders:KnownProxies contains an invalid IP address.");
+
+            options.KnownProxies.Add(address);
+        }
+
+        foreach (var network in knownNetworks.Where(value => !string.IsNullOrWhiteSpace(value)))
+        {
+            options.KnownIPNetworks.Add(ParseIpNetwork(network));
+        }
+    }
+
+    private static System.Net.IPNetwork ParseIpNetwork(string value)
+    {
+        var parts = value.Trim().Split('/', StringSplitOptions.TrimEntries);
+        if (parts.Length != 2 ||
+            !IPAddress.TryParse(parts[0], out var prefix) ||
+            !int.TryParse(parts[1], out var prefixLength))
+        {
+            throw new InvalidOperationException(
+                "ForwardedHeaders:KnownNetworks must use CIDR notation, for example 10.0.0.0/8.");
+        }
+
+        var maxPrefixLength = prefix.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 32 : 128;
+        if (prefixLength < 0 || prefixLength > maxPrefixLength)
+        {
+            throw new InvalidOperationException(
+                "ForwardedHeaders:KnownNetworks contains an invalid prefix length.");
+        }
+
+        return new System.Net.IPNetwork(prefix, prefixLength);
+    }
+
+    private static int GetPositiveInt(
+        IConfiguration configuration,
+        string key,
+        int defaultValue)
+    {
+        var rawValue = configuration[key];
+        if (string.IsNullOrWhiteSpace(rawValue))
+            return defaultValue;
+
+        if (!int.TryParse(rawValue, out var value) || value <= 0)
+            throw new InvalidOperationException($"{key} must be a positive integer.");
+
+        return value;
     }
 
     private static void ValidateRequiredConfiguration(IConfiguration configuration)

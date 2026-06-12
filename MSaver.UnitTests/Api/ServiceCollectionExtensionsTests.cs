@@ -1,10 +1,13 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Reflection;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +16,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 using MSaver.Api.Configuration;
+using MSaver.Api.Controllers;
 using MSaver.Application.Abstractions.Services;
 using MSaver.Infrastructure.Auth;
 
@@ -142,8 +146,33 @@ public sealed class ServiceCollectionExtensionsTests
 
         options.ForwardedHeaders.Should().HaveFlag(ForwardedHeaders.XForwardedFor);
         options.ForwardedHeaders.Should().HaveFlag(ForwardedHeaders.XForwardedProto);
-        options.KnownIPNetworks.Should().BeEmpty();
-        options.KnownProxies.Should().BeEmpty();
+        options.KnownIPNetworks.Should().NotBeEmpty();
+        options.KnownProxies.Should().NotBeEmpty();
+        options.ForwardLimit.Should().Be(1);
+    }
+
+    [Fact]
+    public void AddApiServices_ShouldConfigureTrustedForwardedHeaderSourcesFromConfiguration()
+    {
+        var services = new ServiceCollection();
+        var settings = CreateValidSettings();
+        settings["ForwardedHeaders:KnownProxies:0"] = "10.10.0.5";
+        settings["ForwardedHeaders:KnownNetworks:0"] = "10.20.0.0/16";
+        var configuration = CreateConfiguration(settings);
+
+        services.AddApiServices(configuration);
+
+        using var provider = services.BuildServiceProvider();
+        var options = provider
+            .GetRequiredService<IOptions<ForwardedHeadersOptions>>()
+            .Value;
+
+        var expectedProxy = IPAddress.Parse("10.10.0.5");
+        options.KnownProxies.Should().ContainSingle(proxy => proxy.Equals(expectedProxy));
+
+        var network = options.KnownIPNetworks.Should().ContainSingle().Subject;
+        network.ToString().Should().Be("10.20.0.0/16");
+        network.PrefixLength.Should().Be(16);
     }
 
     [Fact]
@@ -211,6 +240,20 @@ public sealed class ServiceCollectionExtensionsTests
         context.Result!.Failure!.Message.Should().Contain("access");
     }
 
+    [Theory]
+    [InlineData(nameof(AuthController.Register))]
+    [InlineData(nameof(AuthController.Login))]
+    [InlineData(nameof(AuthController.Refresh))]
+    public void AnonymousAuthEndpoints_ShouldUseAuthRateLimitPolicy(string actionName)
+    {
+        var attribute = typeof(AuthController)
+            .GetMethod(actionName)!
+            .GetCustomAttribute<EnableRateLimitingAttribute>();
+
+        attribute.Should().NotBeNull();
+        attribute!.PolicyName.Should().Be("auth");
+    }
+
     [Fact]
     public void UseApiPipeline_ShouldMapLiveAndReadyHealthCheckEndpoints()
     {
@@ -235,6 +278,22 @@ public sealed class ServiceCollectionExtensionsTests
 
         routePatterns.Should().Contain("/health/live");
         routePatterns.Should().Contain("/health/ready");
+    }
+
+    [Fact]
+    public void UseApiPipeline_ShouldEnableRateLimiterMiddleware()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "Api",
+            "Configuration",
+            "ApplicationBuilderExtensions.cs"));
+
+        source.Should().Contain("UseRateLimiter(");
     }
 
     private static IConfiguration CreateConfiguration(params (string Key, string Value)[] values)

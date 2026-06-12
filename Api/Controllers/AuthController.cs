@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 using MSaver.Api.Common;
+using MSaver.Api.Configuration;
 using MSaver.Application.Features.Auth.Login;
 using MSaver.Application.Features.Auth.Logout;
 using MSaver.Application.Features.Auth.Refresh;
@@ -27,6 +29,7 @@ public sealed class AuthController(
 
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     public Task<IActionResult> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
@@ -38,6 +41,7 @@ public sealed class AuthController(
 
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     public Task<IActionResult> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
@@ -49,6 +53,7 @@ public sealed class AuthController(
 
     [HttpPost("refresh")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     public Task<IActionResult> Refresh(
         [FromBody] RefreshTokenRequest request,
         CancellationToken cancellationToken)

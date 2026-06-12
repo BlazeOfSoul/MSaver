@@ -439,6 +439,33 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
     }
 
     [Fact]
+    public async Task CreateAsync_ShouldReturnFailure_WhenAccountIsArchived()
+    {
+        var sut = CreateSut();
+        var userId = TransactionTestData.UserId;
+        var request = TransactionTestData.CreateTransactionRequest();
+        var user = TransactionTestData.CreateUser(userId);
+        var category = TransactionTestData.CreateCategory(userId, type: CategoryType.Debit, id: request.CategoryId);
+        var account = TransactionTestData.CreateAccount(
+            userId,
+            isArchived: true,
+            isPrimary: false,
+            id: request.AccountId);
+
+        CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+        UserRepositoryMock.Setup(x => x.GetByIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(user);
+        CategoryRepositoryMock.Setup(x => x.GetByIdAsync(request.CategoryId, It.IsAny<CancellationToken>())).ReturnsAsync(category);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(request.AccountId, It.IsAny<CancellationToken>())).ReturnsAsync(account);
+
+        var result = await sut.CreateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.NotFound);
+        TransactionRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()), Times.Never);
+        UnitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task CreateAsync_ShouldCreateTransaction_WhenRequestIsValid()
     {
         var sut = CreateSut();

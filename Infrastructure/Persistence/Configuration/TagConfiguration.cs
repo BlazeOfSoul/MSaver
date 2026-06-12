@@ -26,7 +26,8 @@ public sealed class TagConfiguration : IEntityTypeConfiguration<Tag>
         builder.Property(x => x.IsDeleted)
             .IsRequired();
 
-        builder.HasIndex(x => new { x.UserId, x.Name });
+        builder.HasIndex(x => new { x.UserId, x.Name })
+            .IsUnique();
 
         builder.HasOne(x => x.User)
             .WithMany(x => x.Tags)

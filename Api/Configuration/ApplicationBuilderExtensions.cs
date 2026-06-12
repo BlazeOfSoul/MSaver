@@ -30,6 +30,7 @@ public static class ApplicationBuilderExtensions
         app.UseRouting();
 
         app.UseCors("AllowFrontend");
+        app.UseRateLimiter();
 
         app.UseAuthentication();
         app.UseAuthorization();

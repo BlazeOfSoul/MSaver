@@ -52,9 +52,11 @@ public sealed class RefreshTokenRepository(ApplicationDbContext context) : IRefr
     {
         var utcNow = DateTime.UtcNow;
 
-        await _context.RefreshTokens
+        var expiredTokens = await _context.RefreshTokens
             .Where(x => x.UserId == userId && x.ExpiresAt <= utcNow)
-            .ExecuteDeleteAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
+
+        _context.RefreshTokens.RemoveRange(expiredTokens);
     }
 
     private static bool LooksLikeSha256Hash(string token)

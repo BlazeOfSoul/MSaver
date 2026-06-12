@@ -7,5 +7,6 @@ public sealed class AccountByIdSpecification : BaseSpecification<Account>
     public AccountByIdSpecification(Guid id)
     {
         AddCriteria(x => x.Id == id);
+        ApplyTracking();
     }
 }

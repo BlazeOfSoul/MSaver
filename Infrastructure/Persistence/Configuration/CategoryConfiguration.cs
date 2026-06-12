@@ -34,7 +34,8 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(x => x.IsDeleted)
             .IsRequired();
 
-        builder.HasIndex(x => new { x.UserId, x.Name, x.Type });
+        builder.HasIndex(x => new { x.UserId, x.Name })
+            .IsUnique();
 
         builder.HasOne(x => x.User)
             .WithMany(x => x.Categories)

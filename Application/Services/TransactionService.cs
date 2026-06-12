@@ -139,7 +139,7 @@ public sealed class TransactionService(
             return Result<Guid>.Failure(validation.Error);
 
         var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
-        if (account is null || account.UserId != userId)
+        if (account is null || account.UserId != userId || account.IsArchived)
             return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
         Transaction transaction = Transaction.Create(
