@@ -344,6 +344,7 @@ public sealed class AuthServiceTests : AuthServiceTestBase
 
         createdCategories.Should().NotBeNull();
         createdCategories.Should().NotBeEmpty();
+        createdCategories!.Select(x => x.Name).Should().OnlyHaveUniqueItems();
         createdCategories!.Single(x => x.Name == "Продукты").Color.Should().Be("#F97373");
         createdCategories.Single(x => x.Name == "Кафе и рестораны").Color.Should().Be("#FB923C");
         createdCategories.Single(x => x.Name == "Для дома (Интерьер)").Color.Should().Be("#818CF8");
