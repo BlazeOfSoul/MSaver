@@ -1,0 +1,27 @@
+name: deploy-backend
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    name: deploy-backend
+    runs-on: ubuntu-latest
+    needs: []
+
+    steps:
+      - name: Deploy backend to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /root/MSaver
+            git fetch origin
+            git reset --hard origin/master
+
+            cd /root/MSaver.Deploy
+            docker compose up -d --build backend
