@@ -63,6 +63,25 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         TransactionListQuery query,
         CancellationToken cancellationToken = default)
     {
+        DateTime? fromDateUtc = null;
+        DateTime? toDateUtc = null;
+
+        if (query.FromDate.HasValue)
+        {
+            var d = query.FromDate.Value;
+            fromDateUtc = d.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(d, DateTimeKind.Utc)
+                : d.ToUniversalTime();
+        }
+
+        if (query.ToDate.HasValue)
+        {
+            var d = query.ToDate.Value;
+            toDateUtc = d.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(d, DateTimeKind.Utc)
+                : d.ToUniversalTime();
+        }
+
         IQueryable<Transaction> dbQuery = _dbContext.Transactions
             .AsNoTracking()
             .Include(t => t.Category)
@@ -75,11 +94,11 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         if (query.CategoryId.HasValue)
             dbQuery = dbQuery.Where(t => t.CategoryId == query.CategoryId.Value);
 
-        if (query.FromDate.HasValue)
-            dbQuery = dbQuery.Where(t => t.Date >= query.FromDate.Value);
+        if (fromDateUtc.HasValue)
+            dbQuery = dbQuery.Where(t => t.Date >= fromDateUtc.Value);
 
-        if (query.ToDate.HasValue)
-            dbQuery = dbQuery.Where(t => t.Date < query.ToDate.Value);
+        if (toDateUtc.HasValue)
+            dbQuery = dbQuery.Where(t => t.Date < toDateUtc.Value);
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
