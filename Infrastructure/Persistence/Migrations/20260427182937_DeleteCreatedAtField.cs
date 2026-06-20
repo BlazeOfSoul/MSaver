@@ -23,7 +23,7 @@ namespace MSaver.Infrastructure.Persistence.Migrations
                 table: "accounts",
                 type: "timestamp with time zone",
                 nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc));
         }
     }
 }

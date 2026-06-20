@@ -11,6 +11,7 @@ global using MSaver.Application.Services;
 global using MSaver.Domain.Entities;
 global using MSaver.Domain.Errors;
 global using MSaver.Domain.Repositories;
+global using MSaver.UnitTests.Common.TestData;
 
 global using Microsoft.AspNetCore.Identity;
 

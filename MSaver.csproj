@@ -9,8 +9,11 @@
 
 	<ItemGroup>
 		<Compile Remove="MSaver.UnitTests\**\*.cs" />
+		<Compile Remove="server\**\*.cs" />
 		<EmbeddedResource Remove="MSaver.UnitTests\**\*" />
+		<EmbeddedResource Remove="server\**\*" />
 		<None Remove="MSaver.UnitTests\**\*" />
+		<None Remove="server\**\*" />
 	</ItemGroup>
 
 	<ItemGroup>

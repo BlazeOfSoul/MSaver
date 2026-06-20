@@ -63,24 +63,8 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         TransactionListQuery query,
         CancellationToken cancellationToken = default)
     {
-        DateTime? fromDateUtc = null;
-        DateTime? toDateUtc = null;
-
-        if (query.FromDate.HasValue)
-        {
-            var d = query.FromDate.Value;
-            fromDateUtc = d.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(d, DateTimeKind.Utc)
-                : d.ToUniversalTime();
-        }
-
-        if (query.ToDate.HasValue)
-        {
-            var d = query.ToDate.Value;
-            toDateUtc = d.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(d, DateTimeKind.Utc)
-                : d.ToUniversalTime();
-        }
+        var fromDateUtc = UtcDateTime.Normalize(query.FromDate);
+        var toDateUtc = UtcDateTime.Normalize(query.ToDate);
 
         IQueryable<Transaction> dbQuery = _dbContext.Transactions
             .AsNoTracking()
@@ -157,8 +141,10 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         DateTime toExclusive,
         CancellationToken cancellationToken = default)
     {
+        var toExclusiveUtc = UtcDateTime.Normalize(toExclusive);
+
         var total = await _dbContext.Transactions
-            .Where(t => t.AccountId == accountId && t.Date < toExclusive)
+            .Where(t => t.AccountId == accountId && t.Date < toExclusiveUtc)
             .SumAsync(t => (decimal?)t.Amount, cancellationToken);
 
         return total ?? 0m;
@@ -170,10 +156,13 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         DateTime toExclusive,
         CancellationToken cancellationToken = default)
     {
+        var fromInclusiveUtc = UtcDateTime.Normalize(fromInclusive);
+        var toExclusiveUtc = UtcDateTime.Normalize(toExclusive);
+
         var total = await _dbContext.Transactions
             .Where(t => t.AccountId == accountId
-                        && t.Date >= fromInclusive
-                        && t.Date < toExclusive)
+                        && t.Date >= fromInclusiveUtc
+                        && t.Date < toExclusiveUtc)
             .SumAsync(t => (decimal?)t.Amount, cancellationToken);
 
         return total ?? 0m;

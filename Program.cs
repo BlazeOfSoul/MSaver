@@ -9,6 +9,7 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+await app.ApplyDatabaseMigrationsAsync();
 app.UseApiPipeline();
 
 app.MapHealthChecks("/health/ready");

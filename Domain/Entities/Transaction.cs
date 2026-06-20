@@ -41,7 +41,7 @@ public sealed class Transaction : AuditableEntity
             UserId = userId,
             AccountId = accountId,
             CategoryId = categoryId,
-            Date = date
+            Date = UtcDateTime.Normalize(date)
         };
 
         transaction.SetAmount(amount);
@@ -60,7 +60,7 @@ public sealed class Transaction : AuditableEntity
             throw new DomainException(TransactionDomainErrors.CategoryIdRequired);
 
         CategoryId = categoryId;
-        Date = date;
+        Date = UtcDateTime.Normalize(date);
 
         SetAmount(amount);
         SetDescription(description);

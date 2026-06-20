@@ -32,7 +32,7 @@ public sealed class RefreshToken : Entity
             UserId = userId,
             ClientId = clientId,
             Token = token,
-            ExpiresAt = expiresAt,
+            ExpiresAt = UtcDateTime.Normalize(expiresAt),
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -43,7 +43,7 @@ public sealed class RefreshToken : Entity
             throw new DomainException(AuthDomainErrors.RefreshTokenInvalid);
 
         Token = token;
-        ExpiresAt = expiresAt;
+        ExpiresAt = UtcDateTime.Normalize(expiresAt);
     }
 
     public void Revoke()

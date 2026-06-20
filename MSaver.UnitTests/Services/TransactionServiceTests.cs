@@ -60,8 +60,8 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         var userId = TransactionTestData.UserId;
         var accountId = Guid.NewGuid();
         var categoryId = Guid.NewGuid();
-        var fromDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var toDate = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+        var fromDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        var toDate = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
         var request = new GetTransactionsRequest
         {
@@ -90,8 +90,10 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         capturedQuery!.UserId.Should().Be(userId);
         capturedQuery.AccountId.Should().Be(accountId);
         capturedQuery.CategoryId.Should().Be(categoryId);
-        capturedQuery.FromDate.Should().Be(fromDate);
-        capturedQuery.ToDate.Should().Be(toDate);
+        capturedQuery.FromDate!.Value.Kind.Should().Be(DateTimeKind.Utc);
+        capturedQuery.FromDate.Should().Be(DateTime.SpecifyKind(fromDate, DateTimeKind.Utc));
+        capturedQuery.ToDate!.Value.Kind.Should().Be(DateTimeKind.Utc);
+        capturedQuery.ToDate.Should().Be(DateTime.SpecifyKind(toDate, DateTimeKind.Utc));
         capturedQuery.Search.Should().Be("coffee");
         capturedQuery.SortBy.Should().Be("amount");
         capturedQuery.SortDirection.Should().Be(ListQueryDefaults.SortAscending);
