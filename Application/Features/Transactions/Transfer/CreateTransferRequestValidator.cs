@@ -31,6 +31,7 @@ public sealed class CreateTransferRequestValidator : AbstractValidator<CreateTra
 
         RuleFor(x => x)
             .Must(x => x.FromAccountId != x.ToAccountId)
-            .WithMessage(ValidationMessages.DifferentAccountsRequired);
+            .WithMessage(ValidationMessages.DifferentAccountsRequired)
+            .OverridePropertyName(nameof(CreateTransferRequest.ToAccountId));
     }
 }
