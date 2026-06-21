@@ -1,4 +1,5 @@
 using MSaver.Application.Features.Transactions.Get;
+using MSaver.Domain.Enums;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
@@ -56,6 +57,32 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .Include(t => t.Category)
             .Include(t => t.Account)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Transaction>> GetByTransferIdAsync(
+        Guid transferId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Transactions
+            .Include(t => t.Account)
+            .Include(t => t.Category)
+            .Where(t => t.TransferId == transferId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Transaction>> GetByTransferIdsWithDetailsAsync(
+        IReadOnlyCollection<Guid> transferIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (transferIds.Count == 0)
+            return [];
+
+        return await _dbContext.Transactions
+            .AsNoTracking()
+            .Include(t => t.Account)
+            .Include(t => t.Category)
+            .Where(t => t.TransferId.HasValue && transferIds.Contains(t.TransferId.Value))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<PagedResult<Transaction>> GetPagedWithDetailsAsync(
@@ -161,6 +188,37 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .SumAsync(t => (decimal?)t.Amount, cancellationToken);
 
         return total ?? 0m;
+    }
+
+    public async Task<TransactionPeriodBreakdown> GetBreakdownInPeriodAsync(
+        Guid accountId,
+        DateTime fromInclusive,
+        DateTime toExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        var fromInclusiveUtc = UtcDateTime.Normalize(fromInclusive);
+        var toExclusiveUtc = UtcDateTime.Normalize(toExclusive);
+
+        var totals = await _dbContext.Transactions
+            .Where(t => t.AccountId == accountId
+                        && t.Date >= fromInclusiveUtc
+                        && t.Date < toExclusiveUtc)
+            .GroupBy(t => t.Category!.Type)
+            .Select(g => new
+            {
+                Type = g.Key,
+                Total = g.Sum(t => t.Amount)
+            })
+            .ToDictionaryAsync(
+                x => x.Type,
+                x => x.Total,
+                cancellationToken);
+
+        return new TransactionPeriodBreakdown(
+            Income: totals.GetValueOrDefault(CategoryType.Credit, 0m),
+            Expense: totals.GetValueOrDefault(CategoryType.Debit, 0m),
+            TransferIn: totals.GetValueOrDefault(CategoryType.TransferIncome, 0m),
+            TransferOut: totals.GetValueOrDefault(CategoryType.TransferExpense, 0m));
     }
 
     private static IQueryable<Transaction> ApplySorting(

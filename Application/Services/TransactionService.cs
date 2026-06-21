@@ -38,7 +38,7 @@ public sealed class TransactionService(
             AccountId = request.AccountId,
             CategoryId = request.CategoryId,
             FromDate = UtcDateTime.Normalize(request.FromDate),
-            ToDate = UtcDateTime.Normalize(request.ToDate),
+            ToDate = NormalizeToDateExclusive(request.ToDate),
             Search = ListQueryHelper.NormalizeSearch(request.Search),
             SortBy = ListQueryHelper.NormalizeSortBy(request.SortBy, TransactionSortFields.Date),
             SortDirection = ListQueryHelper.NormalizeSortDirection(request.SortDirection),
@@ -47,6 +47,9 @@ public sealed class TransactionService(
         };
 
         var pagedTransactions = await _transactionRepository.GetPagedWithDetailsAsync(query, cancellationToken);
+        var transferCounterparties = await GetTransferCounterpartiesAsync(
+            pagedTransactions.Items,
+            cancellationToken);
 
         var items = pagedTransactions.Items
             .Select(x => new TransactionItemResponse
@@ -64,9 +67,12 @@ public sealed class TransactionService(
                 {
                     Id = x.CategoryId,
                     Name = x.Category!.Name,
+                    Type = x.Category.Type,
                     Color = x.Category.Color
                 },
                 Amount = x.Amount,
+                TransferId = x.TransferId,
+                TransferCounterparty = transferCounterparties.GetValueOrDefault(x.Id),
                 Date = x.Date,
                 Description = x.Description
             })
@@ -110,9 +116,12 @@ public sealed class TransactionService(
             {
                 Id = transaction.CategoryId,
                 Name = transaction.Category!.Name,
+                Type = transaction.Category.Type,
                 Color = transaction.Category.Color
             },
             Amount = transaction.Amount,
+            TransferId = transaction.TransferId,
+            TransferCounterparty = await GetTransferCounterpartyAsync(transaction, cancellationToken),
             Date = transaction.Date,
             Description = transaction.Description
         };
@@ -163,6 +172,9 @@ public sealed class TransactionService(
         if (transaction is null || transaction.UserId != userId)
             return Result<Guid>.Failure(TransactionDomainErrors.TransactionNotFound);
 
+        if (transaction.TransferId.HasValue)
+            return Result<Guid>.Failure(TransactionDomainErrors.TransferTransactionRequiresTransferEndpoint);
+
         var validation = await ValidateTransactionRequestAsync(
             userId,
             request.CategoryId,
@@ -194,10 +206,36 @@ public sealed class TransactionService(
         if (transaction is null || transaction.UserId != userId)
             return Result<Guid>.Failure(TransactionDomainErrors.TransactionNotFound);
 
+        if (transaction.TransferId.HasValue)
+            return Result<Guid>.Failure(TransactionDomainErrors.TransferTransactionRequiresTransferEndpoint);
+
         await _transactionRepository.RemoveAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<Guid>.Success(transaction.Id);
+    }
+
+    public async Task<Result<Guid>> DeleteTransferAsync(
+        Guid transferId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        var transactions = await _transactionRepository.GetByTransferIdAsync(
+            transferId,
+            cancellationToken);
+
+        if (transactions.Count == 0 || transactions.Any(x => x.UserId != userId))
+            return Result<Guid>.Failure(TransactionDomainErrors.TransferNotFound);
+
+        foreach (var transaction in transactions)
+        {
+            await _transactionRepository.RemoveAsync(transaction, cancellationToken);
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<Guid>.Success(transferId);
     }
 
     public async Task<Result<GetTransferRateResponse>> GetTransferRateAsync(
@@ -252,23 +290,32 @@ public sealed class TransactionService(
         if (request.Amount <= 0)
             return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferAmountMustBeGreaterThanZero);
 
+        if (request.Rate.HasValue && request.Rate.Value <= 0)
+        {
+            return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferRateMustBePositive);
+        }
+
+        var isSameCurrency = fromAccount.CurrencyCode == toAccount.CurrencyCode;
         decimal rate;
 
-        if (request.Rate.HasValue)
+        if (isSameCurrency)
         {
-            if (request.Rate.Value <= 0)
-                return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferRateMustBePositive);
+            if (request.Rate.HasValue && request.Rate.Value != 1m)
+                return Result<CreateTransferResponse>.Failure(
+                    TransactionDomainErrors.TransferRateMustBeOneForSameCurrency);
 
+            rate = 1m;
+        }
+        else if (request.Rate.HasValue)
+        {
             rate = request.Rate.Value;
         }
         else
         {
-            rate = fromAccount.CurrencyCode == toAccount.CurrencyCode
-                ? 1m
-                : await _exchangeRateService.GetRateAsync(
-                    fromAccount.CurrencyCode,
-                    toAccount.CurrencyCode,
-                    cancellationToken);
+            rate = await _exchangeRateService.GetRateAsync(
+                fromAccount.CurrencyCode,
+                toAccount.CurrencyCode,
+                cancellationToken);
         }
 
         var precision = CurrencyDefinitions.Get(toAccount.CurrencyCode).Precision;
@@ -286,13 +333,16 @@ public sealed class TransactionService(
         if (transferIncomeCategory is null)
             return Result<CreateTransferResponse>.Failure(CategoryDomainErrors.NotFound);
 
+        var transferId = Guid.NewGuid();
+
         var expenseTransaction = Transaction.Create(
             userId: userId,
             accountId: fromAccount.Id,
             categoryId: transferExpenseCategory.Id,
             amount: -request.Amount,
             date: request.Date,
-            description: request.Description);
+            description: request.Description,
+            transferId: transferId);
 
         var incomeTransaction = Transaction.Create(
             userId: userId,
@@ -300,7 +350,8 @@ public sealed class TransactionService(
             categoryId: transferIncomeCategory.Id,
             amount: depositAmount,
             date: request.Date,
-            description: request.Description);
+            description: request.Description,
+            transferId: transferId);
 
         await _transactionRepository.AddAsync(expenseTransaction, cancellationToken);
         await _transactionRepository.AddAsync(incomeTransaction, cancellationToken);
@@ -309,6 +360,7 @@ public sealed class TransactionService(
 
         return Result<CreateTransferResponse>.Success(
             new CreateTransferResponse(
+                TransferId: transferId,
                 ExpenseTransactionId: expenseTransaction.Id,
                 IncomeTransactionId: incomeTransaction.Id,
                 WithdrawAmount: request.Amount,
@@ -335,6 +387,9 @@ public sealed class TransactionService(
         if (category.IsDeleted)
             return (true, CategoryDomainErrors.CategoryDeleted, null);
 
+        if (category.IsSystem)
+            return (true, TransactionDomainErrors.TransferCategoryRequiresTransferEndpoint, null);
+
         if (amount == 0)
             return (true, TransactionDomainErrors.AmountMustNotBeZero, null);
 
@@ -345,5 +400,103 @@ public sealed class TransactionService(
         }
 
         return (false, null!, category);
+    }
+
+    private static DateTime? NormalizeToDateExclusive(DateTime? toDate)
+    {
+        if (!toDate.HasValue)
+            return null;
+
+        var normalized = UtcDateTime.Normalize(toDate.Value);
+
+        return normalized.TimeOfDay == TimeSpan.Zero
+            ? normalized.AddDays(1)
+            : normalized;
+    }
+
+    private async Task<Dictionary<Guid, TransactionTransferCounterpartyResponse>> GetTransferCounterpartiesAsync(
+        IReadOnlyCollection<Transaction> transactions,
+        CancellationToken cancellationToken)
+    {
+        var transferIds = transactions
+            .Where(x => x.TransferId.HasValue)
+            .Select(x => x.TransferId!.Value)
+            .Distinct()
+            .ToArray();
+
+        if (transferIds.Length == 0)
+            return [];
+
+        var transferTransactions = await _transactionRepository.GetByTransferIdsWithDetailsAsync(
+            transferIds,
+            cancellationToken);
+
+        return MapTransferCounterparties(transactions, transferTransactions);
+    }
+
+    private async Task<TransactionTransferCounterpartyResponse?> GetTransferCounterpartyAsync(
+        Transaction transaction,
+        CancellationToken cancellationToken)
+    {
+        if (!transaction.TransferId.HasValue)
+            return null;
+
+        var transferTransactions = await _transactionRepository.GetByTransferIdAsync(
+            transaction.TransferId.Value,
+            cancellationToken);
+
+        var peer = transferTransactions.FirstOrDefault(x => x.Id != transaction.Id);
+        return MapTransferCounterparty(peer);
+    }
+
+    private static Dictionary<Guid, TransactionTransferCounterpartyResponse> MapTransferCounterparties(
+        IReadOnlyCollection<Transaction> sourceTransactions,
+        IReadOnlyCollection<Transaction> transferTransactions)
+    {
+        var byTransferId = transferTransactions
+            .Where(x => x.TransferId.HasValue)
+            .GroupBy(x => x.TransferId!.Value)
+            .ToDictionary(x => x.Key, x => x.ToArray());
+
+        var result = new Dictionary<Guid, TransactionTransferCounterpartyResponse>();
+
+        foreach (var transaction in sourceTransactions.Where(x => x.TransferId.HasValue))
+        {
+            if (!byTransferId.TryGetValue(transaction.TransferId!.Value, out var transferPair))
+                continue;
+
+            var peer = transferPair.FirstOrDefault(x => x.Id != transaction.Id);
+            var counterparty = MapTransferCounterparty(peer);
+
+            if (counterparty is not null)
+                result[transaction.Id] = counterparty;
+        }
+
+        return result;
+    }
+
+    private static TransactionTransferCounterpartyResponse? MapTransferCounterparty(Transaction? transaction)
+    {
+        if (transaction?.Account is null)
+            return null;
+
+        return new TransactionTransferCounterpartyResponse
+        {
+            Id = transaction.Id,
+            Account = MapAccount(transaction),
+            Amount = transaction.Amount
+        };
+    }
+
+    private static TransactionAccountResponse MapAccount(Transaction transaction)
+    {
+        return new TransactionAccountResponse
+        {
+            Id = transaction.AccountId,
+            Name = transaction.Account!.Name,
+            Color = transaction.Account.Color,
+            CurrencyCode = transaction.Account.CurrencyCode,
+            IsArchived = transaction.Account.IsArchived
+        };
     }
 }

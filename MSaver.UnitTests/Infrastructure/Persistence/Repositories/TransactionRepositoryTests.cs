@@ -32,6 +32,145 @@ public sealed class TransactionRepositoryTests
         totals[accountId].Should().Be(175m);
     }
 
+    [Fact]
+    public async Task GetBreakdownInPeriodAsync_ShouldSplitOperationsAndTransfersByCategoryType()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new TransactionRepository(dbContext);
+        var userId = TransactionTestData.UserId;
+        var accountId = Guid.NewGuid();
+        var otherAccountId = Guid.NewGuid();
+        var debitCategory = TransactionTestData.CreateCategory(userId, "Food", CategoryType.Debit);
+        var creditCategory = TransactionTestData.CreateCategory(userId, "Salary", CategoryType.Credit);
+        var transferExpenseCategory = TransactionTestData.CreateCategory(userId, "Transfer Out", CategoryType.TransferExpense);
+        var transferIncomeCategory = TransactionTestData.CreateCategory(userId, "Transfer In", CategoryType.TransferIncome);
+        var periodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc);
+        var periodEnd = periodStart.AddMonths(1);
+
+        dbContext.Categories.AddRange(debitCategory, creditCategory, transferExpenseCategory, transferIncomeCategory);
+        dbContext.Transactions.AddRange(
+            TransactionTestData.CreateTransaction(userId, accountId, debitCategory.Id, -25m, periodStart.AddDays(1), category: debitCategory),
+            TransactionTestData.CreateTransaction(userId, accountId, creditCategory.Id, 300m, periodStart.AddDays(2), category: creditCategory),
+            TransactionTestData.CreateTransaction(userId, accountId, transferExpenseCategory.Id, -100m, periodStart.AddDays(3), category: transferExpenseCategory),
+            TransactionTestData.CreateTransaction(userId, accountId, transferIncomeCategory.Id, 40m, periodStart.AddDays(4), category: transferIncomeCategory),
+            TransactionTestData.CreateTransaction(userId, accountId, debitCategory.Id, -999m, periodStart.AddDays(-1), category: debitCategory),
+            TransactionTestData.CreateTransaction(userId, accountId, creditCategory.Id, 999m, periodEnd, category: creditCategory),
+            TransactionTestData.CreateTransaction(userId, otherAccountId, creditCategory.Id, 999m, periodStart.AddDays(5), category: creditCategory));
+        await dbContext.SaveChangesAsync();
+
+        var breakdown = await repository.GetBreakdownInPeriodAsync(
+            accountId,
+            periodStart,
+            periodEnd);
+
+        breakdown.Income.Should().Be(300m);
+        breakdown.Expense.Should().Be(-25m);
+        breakdown.TransferIn.Should().Be(40m);
+        breakdown.TransferOut.Should().Be(-100m);
+    }
+
+    [Fact]
+    public async Task GetByTransferIdAsync_ShouldReturnOnlyTransactionsWithMatchingTransferId()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new TransactionRepository(dbContext);
+        var userId = TransactionTestData.UserId;
+        var account = TransactionTestData.CreateAccount(userId, "USD", "Cash");
+        var otherAccount = TransactionTestData.CreateAccount(userId, "USD", "Savings");
+        var transferCategory = TransactionTestData.CreateCategory(userId, "Transfer Out", CategoryType.TransferExpense);
+        var transferId = Guid.NewGuid();
+        var otherTransferId = Guid.NewGuid();
+
+        var matchingExpense = TransactionTestData.CreateTransaction(
+            userId,
+            account.Id,
+            transferCategory.Id,
+            -100m,
+            account: account,
+            category: transferCategory,
+            transferId: transferId);
+
+        var matchingIncome = TransactionTestData.CreateTransaction(
+            userId,
+            otherAccount.Id,
+            transferCategory.Id,
+            100m,
+            account: otherAccount,
+            category: transferCategory,
+            transferId: transferId);
+
+        var otherTransfer = TransactionTestData.CreateTransaction(
+            userId,
+            account.Id,
+            transferCategory.Id,
+            -25m,
+            account: account,
+            category: transferCategory,
+            transferId: otherTransferId);
+
+        dbContext.Accounts.AddRange(account, otherAccount);
+        dbContext.Categories.Add(transferCategory);
+        dbContext.Transactions.AddRange(matchingExpense, matchingIncome, otherTransfer);
+        await dbContext.SaveChangesAsync();
+
+        var transactions = await repository.GetByTransferIdAsync(transferId);
+
+        transactions.Should().HaveCount(2);
+        transactions.Select(x => x.Id).Should().BeEquivalentTo([matchingExpense.Id, matchingIncome.Id]);
+    }
+
+    [Fact]
+    public async Task GetByTransferIdsWithDetailsAsync_ShouldReturnMatchingTransfersWithAccountDetails()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new TransactionRepository(dbContext);
+        var userId = TransactionTestData.UserId;
+        var transferId = Guid.NewGuid();
+        var otherTransferId = Guid.NewGuid();
+        var account = TransactionTestData.CreateAccount(userId, "USD", "Cash");
+        var otherAccount = TransactionTestData.CreateAccount(userId, "EUR", "Euro Savings");
+        var transferCategory = TransactionTestData.CreateCategory(userId, "Transfer Out", CategoryType.TransferExpense);
+
+        var matchingExpense = TransactionTestData.CreateTransaction(
+            userId,
+            account.Id,
+            transferCategory.Id,
+            -100m,
+            account: account,
+            category: transferCategory,
+            transferId: transferId);
+
+        var matchingIncome = TransactionTestData.CreateTransaction(
+            userId,
+            otherAccount.Id,
+            transferCategory.Id,
+            91m,
+            account: otherAccount,
+            category: transferCategory,
+            transferId: transferId);
+
+        var otherTransfer = TransactionTestData.CreateTransaction(
+            userId,
+            account.Id,
+            transferCategory.Id,
+            -25m,
+            account: account,
+            category: transferCategory,
+            transferId: otherTransferId);
+
+        dbContext.Accounts.AddRange(account, otherAccount);
+        dbContext.Categories.Add(transferCategory);
+        dbContext.Transactions.AddRange(matchingExpense, matchingIncome, otherTransfer);
+        await dbContext.SaveChangesAsync();
+
+        var transactions = await repository.GetByTransferIdsWithDetailsAsync([transferId]);
+
+        transactions.Should().HaveCount(2);
+        transactions.Select(x => x.Id).Should().BeEquivalentTo([matchingExpense.Id, matchingIncome.Id]);
+        transactions.Should().OnlyContain(x => x.Account != null);
+        transactions.Select(x => x.Account!.Name).Should().BeEquivalentTo(["Cash", "Euro Savings"]);
+    }
+
     private static ApplicationDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()

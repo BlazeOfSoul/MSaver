@@ -64,7 +64,8 @@ public static class TransactionTestData
         string? description = "Coffee",
         Guid? id = null,
         Account? account = null,
-        Category? category = null)
+        Category? category = null,
+        Guid? transferId = null)
     {
         var transaction = Transaction.Create(
             userId,
@@ -72,7 +73,8 @@ public static class TransactionTestData
             categoryId,
             amount,
             date ?? new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
-            description);
+            description,
+            transferId);
 
         SetId(transaction, id ?? Guid.NewGuid());
 

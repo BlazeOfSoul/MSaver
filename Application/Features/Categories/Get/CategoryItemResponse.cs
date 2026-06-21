@@ -11,4 +11,6 @@ public sealed class CategoryItemResponse
     public CategoryType Type { get; init; }
 
     public string Color { get; init; } = string.Empty;
+
+    public bool IsSystem { get; init; }
 }

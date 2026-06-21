@@ -10,14 +10,22 @@ public static class AccountTestData
         string currencyCode = "USD",
         string name = "Main account",
         string? color = "#111111",
-        bool isPrimary = false)
+        bool isPrimary = false,
+        decimal initialBalance = 0m,
+        DateTime? createdAt = null)
     {
-        return Account.Create(
+        var account = Account.Create(
             userId ?? UserId,
             currencyCode,
             name,
             color,
-            isPrimary);
+            isPrimary,
+            initialBalance);
+
+        if (createdAt.HasValue)
+            SetPrivateProperty(account, nameof(Account.CreatedAt), createdAt.Value);
+
+        return account;
     }
 
     public static Dictionary<Guid, decimal> CreateTotals(params (Guid accountId, decimal balance)[] items)
@@ -40,5 +48,26 @@ public static class AccountTestData
             Size = size,
             TotalCount = resolvedTotalCount
         };
+    }
+
+    private static void SetPrivateProperty(object target, string propertyName, object value)
+    {
+        var type = target.GetType();
+        while (type is not null)
+        {
+            var prop = type.GetProperty(
+                propertyName,
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic);
+
+            if (prop is not null)
+            {
+                prop.SetValue(target, value);
+                return;
+            }
+
+            type = type.BaseType;
+        }
     }
 }

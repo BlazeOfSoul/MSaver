@@ -10,6 +10,10 @@ public sealed class TransactionItemResponse
 
     public decimal Amount { get; init; }
 
+    public Guid? TransferId { get; init; }
+
+    public TransactionTransferCounterpartyResponse? TransferCounterparty { get; init; }
+
     public DateTime Date { get; init; }
 
     public string Description { get; init; } = string.Empty;

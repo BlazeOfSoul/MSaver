@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+using MSaver.Api.Auth;
 using MSaver.Api.Common;
 using MSaver.Application.Features.Auth.Register;
 using MSaver.Infrastructure;
@@ -30,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddMemoryCache();
         services.AddHttpClient();
         services.AddHttpContextAccessor();
+        services.AddScoped<AuthCookieService>();
         services.AddEndpointsApiExplorer();
 
         services.AddSwaggerGen(c =>
@@ -83,7 +85,8 @@ public static class ServiceCollectionExtensions
                 policy => policy
                     .WithOrigins(frontendOrigin)
                     .AllowAnyHeader()
-                    .AllowAnyMethod());
+                    .AllowAnyMethod()
+                    .AllowCredentials());
         });
 
         services.AddApplicationServices(configuration);
@@ -106,6 +109,18 @@ public static class ServiceCollectionExtensions
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        if (context.Request.Cookies.TryGetValue(
+                                AuthCookieNames.AccessToken,
+                                out var accessToken))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    },
+
                     OnAuthenticationFailed = context =>
                     {
                         var logger = context.HttpContext.RequestServices

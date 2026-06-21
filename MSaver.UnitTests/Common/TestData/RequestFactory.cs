@@ -5,13 +5,15 @@ public static class RequestFactory
     public static CreateAccountRequest CreateAccountRequest(
         string name = "Main account",
         string currencyCode = "USD",
-        string? color = "#111111")
+        string? color = "#111111",
+        decimal initialBalance = 0m)
     {
         return new CreateAccountRequest
         {
             Name = name,
             CurrencyCode = currencyCode,
-            Color = color
+            Color = color,
+            InitialBalance = initialBalance
         };
     }
 

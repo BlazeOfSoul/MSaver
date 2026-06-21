@@ -35,6 +35,19 @@ public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
     public string? Email =>
         _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email)?.Value;
 
+    public string ClientId
+    {
+        get
+        {
+            var clientId = _httpContextAccessor.HttpContext?.User.FindFirst("client_id")?.Value;
+
+            if (string.IsNullOrWhiteSpace(clientId))
+                throw new DomainException(UserDomainErrors.IdNotFound);
+
+            return clientId;
+        }
+    }
+
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false;
 }

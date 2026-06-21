@@ -1,4 +1,4 @@
-﻿using MSaver.Application.Features.Transactions.Get;
+using MSaver.Application.Features.Transactions.Get;
 
 namespace MSaver.Application.Features.Transactions.GetById;
 
@@ -11,6 +11,10 @@ public sealed class GetTransactionByIdResponse
     public TransactionCategoryResponse Category { get; init; } = null!;
 
     public decimal Amount { get; init; }
+
+    public Guid? TransferId { get; init; }
+
+    public TransactionTransferCounterpartyResponse? TransferCounterparty { get; init; }
 
     public DateTime Date { get; init; }
 

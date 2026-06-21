@@ -17,6 +17,8 @@ public sealed class Account : AuditableEntity
 
     public string? Color { get; private set; }
 
+    public decimal InitialBalance { get; private set; }
+
     public bool IsPrimary { get; private set; }
 
     public bool IsArchived { get; private set; }
@@ -28,7 +30,8 @@ public sealed class Account : AuditableEntity
         string currencyCode,
         string name,
         string? color = null,
-        bool isPrimary = false)
+        bool isPrimary = false,
+        decimal initialBalance = 0m)
     {
         if (userId == Guid.Empty)
             throw new DomainException(AccountDomainErrors.UserIdRequired);
@@ -36,9 +39,13 @@ public sealed class Account : AuditableEntity
         if (string.IsNullOrWhiteSpace(currencyCode))
             throw new DomainException(AccountDomainErrors.CurrencyCodeRequired);
 
+        if (initialBalance < 0)
+            throw new DomainException(AccountDomainErrors.InitialBalanceNegative);
+
         var account = new Account
         {
             UserId = userId,
+            InitialBalance = initialBalance,
             IsPrimary = isPrimary,
             IsArchived = false
         };

@@ -26,6 +26,8 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
             .HasPrecision(18, 2)
             .IsRequired();
 
+        builder.Property(x => x.TransferId);
+
         builder.Property(x => x.Date)
             .IsRequired();
 
@@ -37,6 +39,7 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.HasIndex(x => x.AccountId);
         builder.HasIndex(x => x.CategoryId);
         builder.HasIndex(x => x.Date);
+        builder.HasIndex(x => x.TransferId);
 
         builder.HasOne(x => x.User)
             .WithMany(x => x.Transactions)

@@ -22,7 +22,8 @@ MSaver is a personal finance app for tracking income, expenses, and overall bala
 
 ## Auth & Security
 
-- **JWT Access + Refresh tokens**
-  - Access token: short‑lived, used for authorized API calls.
-  - Refresh token: long‑lived, stored in DB and rotated on refresh.
+- **JWT Access + Refresh tokens in HttpOnly cookies**
+  - Access token: short-lived, sent as an HttpOnly cookie for authorized API calls.
+  - Refresh token: long-lived, stored in DB, sent as an HttpOnly cookie, and rotated on refresh.
+  - Tokens are not exposed to frontend JavaScript storage.
   - Maximum 3 active refresh tokens per user.

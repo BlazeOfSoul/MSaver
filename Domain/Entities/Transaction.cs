@@ -15,6 +15,8 @@ public sealed class Transaction : AuditableEntity
 
     public decimal Amount { get; private set; }
 
+    public Guid? TransferId { get; private set; }
+
     public DateTime Date { get; private set; }
 
     public string Description { get; private set; } = string.Empty;
@@ -25,7 +27,8 @@ public sealed class Transaction : AuditableEntity
         Guid categoryId,
         decimal amount,
         DateTime date,
-        string? description = null)
+        string? description = null,
+        Guid? transferId = null)
     {
         if (userId == Guid.Empty)
             throw new DomainException(TransactionDomainErrors.UserIdRequired);
@@ -41,6 +44,7 @@ public sealed class Transaction : AuditableEntity
             UserId = userId,
             AccountId = accountId,
             CategoryId = categoryId,
+            TransferId = NormalizeTransferId(transferId),
             Date = UtcDateTime.Normalize(date)
         };
 
@@ -72,6 +76,13 @@ public sealed class Transaction : AuditableEntity
             throw new DomainException(TransactionDomainErrors.AmountMustNotBeZero);
 
         Amount = amount;
+    }
+
+    private static Guid? NormalizeTransferId(Guid? transferId)
+    {
+        return transferId == Guid.Empty
+            ? throw new DomainException(TransactionDomainErrors.TransferIdRequired)
+            : transferId;
     }
 
     private void SetDescription(string? description)

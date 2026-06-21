@@ -27,6 +27,11 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.Color)
             .HasMaxLength(20);
 
+        builder.Property(x => x.InitialBalance)
+            .HasPrecision(18, 2)
+            .HasDefaultValue(0m)
+            .IsRequired();
+
         builder.Property(x => x.IsPrimary)
             .IsRequired()
             .HasDefaultValue(false);

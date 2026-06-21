@@ -1,5 +1,6 @@
 ﻿using MSaver.Api.Contracts.Accounts;
 using MSaver.Application.Features.Accounts.Get;
+using MSaver.Application.Features.Transactions.Get;
 using MSaver.Domain.Common;
 using MSaver.UnitTests.Common;
 using MSaver.UnitTests.Common.TestData;
@@ -49,7 +50,8 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         var request = RequestFactory.CreateAccountRequest(
             name: "Main account",
             currencyCode: "usd",
-            color: "#123456");
+            color: "#123456",
+            initialBalance: 250.50m);
 
         Account? createdAccount = null;
 
@@ -88,6 +90,7 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         createdAccount.Name.Should().Be("Main account");
         createdAccount.CurrencyCode.Should().Be("USD");
         createdAccount.Color.Should().Be("#123456");
+        createdAccount.InitialBalance.Should().Be(250.50m);
         createdAccount.IsPrimary.Should().BeTrue();
         createdAccount.IsArchived.Should().BeFalse();
 
@@ -98,6 +101,39 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         UnitOfWorkMock.Verify(
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnFailure_WhenInitialBalanceIsNegative()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var request = RequestFactory.CreateAccountRequest(initialBalance: -0.01m);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.CreateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.InitialBalanceNegative);
+
+        AccountRepositoryMock.Verify(
+            x => x.ExistsByNameAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Guid?>()),
+            Times.Never);
+
+        AccountRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -505,8 +541,17 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         var sut = CreateSut();
         var userId = AccountTestData.UserId;
 
-        var account1 = AccountTestData.CreateAccount(userId: userId, name: "Cash", color: "#111111");
-        var account2 = AccountTestData.CreateAccount(userId: userId, name: "Card", color: "#222222");
+        var account1 = AccountTestData.CreateAccount(
+            userId: userId,
+            name: "Cash",
+            color: "#111111",
+            initialBalance: 100m);
+
+        var account2 = AccountTestData.CreateAccount(
+            userId: userId,
+            name: "Card",
+            color: "#222222",
+            initialBalance: 20m);
 
         var pagedAccounts = new PagedResult<Account>
         {
@@ -554,16 +599,19 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         response.HasPreviousPage.Should().BeTrue();
         response.HasNextPage.Should().BeTrue();
 
-var items = response.Items.ToArray();
+        var items = response.Items.ToArray();
 
-items[0].Id.Should().Be(account1.Id);
-items[0].Name.Should().Be("Cash");
-items[0].CurrencyCode.Should().Be(account1.CurrencyCode);
-items[0].CurrentBalance.Should().Be(150.75m);
-items[0].Color.Should().Be("#111111");
+        items[0].Id.Should().Be(account1.Id);
+        items[0].Name.Should().Be("Cash");
+        items[0].CurrencyCode.Should().Be(account1.CurrencyCode);
+        items[0].InitialBalance.Should().Be(100m);
+        items[0].CurrentBalance.Should().Be(250.75m);
+        items[0].Color.Should().Be("#111111");
+        items[0].IsPrimary.Should().Be(account1.IsPrimary);
 
-items[1].Id.Should().Be(account2.Id);
-items[1].CurrentBalance.Should().Be(-20m);
+        items[1].Id.Should().Be(account2.Id);
+        items[1].InitialBalance.Should().Be(20m);
+        items[1].CurrentBalance.Should().Be(0m);
     }
 
     [Fact]
@@ -605,6 +653,7 @@ items[1].CurrentBalance.Should().Be(-20m);
             .ContainSingle()
             .Subject;
 
+        singleItem.InitialBalance.Should().Be(0m);
         singleItem.CurrentBalance.Should().Be(0m);
     }
 
@@ -655,7 +704,7 @@ items[1].CurrentBalance.Should().Be(-20m);
     {
         var sut = CreateSut();
         var userId = AccountTestData.UserId;
-        var account = AccountTestData.CreateAccount(userId: userId, isPrimary: true);
+        var account = AccountTestData.CreateAccount(userId: userId, isPrimary: true, initialBalance: 50m);
 
         CurrentUserServiceMock
             .Setup(x => x.UserId)
@@ -675,7 +724,8 @@ items[1].CurrentBalance.Should().Be(-20m);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value!.CurrentBalance.Should().Be(0m);
+        result.Value!.InitialBalance.Should().Be(50m);
+        result.Value.CurrentBalance.Should().Be(50m);
         result.Value.Name.Should().Be(account.Name);
         result.Value.CurrencyCode.Should().Be(account.CurrencyCode);
         result.Value.IsPrimary.Should().BeTrue();
@@ -686,7 +736,12 @@ items[1].CurrentBalance.Should().Be(-20m);
     {
         var sut = CreateSut();
         var userId = AccountTestData.UserId;
-        var account = AccountTestData.CreateAccount(userId: userId, isPrimary: false);
+        var createdAt = new DateTime(2026, 4, 12, 9, 30, 0, DateTimeKind.Utc);
+        var account = AccountTestData.CreateAccount(
+            userId: userId,
+            isPrimary: false,
+            initialBalance: 200m,
+            createdAt: createdAt);
 
         var totals = new Dictionary<Guid, decimal>
         {
@@ -711,8 +766,10 @@ items[1].CurrentBalance.Should().Be(-20m);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value!.CurrentBalance.Should().Be(999.99m);
+        result.Value!.InitialBalance.Should().Be(200m);
+        result.Value.CurrentBalance.Should().Be(1199.99m);
         result.Value.IsPrimary.Should().BeFalse();
+        result.Value.CreatedAtUtc.Should().Be(createdAt);
     }
 
     [Fact]
@@ -765,7 +822,11 @@ items[1].CurrentBalance.Should().Be(-20m);
         var userId = AccountTestData.UserId;
         var accountId = Guid.NewGuid();
         var request = RequestFactory.GetMonthBalanceRequest(accountId, 2026, 5);
-        var account = AccountTestData.CreateAccount(userId: userId, name: "Main account", color: "#999999");
+        var account = AccountTestData.CreateAccount(
+            userId: userId,
+            name: "Main account",
+            color: "#999999",
+            initialBalance: 1000m);
 
         var expectedMonthStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc);
         var expectedMonthEnd = expectedMonthStart.AddMonths(1);
@@ -793,6 +854,18 @@ items[1].CurrentBalance.Should().Be(-20m);
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(25m);
 
+        TransactionRepositoryMock
+            .Setup(x => x.GetBreakdownInPeriodAsync(
+                account.Id,
+                expectedMonthStart,
+                expectedMonthEnd,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TransactionPeriodBreakdown(
+                Income: 300m,
+                Expense: -120m,
+                TransferIn: 50m,
+                TransferOut: -205m));
+
         var result = await sut.GetMonthBalanceAsync(request);
 
         result.IsSuccess.Should().BeTrue();
@@ -801,9 +874,15 @@ items[1].CurrentBalance.Should().Be(-20m);
         result.Value!.AccountId.Should().Be(account.Id);
         result.Value.AccountName.Should().Be(account.Name);
         result.Value.CurrencyCode.Should().Be(account.CurrencyCode);
-        result.Value.OpeningBalance.Should().Be(100m);
+        result.Value.OpeningBalance.Should().Be(1100m);
         result.Value.MonthChange.Should().Be(25m);
-        result.Value.ClosingBalance.Should().Be(125m);
+        result.Value.ClosingBalance.Should().Be(1125m);
+        result.Value.Income.Should().Be(300m);
+        result.Value.Expense.Should().Be(-120m);
+        result.Value.TransferIn.Should().Be(50m);
+        result.Value.TransferOut.Should().Be(-205m);
+        result.Value.OperationsChange.Should().Be(180m);
+        result.Value.TransferChange.Should().Be(-155m);
         result.Value.Year.Should().Be(2026);
         result.Value.Month.Should().Be(5);
     }

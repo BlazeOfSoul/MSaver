@@ -26,6 +26,12 @@ public static class CategoryDomainErrors
             message: "Некорректный тип категории.",
             field: "type");
 
+    public static readonly DomainError TransferCategoryTypeIsSystemOnly =
+        DomainError.Validation(
+            code: "Category.TransferCategoryTypeIsSystemOnly",
+            message: "Transfer category types are system-only and cannot be created manually.",
+            field: "type");
+
     public static readonly DomainError NotFound =
         DomainError.NotFound(
             code: "Category.NotFound",

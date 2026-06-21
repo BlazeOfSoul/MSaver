@@ -8,5 +8,7 @@ public interface ICurrentUserService
 
     string? Email { get; }
 
+    string ClientId { get; }
+
     bool IsAuthenticated { get; }
 }

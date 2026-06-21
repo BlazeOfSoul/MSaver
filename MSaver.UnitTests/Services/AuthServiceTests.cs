@@ -149,6 +149,8 @@ public sealed class AuthServiceTests : AuthServiceTestBase
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value!.Id.Should().Be(user.Id);
+        result.Value.Name.Should().Be(user.Name);
+        result.Value.Email.Should().Be(user.Email);
         result.Value.AccessToken.Should().Be("access-token");
         result.Value.RefreshToken.Should().Be("refresh-token");
         result.Value.ClientId.Should().NotBeNullOrWhiteSpace();

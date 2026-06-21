@@ -49,7 +49,8 @@ public sealed class CategoryService(
                 Id = x.Id,
                 Name = x.Name,
                 Type = x.Type,
-                Color = x.Color
+                Color = x.Color,
+                IsSystem = x.IsSystem
             })
             .ToArray();
 
@@ -96,6 +97,9 @@ public sealed class CategoryService(
     {
         var userId = _currentUserService.UserId;
 
+        if (IsTransferCategoryType(request.Type))
+            return Result<Guid>.Failure(CategoryDomainErrors.TransferCategoryTypeIsSystemOnly);
+
         var exists = await _categoryRepository.ExistsByNameAsync(
             userId,
             request.Name,
@@ -132,6 +136,9 @@ public sealed class CategoryService(
 
         if (category.UserId != userId)
             return Result<Guid>.Failure(CategoryDomainErrors.AccessDenied);
+
+        if (IsTransferCategoryType(request.Type))
+            return Result<Guid>.Failure(CategoryDomainErrors.TransferCategoryTypeIsSystemOnly);
 
         var exists = await _categoryRepository.ExistsByNameAsync(
             userId,
@@ -176,5 +183,10 @@ public sealed class CategoryService(
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<Guid>.Success(category.Id);
+    }
+
+    private static bool IsTransferCategoryType(CategoryType type)
+    {
+        return type is CategoryType.TransferIncome or CategoryType.TransferExpense;
     }
 }

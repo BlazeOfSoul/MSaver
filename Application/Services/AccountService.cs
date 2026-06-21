@@ -24,6 +24,9 @@ public sealed class AccountService(
     {
         var userId = _currentUserService.UserId;
 
+        if (request.InitialBalance < 0)
+            return Result<Guid>.Failure(AccountDomainErrors.InitialBalanceNegative);
+
         var existsByName = await _accountRepository.ExistsByNameAsync(
             userId,
             request.Name,
@@ -40,7 +43,8 @@ public sealed class AccountService(
             currencyCode: request.CurrencyCode,
             name: request.Name,
             color: request.Color,
-            isPrimary: isPrimary);
+            isPrimary: isPrimary,
+            initialBalance: request.InitialBalance);
 
         await _accountRepository.AddAsync(account, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -126,9 +130,11 @@ public sealed class AccountService(
                 Id = account.Id,
                 Name = account.Name,
                 CurrencyCode = account.CurrencyCode,
-                CurrentBalance = totalsByAccountId.GetValueOrDefault(account.Id, 0m),
+                InitialBalance = account.InitialBalance,
+                CurrentBalance = account.InitialBalance + totalsByAccountId.GetValueOrDefault(account.Id, 0m),
                 Color = account.Color,
-                IsArchived = account.IsArchived
+                IsArchived = account.IsArchived,
+                IsPrimary = account.IsPrimary
             })
             .ToArray();
 
@@ -158,17 +164,19 @@ public sealed class AccountService(
             [account.Id],
             cancellationToken);
 
-        var currentBalance = totalsByAccountId.GetValueOrDefault(account.Id, 0m);
+        var currentBalance = account.InitialBalance + totalsByAccountId.GetValueOrDefault(account.Id, 0m);
 
         return Result<GetAccountByIdResponse>.Success(new GetAccountByIdResponse
         {
             Id = account.Id,
             Name = account.Name,
             CurrencyCode = account.CurrencyCode,
+            InitialBalance = account.InitialBalance,
             CurrentBalance = currentBalance,
             Color = account.Color,
             IsArchived = account.IsArchived,
-            IsPrimary = account.IsPrimary
+            IsPrimary = account.IsPrimary,
+            CreatedAtUtc = account.CreatedAt
         });
     }
 
@@ -196,16 +204,29 @@ public sealed class AccountService(
             monthEnd,
             cancellationToken);
 
-        var closingBalance = beforeTotal + monthChange;
+        var breakdown = await _transactionRepository.GetBreakdownInPeriodAsync(
+            account.Id,
+            monthStart,
+            monthEnd,
+            cancellationToken);
+
+        var openingBalance = account.InitialBalance + beforeTotal;
+        var closingBalance = openingBalance + monthChange;
 
         return Result<GetMonthBalanceResponse>.Success(new GetMonthBalanceResponse
         {
             AccountId = account.Id,
             AccountName = account.Name,
             CurrencyCode = account.CurrencyCode,
-            OpeningBalance = beforeTotal,
+            OpeningBalance = openingBalance,
             MonthChange = monthChange,
             ClosingBalance = closingBalance,
+            Income = breakdown.Income,
+            Expense = breakdown.Expense,
+            TransferIn = breakdown.TransferIn,
+            TransferOut = breakdown.TransferOut,
+            OperationsChange = breakdown.OperationsChange,
+            TransferChange = breakdown.TransferChange,
             Year = request.Year,
             Month = request.Month
         });

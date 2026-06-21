@@ -1,3 +1,6 @@
+using MSaver.Application.Features.Categories.Common;
+using MSaver.Domain.Enums;
+
 namespace MSaver.Application.Features.Categories.Update;
 
 public sealed class UpdateCategoryRequestValidator : AbstractValidator<UpdateCategoryRequest>
@@ -21,6 +24,8 @@ public sealed class UpdateCategoryRequestValidator : AbstractValidator<UpdateCat
             .WithMessage(ValidationMessages.MaxLength);
 
         RuleFor(x => x.Type)
-            .IsInEnum();
+            .IsInEnum()
+            .Must(x => x is not CategoryType.TransferIncome and not CategoryType.TransferExpense)
+            .WithMessage(CategoryValidationMessages.TransferCategoryTypeIsSystemOnly);
     }
 }

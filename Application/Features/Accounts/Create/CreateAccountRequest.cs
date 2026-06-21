@@ -7,4 +7,6 @@ public sealed class CreateAccountRequest
     public string Name { get; set; } = string.Empty;
 
     public string? Color { get; set; }
+
+    public decimal InitialBalance { get; set; }
 }

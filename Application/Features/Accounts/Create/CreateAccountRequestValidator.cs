@@ -17,5 +17,9 @@ public sealed class CreateAccountRequestValidator : AbstractValidator<CreateAcco
         RuleFor(x => x.Color)
             .MaximumLength(20)
             .WithMessage(ValidationMessages.MaxLength);
+
+        RuleFor(x => x.InitialBalance)
+            .GreaterThanOrEqualTo(0m)
+            .WithMessage(ValidationMessages.MustBeZeroOrPositive);
     }
 }

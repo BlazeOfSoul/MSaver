@@ -118,4 +118,13 @@ public sealed class TransactionsController(
         var result = await _transactionService.DeleteAsync(id, cancellationToken);
         return FromResult(result);
     }
+
+    [HttpDelete("transfers/{transferId:guid}")]
+    public async Task<IActionResult> DeleteTransfer(
+        Guid transferId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _transactionService.DeleteTransferAsync(transferId, cancellationToken);
+        return FromResult(result);
+    }
 }

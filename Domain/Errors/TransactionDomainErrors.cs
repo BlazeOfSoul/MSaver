@@ -38,10 +38,28 @@ public static class TransactionDomainErrors
             message: "Идентификатор перевода обязателен.",
             field: "transferId");
 
+    public static readonly DomainError TransferCategoryRequiresTransferEndpoint =
+        DomainError.Validation(
+            code: "Transaction.TransferCategoryRequiresTransferEndpoint",
+            message: "Transfer categories can be used only through the transfer endpoint.",
+            field: "categoryId");
+
+    public static readonly DomainError TransferTransactionRequiresTransferEndpoint =
+        DomainError.Validation(
+            code: "Transaction.TransferTransactionRequiresTransferEndpoint",
+            message: "Transfer transactions can be changed only through the transfer endpoint.",
+            field: "transferId");
+
     public static readonly DomainError TransferRateMustBePositive =
         DomainError.Validation(
             code: "Transaction.TransferRateMustBePositive",
             message: "Курс перевода должен быть больше нуля.",
+            field: "transferRate");
+
+    public static readonly DomainError TransferRateMustBeOneForSameCurrency =
+        DomainError.Validation(
+            code: "Transaction.TransferRateMustBeOneForSameCurrency",
+            message: "Transfer rate must be 1 when accounts use the same currency.",
             field: "transferRate");
 
     public static readonly DomainError TransferAccountsMustBeDifferent =
@@ -80,4 +98,8 @@ public static class TransactionDomainErrors
         DomainError.NotFound(
             code: "Transaction.TransactionNotFound",
             message: "Транзакция не найдена.");
+    public static readonly DomainError TransferNotFound =
+        DomainError.NotFound(
+            code: "Transaction.TransferNotFound",
+            message: "Transfer was not found.");
 }
