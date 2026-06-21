@@ -29,6 +29,11 @@ public interface ITransactionService
         Guid id,
         CancellationToken cancellationToken = default);
 
+    Task<Result<GetTransferRateResponse>> GetTransferRateAsync(
+        Guid fromAccountId,
+        Guid toAccountId,
+        CancellationToken cancellationToken = default);
+
     Task<Result<CreateTransferResponse>> TransferAsync(
         CreateTransferRequest request,
         CancellationToken cancellationToken = default);

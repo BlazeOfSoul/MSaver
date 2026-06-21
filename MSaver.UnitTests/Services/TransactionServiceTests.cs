@@ -550,6 +550,32 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
     }
 
     [Fact]
+    public async Task GetTransferRateAsync_ShouldReturnExchangeRate_WhenAccountsBelongToCurrentUser()
+    {
+        var sut = CreateSut();
+        var userId = TransactionTestData.UserId;
+        var fromAccountId = Guid.NewGuid();
+        var toAccountId = Guid.NewGuid();
+        var fromAccount = TransactionTestData.CreateAccount(userId, currencyCode: "USD", id: fromAccountId);
+        var toAccount = TransactionTestData.CreateAccount(userId, currencyCode: "EUR", id: toAccountId);
+
+        CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(fromAccountId, It.IsAny<CancellationToken>())).ReturnsAsync(fromAccount);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(toAccountId, It.IsAny<CancellationToken>())).ReturnsAsync(toAccount);
+        ExchangeRateServiceMock.Setup(x => x.GetRateAsync("USD", "EUR", It.IsAny<CancellationToken>())).ReturnsAsync(0.91m);
+
+        var result = await sut.GetTransferRateAsync(fromAccountId, toAccountId);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Rate.Should().Be(0.91m);
+        result.Value.FromCurrencyCode.Should().Be("USD");
+        result.Value.ToCurrencyCode.Should().Be("EUR");
+
+        ExchangeRateServiceMock.Verify(x => x.GetRateAsync("USD", "EUR", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task TransferAsync_ShouldReturnFailure_WhenFromAccountWasNotFound()
     {
         var sut = CreateSut();
