@@ -11,4 +11,6 @@ public sealed class TransactionCategoryResponse
     public CategoryType Type { get; init; }
 
     public string Color { get; init; } = string.Empty;
+
+    public bool IsDeleted { get; init; }
 }

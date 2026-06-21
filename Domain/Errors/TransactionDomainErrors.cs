@@ -74,6 +74,12 @@ public static class TransactionDomainErrors
             message: "Сумма перевода должна быть больше нуля.",
             field: "amount");
 
+    public static readonly DomainError TransferDepositAmountMustBeGreaterThanZero =
+        DomainError.Validation(
+            code: "Transaction.TransferDepositAmountMustBeGreaterThanZero",
+            message: "Transfer deposit amount after currency rounding must be greater than zero.",
+            field: "amount");
+
     public static readonly DomainError CategoryNotFound =
         DomainError.NotFound(
             code: "Transaction.CategoryNotFound",

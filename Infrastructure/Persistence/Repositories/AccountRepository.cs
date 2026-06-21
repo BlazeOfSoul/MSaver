@@ -70,6 +70,6 @@ public sealed class AccountRepository(ApplicationDbContext context)
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        return Context.Accounts.AnyAsync(x => x.UserId == userId, cancellationToken);
+        return Context.Accounts.AnyAsync(x => x.UserId == userId && !x.IsArchived, cancellationToken);
     }
 }

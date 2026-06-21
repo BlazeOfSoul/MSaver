@@ -27,6 +27,23 @@ public sealed class AccountRepositoryTests
         activeNameExists.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task AnyAsync_ShouldIgnoreArchivedAccounts()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new AccountRepository(dbContext);
+        var userId = AccountTestData.UserId;
+        var archivedAccount = AccountTestData.CreateAccount(userId: userId, name: "Old Cash");
+        archivedAccount.Archive();
+
+        dbContext.Accounts.Add(archivedAccount);
+        await dbContext.SaveChangesAsync();
+
+        var hasActiveAccounts = await repository.AnyAsync(userId);
+
+        hasActiveAccounts.Should().BeFalse();
+    }
+
     private static ApplicationDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()

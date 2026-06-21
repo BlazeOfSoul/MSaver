@@ -33,6 +33,59 @@ public sealed class TransactionRepositoryTests
     }
 
     [Fact]
+    public async Task GetBalanceBeforeAsync_ShouldSumSignedAmountsBeforeExclusiveDate()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new TransactionRepository(dbContext);
+        var userId = TransactionTestData.UserId;
+        var accountId = Guid.NewGuid();
+        var otherAccountId = Guid.NewGuid();
+        var category = TransactionTestData.CreateCategory(userId, "Food", CategoryType.Debit);
+        var cutoff = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        dbContext.Categories.Add(category);
+        dbContext.Transactions.AddRange(
+            TransactionTestData.CreateTransaction(userId, accountId, category.Id, -100m, cutoff.AddDays(-2), category: category),
+            TransactionTestData.CreateTransaction(userId, accountId, category.Id, 250m, cutoff.AddTicks(-1), category: category),
+            TransactionTestData.CreateTransaction(userId, accountId, category.Id, 999m, cutoff, category: category),
+            TransactionTestData.CreateTransaction(userId, otherAccountId, category.Id, -999m, cutoff.AddDays(-1), category: category));
+        await dbContext.SaveChangesAsync();
+
+        var balance = await repository.GetBalanceBeforeAsync(accountId, cutoff);
+
+        balance.Should().Be(150m);
+    }
+
+    [Fact]
+    public async Task GetBalanceInPeriodAsync_ShouldUseInclusiveStartAndExclusiveEnd()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new TransactionRepository(dbContext);
+        var userId = TransactionTestData.UserId;
+        var accountId = Guid.NewGuid();
+        var otherAccountId = Guid.NewGuid();
+        var category = TransactionTestData.CreateCategory(userId, "Food", CategoryType.Debit);
+        var periodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc);
+        var periodEnd = periodStart.AddMonths(1);
+
+        dbContext.Categories.Add(category);
+        dbContext.Transactions.AddRange(
+            TransactionTestData.CreateTransaction(userId, accountId, category.Id, -999m, periodStart.AddTicks(-1), category: category),
+            TransactionTestData.CreateTransaction(userId, accountId, category.Id, -100m, periodStart, category: category),
+            TransactionTestData.CreateTransaction(userId, accountId, category.Id, 50m, periodStart.AddDays(10), category: category),
+            TransactionTestData.CreateTransaction(userId, accountId, category.Id, 999m, periodEnd, category: category),
+            TransactionTestData.CreateTransaction(userId, otherAccountId, category.Id, 999m, periodStart.AddDays(10), category: category));
+        await dbContext.SaveChangesAsync();
+
+        var balance = await repository.GetBalanceInPeriodAsync(
+            accountId,
+            periodStart,
+            periodEnd);
+
+        balance.Should().Be(-50m);
+    }
+
+    [Fact]
     public async Task GetBreakdownInPeriodAsync_ShouldSplitOperationsAndTransfersByCategoryType()
     {
         await using var dbContext = CreateDbContext();

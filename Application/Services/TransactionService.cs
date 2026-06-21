@@ -68,7 +68,8 @@ public sealed class TransactionService(
                     Id = x.CategoryId,
                     Name = x.Category!.Name,
                     Type = x.Category.Type,
-                    Color = x.Category.Color
+                    Color = x.Category.Color,
+                    IsDeleted = x.Category.IsDeleted
                 },
                 Amount = x.Amount,
                 TransferId = x.TransferId,
@@ -117,7 +118,8 @@ public sealed class TransactionService(
                 Id = transaction.CategoryId,
                 Name = transaction.Category!.Name,
                 Type = transaction.Category.Type,
-                Color = transaction.Category.Color
+                Color = transaction.Category.Color,
+                IsDeleted = transaction.Category.IsDeleted
             },
             Amount = transaction.Amount,
             TransferId = transaction.TransferId,
@@ -275,6 +277,10 @@ public sealed class TransactionService(
                 toAccount.CurrencyCode,
                 cancellationToken);
 
+        if (rate <= 0)
+            return Result<GetTransferRateResponse>.Failure(
+                TransactionDomainErrors.TransferRateMustBePositive);
+
         return Result<GetTransferRateResponse>.Success(
             new GetTransferRateResponse(
                 Rate: rate,
@@ -330,12 +336,20 @@ public sealed class TransactionService(
                 cancellationToken);
         }
 
+        if (rate <= 0)
+            return Result<CreateTransferResponse>.Failure(
+                TransactionDomainErrors.TransferRateMustBePositive);
+
         var precision = CurrencyDefinitions.Get(toAccount.CurrencyCode).Precision;
 
         var depositAmount = Math.Round(
             request.Amount * rate,
             precision,
             MidpointRounding.AwayFromZero);
+
+        if (depositAmount == 0)
+            return Result<CreateTransferResponse>.Failure(
+                TransactionDomainErrors.TransferDepositAmountMustBeGreaterThanZero);
 
         var transferExpenseCategory = await _categoryRepository.GetTransferExpenseCategoryAsync(userId, cancellationToken);
         if (transferExpenseCategory is null)
@@ -417,6 +431,7 @@ public sealed class TransactionService(
     private static bool IsValidTransferPair(IReadOnlyCollection<Transaction> transactions)
     {
         return transactions.Count == 2 &&
+               transactions.Select(x => x.AccountId).Distinct().Count() == 2 &&
                transactions.Count(x =>
                    x.Amount < 0 &&
                    x.Category?.Type == CategoryType.TransferExpense) == 1 &&

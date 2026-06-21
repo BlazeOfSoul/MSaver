@@ -14,7 +14,7 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         var sut = CreateSut();
         var userId = TransactionTestData.UserId;
         var account = TransactionTestData.CreateAccount(userId, "USD", "Main", "#111111");
-        var category = TransactionTestData.CreateCategory(userId, "Food", CategoryType.Debit, "#222222");
+        var category = TransactionTestData.CreateCategory(userId, "Food", CategoryType.Debit, "#222222", isDeleted: true);
 
         var tx1 = TransactionTestData.CreateTransaction(userId, account.Id, category.Id, -10m, description: "Coffee", account: account, category: category);
         var tx2 = TransactionTestData.CreateTransaction(userId, account.Id, category.Id, -25m, description: "Lunch", account: account, category: category);
@@ -50,6 +50,7 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         response.Items.First().Account.Name.Should().Be("Main");
         response.Items.First().Category.Name.Should().Be("Food");
         response.Items.First().Category.Type.Should().Be(CategoryType.Debit);
+        response.Items.First().Category.IsDeleted.Should().BeTrue();
         response.Items.First().Amount.Should().Be(-10m);
         response.Items.First().TransferId.Should().BeNull();
         response.Items.First().Description.Should().Be("Coffee");
@@ -339,7 +340,7 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         var userId = TransactionTestData.UserId;
         var transactionId = Guid.NewGuid();
         var account = TransactionTestData.CreateAccount(userId, "EUR", "Wallet", "#123456");
-        var category = TransactionTestData.CreateCategory(userId, "Salary", CategoryType.Credit, "#654321");
+        var category = TransactionTestData.CreateCategory(userId, "Salary", CategoryType.Credit, "#654321", isDeleted: true);
         var transaction = TransactionTestData.CreateTransaction(userId, account.Id, category.Id, 120m, new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc), "Salary April", transactionId, account, category);
 
         CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
@@ -358,6 +359,7 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         response.Account.CurrencyCode.Should().Be("EUR");
         response.Category.Name.Should().Be("Salary");
         response.Category.Type.Should().Be(CategoryType.Credit);
+        response.Category.IsDeleted.Should().BeTrue();
         response.Amount.Should().Be(120m);
         response.TransferId.Should().BeNull();
         response.Description.Should().Be("Salary April");
@@ -485,6 +487,49 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
             91m,
             account: toAccount,
             category: creditCategory,
+            transferId: transferId);
+
+        CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+        TransactionRepositoryMock
+            .Setup(x => x.GetByIdWithDetailsAsync(transactionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expense);
+        TransactionRepositoryMock
+            .Setup(x => x.GetByTransferIdAsync(transferId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([expense, income]);
+
+        var result = await sut.GetByIdAsync(transactionId);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.TransferCounterparty.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ShouldNotReturnTransferCounterparty_WhenTransferPairUsesSameAccount()
+    {
+        var sut = CreateSut();
+        var userId = TransactionTestData.UserId;
+        var transactionId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var account = TransactionTestData.CreateAccount(userId, "USD", "Cash", "#111111");
+        var expenseCategory = TransactionTestData.CreateCategory(userId, "Transfer Out", CategoryType.TransferExpense, "#333333");
+        var incomeCategory = TransactionTestData.CreateCategory(userId, "Transfer In", CategoryType.TransferIncome, "#444444");
+        var expense = TransactionTestData.CreateTransaction(
+            userId,
+            account.Id,
+            expenseCategory.Id,
+            -100m,
+            id: transactionId,
+            account: account,
+            category: expenseCategory,
+            transferId: transferId);
+
+        var income = TransactionTestData.CreateTransaction(
+            userId,
+            account.Id,
+            incomeCategory.Id,
+            100m,
+            account: account,
+            category: incomeCategory,
             transferId: transferId);
 
         CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
@@ -1308,6 +1353,52 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
     }
 
     [Fact]
+    public async Task DeleteTransferAsync_ShouldReturnFailure_WhenTransferPairUsesSameAccount()
+    {
+        var sut = CreateSut();
+        var userId = TransactionTestData.UserId;
+        var transferId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var transferExpenseCategory = TransactionTestData.CreateCategory(userId, "Transfer Out", CategoryType.TransferExpense);
+        var transferIncomeCategory = TransactionTestData.CreateCategory(userId, "Transfer In", CategoryType.TransferIncome);
+        var transactions = new[]
+        {
+            TransactionTestData.CreateTransaction(
+                userId,
+                accountId,
+                transferExpenseCategory.Id,
+                amount: -100m,
+                category: transferExpenseCategory,
+                transferId: transferId),
+            TransactionTestData.CreateTransaction(
+                userId,
+                accountId,
+                transferIncomeCategory.Id,
+                amount: 100m,
+                category: transferIncomeCategory,
+                transferId: transferId)
+        };
+
+        CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+        TransactionRepositoryMock
+            .Setup(x => x.GetByTransferIdAsync(transferId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(transactions);
+
+        var result = await sut.DeleteTransferAsync(transferId);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(TransactionDomainErrors.TransferPairInvalid);
+
+        TransactionRepositoryMock.Verify(
+            x => x.RemoveAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task DeleteTransferAsync_ShouldRemoveAllTransferTransactionsAndSaveOnce()
     {
         var sut = CreateSut();
@@ -1386,6 +1477,27 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         result.Value.ToCurrencyCode.Should().Be("EUR");
 
         ExchangeRateServiceMock.Verify(x => x.GetRateAsync("USD", "EUR", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTransferRateAsync_ShouldReturnFailure_WhenExchangeRateIsNotPositive()
+    {
+        var sut = CreateSut();
+        var userId = TransactionTestData.UserId;
+        var fromAccountId = Guid.NewGuid();
+        var toAccountId = Guid.NewGuid();
+        var fromAccount = TransactionTestData.CreateAccount(userId, currencyCode: "USD", id: fromAccountId);
+        var toAccount = TransactionTestData.CreateAccount(userId, currencyCode: "EUR", id: toAccountId);
+
+        CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(fromAccountId, It.IsAny<CancellationToken>())).ReturnsAsync(fromAccount);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(toAccountId, It.IsAny<CancellationToken>())).ReturnsAsync(toAccount);
+        ExchangeRateServiceMock.Setup(x => x.GetRateAsync("USD", "EUR", It.IsAny<CancellationToken>())).ReturnsAsync(-0.91m);
+
+        var result = await sut.GetTransferRateAsync(fromAccountId, toAccountId);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(TransactionDomainErrors.TransferRateMustBePositive);
     }
 
     [Fact]
@@ -1517,6 +1629,38 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
     }
 
     [Fact]
+    public async Task TransferAsync_ShouldReturnFailure_WhenExchangeRateIsNotPositive()
+    {
+        var sut = CreateSut();
+        var userId = TransactionTestData.UserId;
+        var request = TransactionTestData.CreateTransferRequest(rate: null);
+        var fromAccount = TransactionTestData.CreateAccount(userId, currencyCode: "USD", id: request.FromAccountId);
+        var toAccount = TransactionTestData.CreateAccount(userId, currencyCode: "EUR", id: request.ToAccountId);
+        var expenseCategory = TransactionTestData.CreateCategory(userId, "Transfer Expense", CategoryType.TransferExpense, "#111111");
+        var incomeCategory = TransactionTestData.CreateCategory(userId, "Transfer Income", CategoryType.TransferIncome, "#222222");
+
+        CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(request.FromAccountId, It.IsAny<CancellationToken>())).ReturnsAsync(fromAccount);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(request.ToAccountId, It.IsAny<CancellationToken>())).ReturnsAsync(toAccount);
+        ExchangeRateServiceMock.Setup(x => x.GetRateAsync("USD", "EUR", It.IsAny<CancellationToken>())).ReturnsAsync(-1.1m);
+        CategoryRepositoryMock.Setup(x => x.GetTransferExpenseCategoryAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(expenseCategory);
+        CategoryRepositoryMock.Setup(x => x.GetTransferIncomeCategoryAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(incomeCategory);
+
+        var result = await sut.TransferAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(TransactionDomainErrors.TransferRateMustBePositive);
+
+        TransactionRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task TransferAsync_ShouldReturnFailure_WhenSameCurrencyCustomRateIsNotOne()
     {
         var sut = CreateSut();
@@ -1599,6 +1743,39 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         result.Value.DepositAmount.Should().Be(Math.Round(10.125m * 1.234m, 2, MidpointRounding.AwayFromZero));
 
         ExchangeRateServiceMock.Verify(x => x.GetRateAsync("USD", "EUR", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransferAsync_ShouldReturnFailure_WhenRoundedDepositAmountIsZero()
+    {
+        var sut = CreateSut();
+        var userId = TransactionTestData.UserId;
+        var request = TransactionTestData.CreateTransferRequest(amount: 0.4m, rate: 1m);
+        var fromAccount = TransactionTestData.CreateAccount(userId, currencyCode: "USD", id: request.FromAccountId);
+        var toAccount = TransactionTestData.CreateAccount(userId, currencyCode: "JPY", id: request.ToAccountId);
+        var expenseCategory = TransactionTestData.CreateCategory(userId, "Transfer Expense", CategoryType.TransferExpense, "#111111");
+        var incomeCategory = TransactionTestData.CreateCategory(userId, "Transfer Income", CategoryType.TransferIncome, "#222222");
+
+        CurrentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(request.FromAccountId, It.IsAny<CancellationToken>())).ReturnsAsync(fromAccount);
+        AccountRepositoryMock.Setup(x => x.GetByIdAsync(request.ToAccountId, It.IsAny<CancellationToken>())).ReturnsAsync(toAccount);
+        CategoryRepositoryMock.Setup(x => x.GetTransferExpenseCategoryAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(expenseCategory);
+        CategoryRepositoryMock.Setup(x => x.GetTransferIncomeCategoryAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(incomeCategory);
+
+        var result = await sut.TransferAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Transaction.TransferDepositAmountMustBeGreaterThanZero");
+        result.Error.Details.Should().ContainSingle()
+            .Which.Field.Should().Be("amount");
+
+        TransactionRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
