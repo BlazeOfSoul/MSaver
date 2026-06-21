@@ -1,5 +1,4 @@
 using MSaver.Application.Features.Transactions.Get;
-using MSaver.Domain.Enums;
 
 namespace MSaver.Infrastructure.Persistence.Repositories;
 
@@ -124,11 +123,7 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
             .Select(g => new
             {
                 AccountId = g.Key,
-                Total = g.Sum(t =>
-                    t.Category!.Type == CategoryType.Debit ||
-                    t.Category.Type == CategoryType.TransferExpense
-                        ? -t.Amount
-                        : t.Amount)
+                Total = g.Sum(t => t.Amount)
             })
             .ToDictionaryAsync(
                 x => x.AccountId,

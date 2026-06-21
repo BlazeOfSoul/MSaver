@@ -290,7 +290,7 @@ public sealed class TransactionService(
             userId: userId,
             accountId: fromAccount.Id,
             categoryId: transferExpenseCategory.Id,
-            amount: request.Amount,
+            amount: -request.Amount,
             date: request.Date,
             description: request.Description);
 

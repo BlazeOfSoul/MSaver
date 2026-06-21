@@ -832,12 +832,14 @@ public sealed class TransactionServiceTests : TransactionServiceTestBase
         addedTransactions.Should().HaveCount(2);
         addedTransactions[0].AccountId.Should().Be(fromAccount.Id);
         addedTransactions[0].CategoryId.Should().Be(expenseCategory.Id);
-        addedTransactions[0].Amount.Should().Be(100m);
+        addedTransactions[0].Amount.Should().Be(-100m);
         addedTransactions[0].Description.Should().Be("To savings");
         addedTransactions[1].AccountId.Should().Be(toAccount.Id);
         addedTransactions[1].CategoryId.Should().Be(incomeCategory.Id);
         addedTransactions[1].Amount.Should().Be(150m);
         addedTransactions[1].Description.Should().Be("To savings");
+        result.Value!.WithdrawAmount.Should().Be(100m);
+        result.Value.DepositAmount.Should().Be(150m);
 
         TransactionRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         UnitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
