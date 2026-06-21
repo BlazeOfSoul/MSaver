@@ -35,6 +35,7 @@ public sealed class TransactionRepository(ApplicationDbContext dbContext) : ITra
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.Transactions
+            .Include(t => t.Account)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 

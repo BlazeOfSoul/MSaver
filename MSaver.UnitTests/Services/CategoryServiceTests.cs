@@ -718,7 +718,7 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
     }
 
     [Fact]
-    public async Task UpdateAsync_ShouldThrowDomainException_WhenCategoryIsSystem()
+    public async Task UpdateAsync_ShouldReturnFailure_WhenCategoryIsSystem()
     {
         var sut = CreateSut();
         var userId = CategoryTestData.UserId;
@@ -752,9 +752,18 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
                 request.Id))
             .ReturnsAsync(false);
 
-        Func<Task> act = async () => await sut.UpdateAsync(request);
+        var result = await sut.UpdateAsync(request);
 
-        await act.Should().ThrowAsync<DomainException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CategoryDomainErrors.SystemCategoryCannotBeModified);
+
+        CategoryRepositoryMock.Verify(
+            x => x.ExistsByNameAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Guid?>()),
+            Times.Never);
 
         CategoryRepositoryMock.Verify(
             x => x.UpdateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()),
@@ -886,7 +895,7 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
     }
 
     [Fact]
-    public async Task DeleteAsync_ShouldThrowDomainException_WhenCategoryIsSystem()
+    public async Task DeleteAsync_ShouldReturnFailure_WhenCategoryIsSystem()
     {
         var sut = CreateSut();
         var userId = CategoryTestData.UserId;
@@ -906,9 +915,10 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
             .Setup(x => x.GetByIdAsync(categoryId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(category);
 
-        Func<Task> act = async () => await sut.DeleteAsync(categoryId);
+        var result = await sut.DeleteAsync(categoryId);
 
-        await act.Should().ThrowAsync<DomainException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CategoryDomainErrors.SystemCategoryCannotBeDeleted);
 
         CategoryRepositoryMock.Verify(
             x => x.UpdateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()),

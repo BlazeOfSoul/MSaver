@@ -16,6 +16,11 @@ public sealed class CreateTransferRequestValidator : AbstractValidator<CreateTra
             .GreaterThan(0)
             .WithMessage(ValidationMessages.MustBePositive);
 
+        RuleFor(x => x.Rate)
+            .GreaterThan(0)
+            .When(x => x.Rate.HasValue)
+            .WithMessage(ValidationMessages.MustBePositive);
+
         RuleFor(x => x.Date)
             .NotEmpty()
             .WithMessage(ValidationMessages.InvalidDate);

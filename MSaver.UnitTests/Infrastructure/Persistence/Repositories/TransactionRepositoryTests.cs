@@ -120,6 +120,35 @@ public sealed class TransactionRepositoryTests
     }
 
     [Fact]
+    public async Task GetByIdAsync_ShouldReturnTransactionWithAccountDetails()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new TransactionRepository(dbContext);
+        var userId = TransactionTestData.UserId;
+        var account = TransactionTestData.CreateAccount(userId, "USD", "Cash");
+        var category = TransactionTestData.CreateCategory(userId, "Food", CategoryType.Debit);
+        var transaction = TransactionTestData.CreateTransaction(
+            userId,
+            account.Id,
+            category.Id,
+            -25m,
+            account: null,
+            category: category);
+
+        dbContext.Accounts.Add(account);
+        dbContext.Categories.Add(category);
+        dbContext.Transactions.Add(transaction);
+        await dbContext.SaveChangesAsync();
+        dbContext.ChangeTracker.Clear();
+
+        var result = await repository.GetByIdAsync(transaction.Id);
+
+        result.Should().NotBeNull();
+        result!.Account.Should().NotBeNull();
+        result.Account!.Id.Should().Be(account.Id);
+    }
+
+    [Fact]
     public async Task GetByTransferIdsWithDetailsAsync_ShouldReturnMatchingTransfersWithAccountDetails()
     {
         await using var dbContext = CreateDbContext();

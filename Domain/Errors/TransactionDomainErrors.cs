@@ -54,13 +54,13 @@ public static class TransactionDomainErrors
         DomainError.Validation(
             code: "Transaction.TransferRateMustBePositive",
             message: "Курс перевода должен быть больше нуля.",
-            field: "transferRate");
+            field: "rate");
 
     public static readonly DomainError TransferRateMustBeOneForSameCurrency =
         DomainError.Validation(
             code: "Transaction.TransferRateMustBeOneForSameCurrency",
             message: "Transfer rate must be 1 when accounts use the same currency.",
-            field: "transferRate");
+            field: "rate");
 
     public static readonly DomainError TransferAccountsMustBeDifferent =
         DomainError.Validation(
@@ -102,4 +102,9 @@ public static class TransactionDomainErrors
         DomainError.NotFound(
             code: "Transaction.TransferNotFound",
             message: "Transfer was not found.");
+
+    public static readonly DomainError TransferPairInvalid =
+        DomainError.Conflict(
+            code: "Transaction.TransferPairInvalid",
+            message: "Transfer must consist of exactly one withdrawal and one deposit transaction.");
 }

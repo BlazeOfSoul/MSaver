@@ -145,7 +145,7 @@ public sealed class TransactionService(
             return Result<Guid>.Failure(validation.Error);
 
         var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
-        if (account is null || account.UserId != userId)
+        if (account is null || account.UserId != userId || account.IsArchived)
             return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
         Transaction transaction = Transaction.Create(
@@ -174,6 +174,9 @@ public sealed class TransactionService(
 
         if (transaction.TransferId.HasValue)
             return Result<Guid>.Failure(TransactionDomainErrors.TransferTransactionRequiresTransferEndpoint);
+
+        if (transaction.Account?.IsArchived == true)
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
         var validation = await ValidateTransactionRequestAsync(
             userId,
@@ -209,6 +212,9 @@ public sealed class TransactionService(
         if (transaction.TransferId.HasValue)
             return Result<Guid>.Failure(TransactionDomainErrors.TransferTransactionRequiresTransferEndpoint);
 
+        if (transaction.Account?.IsArchived == true)
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
+
         await _transactionRepository.RemoveAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -227,6 +233,12 @@ public sealed class TransactionService(
 
         if (transactions.Count == 0 || transactions.Any(x => x.UserId != userId))
             return Result<Guid>.Failure(TransactionDomainErrors.TransferNotFound);
+
+        if (!IsValidTransferPair(transactions))
+            return Result<Guid>.Failure(TransactionDomainErrors.TransferPairInvalid);
+
+        if (transactions.Any(x => x.Account?.IsArchived == true))
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
         foreach (var transaction in transactions)
         {
@@ -402,6 +414,17 @@ public sealed class TransactionService(
         return (false, null!, category);
     }
 
+    private static bool IsValidTransferPair(IReadOnlyCollection<Transaction> transactions)
+    {
+        return transactions.Count == 2 &&
+               transactions.Count(x =>
+                   x.Amount < 0 &&
+                   x.Category?.Type == CategoryType.TransferExpense) == 1 &&
+               transactions.Count(x =>
+                   x.Amount > 0 &&
+                   x.Category?.Type == CategoryType.TransferIncome) == 1;
+    }
+
     private static DateTime? NormalizeToDateExclusive(DateTime? toDate)
     {
         if (!toDate.HasValue)
@@ -445,7 +468,12 @@ public sealed class TransactionService(
             transaction.TransferId.Value,
             cancellationToken);
 
-        var peer = transferTransactions.FirstOrDefault(x => x.Id != transaction.Id);
+        if (!IsValidTransferPair(transferTransactions))
+            return null;
+
+        var peer = transferTransactions.FirstOrDefault(x =>
+            x.Id != transaction.Id &&
+            x.UserId == transaction.UserId);
         return MapTransferCounterparty(peer);
     }
 
@@ -465,7 +493,12 @@ public sealed class TransactionService(
             if (!byTransferId.TryGetValue(transaction.TransferId!.Value, out var transferPair))
                 continue;
 
-            var peer = transferPair.FirstOrDefault(x => x.Id != transaction.Id);
+            if (!IsValidTransferPair(transferPair))
+                continue;
+
+            var peer = transferPair.FirstOrDefault(x =>
+                x.Id != transaction.Id &&
+                x.UserId == transaction.UserId);
             var counterparty = MapTransferCounterparty(peer);
 
             if (counterparty is not null)

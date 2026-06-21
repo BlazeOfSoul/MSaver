@@ -119,6 +119,7 @@ public sealed class TransactionsController(
         return FromResult(result);
     }
 
+    [HttpDelete("transfer/{transferId:guid}")]
     [HttpDelete("transfers/{transferId:guid}")]
     public async Task<IActionResult> DeleteTransfer(
         Guid transferId,

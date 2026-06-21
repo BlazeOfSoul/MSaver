@@ -62,7 +62,7 @@ public sealed class TagRepository(ApplicationDbContext context) : EfRepositoryBa
         var normalizedName = name.Trim();
 
         var query = Context.Tags
-            .Where(x => x.UserId == userId && x.Name == normalizedName);
+            .Where(x => x.UserId == userId && !x.IsDeleted && x.Name == normalizedName);
 
         if (excludeId.HasValue)
             query = query.Where(x => x.Id != excludeId.Value);

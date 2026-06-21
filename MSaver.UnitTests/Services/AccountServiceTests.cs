@@ -265,6 +265,54 @@ public sealed class AccountServiceTests : AccountServiceTestBase
     }
 
     [Fact]
+    public async Task UpdateAsync_ShouldReturnFailure_WhenAccountIsArchived()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var account = AccountTestData.CreateAccount(
+            userId: userId,
+            name: "Archived account",
+            color: "#000000");
+        account.Archive();
+        var request = RequestFactory.UpdateAccountRequest(
+            id: account.Id,
+            name: "Updated name",
+            color: "#ABC123");
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        AccountRepositoryMock
+            .Setup(x => x.GetByIdAsync(request.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        var result = await sut.UpdateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.NotFound);
+
+        account.Name.Should().Be("Archived account");
+        account.Color.Should().Be("#000000");
+
+        AccountRepositoryMock.Verify(
+            x => x.ExistsByNameAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Guid?>()),
+            Times.Never);
+
+        AccountRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task UpdateAsync_ShouldReturnFailure_WhenAccountNameAlreadyExists()
     {
         var sut = CreateSut();
@@ -419,6 +467,36 @@ public sealed class AccountServiceTests : AccountServiceTestBase
     }
 
     [Fact]
+    public async Task DeleteAsync_ShouldReturnFailure_WhenAccountIsArchived()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var account = AccountTestData.CreateAccount(userId: userId, name: "Archived", isPrimary: false);
+        account.Archive();
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        AccountRepositoryMock
+            .Setup(x => x.GetByIdAsync(account.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        var result = await sut.DeleteAsync(account.Id);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.NotFound);
+
+        AccountRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task DeleteAsync_ShouldArchiveAccount_WhenRequestIsValid()
     {
         var sut = CreateSut();
@@ -457,7 +535,7 @@ public sealed class AccountServiceTests : AccountServiceTestBase
     }
 
     [Fact]
-    public async Task DeleteAsync_ShouldThrow_WhenAccountIsPrimary()
+    public async Task DeleteAsync_ShouldReturnFailure_WhenAccountIsPrimary()
     {
         var sut = CreateSut();
         var userId = AccountTestData.UserId;
@@ -471,7 +549,10 @@ public sealed class AccountServiceTests : AccountServiceTestBase
             .Setup(x => x.GetByIdAsync(account.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
 
-        await Assert.ThrowsAsync<DomainException>(() => sut.DeleteAsync(account.Id));
+        var result = await sut.DeleteAsync(account.Id);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.PrimaryAccountCannotBeArchived);
 
         AccountRepositoryMock.Verify(
             x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
@@ -533,6 +614,40 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         capturedQuery.CurrencyCode.Should().Be("USD");
         capturedQuery.Page.Should().Be(3);
         capturedQuery.Size.Should().Be(20);
+    }
+
+    [Fact]
+    public async Task GetAccountsAsync_ShouldRequestActiveAccounts_WhenArchiveFilterIsNotSpecified()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        AccountListQuery? capturedQuery = null;
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        AccountRepositoryMock
+            .Setup(x => x.GetPagedAsync(It.IsAny<AccountListQuery>(), It.IsAny<CancellationToken>()))
+            .Callback<AccountListQuery, CancellationToken>((query, _) => capturedQuery = query)
+            .ReturnsAsync(new PagedResult<Account>
+            {
+                Items = [],
+                Page = 1,
+                Size = 20,
+                TotalCount = 0
+            });
+
+        TransactionRepositoryMock
+            .Setup(x => x.SumByAccountIdsAsync(
+                It.IsAny<IReadOnlyCollection<Guid>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        await sut.GetAccountsAsync(new GetAccountsRequest());
+
+        capturedQuery.Should().NotBeNull();
+        capturedQuery!.IsArchived.Should().BeFalse();
     }
 
     [Fact]

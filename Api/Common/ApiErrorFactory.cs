@@ -1,4 +1,6 @@
-﻿using FluentValidation.Results;
+using System.Text.Json;
+
+using FluentValidation.Results;
 
 namespace MSaver.Api.Common;
 
@@ -10,7 +12,7 @@ public static class ApiErrorFactory
             ? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             : error.Details
                 .Where(x => !string.IsNullOrWhiteSpace(x.Field))
-                .GroupBy(x => x.Field!)
+                .GroupBy(x => NormalizeFieldName(x.Field!))
                 .ToDictionary(
                     g => g.Key,
                     g => g.Select(x => x.Message).Distinct().ToArray(),
@@ -26,7 +28,7 @@ public static class ApiErrorFactory
     {
         var details = validationResult.Errors
             .Where(x => !string.IsNullOrWhiteSpace(x.PropertyName))
-            .GroupBy(x => x.PropertyName)
+            .GroupBy(x => NormalizeFieldName(x.PropertyName))
             .ToDictionary(
                 g => g.Key,
                 g => g.Select(x => x.ErrorMessage).Distinct().ToArray(),
@@ -49,4 +51,9 @@ public static class ApiErrorFactory
             "General.UnexpectedError",
             "Произошла непредвиденная ошибка. Попробуйте позже.",
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase));
+
+    private static string NormalizeFieldName(string fieldName)
+    {
+        return JsonNamingPolicy.CamelCase.ConvertName(fieldName);
+    }
 }

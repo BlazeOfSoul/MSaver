@@ -341,6 +341,10 @@ public sealed class AuthServiceTests : AuthServiceTestBase
 
         createdCategories.Should().NotBeNull();
         createdCategories.Should().NotBeEmpty();
+        createdCategories!
+            .Select(category => category.Name)
+            .Should()
+            .OnlyHaveUniqueItems();
 
         CategoryRepositoryMock.Verify(
             x => x.AddRangeAsync(It.IsAny<IEnumerable<Category>>(), It.IsAny<CancellationToken>()),

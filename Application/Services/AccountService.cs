@@ -62,6 +62,9 @@ public sealed class AccountService(
         if (account is null || account.UserId != userId)
             return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
+        if (account.IsArchived)
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
+
         var exists = await _accountRepository.ExistsByNameAsync(
             userId,
             request.Name,
@@ -91,6 +94,12 @@ public sealed class AccountService(
         if (account is null || account.UserId != userId)
             return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
+        if (account.IsArchived)
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
+
+        if (account.IsPrimary)
+            return Result<Guid>.Failure(AccountDomainErrors.PrimaryAccountCannotBeArchived);
+
         account.Archive();
 
         await _accountRepository.UpdateAsync(account, cancellationToken);
@@ -111,7 +120,7 @@ public sealed class AccountService(
             Search = ListQueryHelper.NormalizeSearch(request.Search),
             SortBy = ListQueryHelper.NormalizeSortBy(request.SortBy, AccountSortFields.CreatedAt),
             SortDirection = ListQueryHelper.NormalizeSortDirection(request.SortDirection),
-            IsArchived = request.IsArchived,
+            IsArchived = request.IsArchived ?? false,
             CurrencyCode = ListQueryHelper.NormalizeUpperInvariant(request.CurrencyCode),
             Page = request.Page,
             Size = request.Size

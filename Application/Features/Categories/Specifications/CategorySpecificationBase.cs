@@ -8,6 +8,7 @@ public abstract class CategorySpecificationBase : BaseSpecification<Category>
     protected void ApplyBaseFilters(CategoryListQuery query)
     {
         AddCriteriaInternal(x => x.UserId == query.UserId);
+        AddCriteriaInternal(x => !x.IsDeleted);
 
         if (query.Type.HasValue)
             AddCriteriaInternal(x => x.Type == query.Type.Value);

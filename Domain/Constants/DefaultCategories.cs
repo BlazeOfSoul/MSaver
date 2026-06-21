@@ -23,13 +23,13 @@ public static class DefaultCategories
             { DefaultCategoryType.Clothes, ("Одежда", CategoryType.Debit, "#1ABC9C") },
             { DefaultCategoryType.Gift, ("В подарок", CategoryType.Debit, "#D35400") },
             { DefaultCategoryType.Parents, ("Для родителей", CategoryType.Debit, "#5D6D7E") },
-            { DefaultCategoryType.OtherExpense, ("Другое", CategoryType.Debit, "#7F8C8D") },
+            { DefaultCategoryType.OtherExpense, ("Другое (расходы)", CategoryType.Debit, "#7F8C8D") },
 
             { DefaultCategoryType.Salary, ("Зарплата", CategoryType.Credit, "#27AE60") },
             { DefaultCategoryType.SideJob, ("Подработка", CategoryType.Credit, "#2ECC71") },
             { DefaultCategoryType.Cashback, ("Кэшбэк", CategoryType.Credit, "#16A085") },
             { DefaultCategoryType.GiftIncome, ("Подарок", CategoryType.Credit, "#F39C12") },
-            { DefaultCategoryType.OtherIncome, ("Другое", CategoryType.Credit, "#BDC3C7") },
+            { DefaultCategoryType.OtherIncome, ("Другое (доходы)", CategoryType.Credit, "#BDC3C7") },
 
             { DefaultCategoryType.TransferIncome, ("Перевод (поступление)", CategoryType.TransferIncome, "#95A5A6") },
             { DefaultCategoryType.TransferExpense, ("Перевод (выбытие)", CategoryType.TransferExpense, "#95A5A6") },

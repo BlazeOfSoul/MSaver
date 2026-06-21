@@ -32,15 +32,26 @@ public sealed class TransactionsControllerTests
 
         method.Should().NotBeNull();
 
-        var attribute = method!
+        var templates = method!
             .GetCustomAttributes(typeof(HttpDeleteAttribute), inherit: false)
-            .Should()
-            .ContainSingle()
-            .Subject
-            .Should()
-            .BeOfType<HttpDeleteAttribute>()
-            .Subject;
+            .Cast<HttpDeleteAttribute>()
+            .Select(x => x.Template);
 
-        attribute.Template.Should().Be("transfers/{transferId:guid}");
+        templates.Should().Contain("transfers/{transferId:guid}");
+    }
+
+    [Fact]
+    public void DeleteTransfer_ShouldExposeSingularTransferDeleteRoute()
+    {
+        var method = typeof(TransactionsController).GetMethod(nameof(TransactionsController.DeleteTransfer));
+
+        method.Should().NotBeNull();
+
+        var templates = method!
+            .GetCustomAttributes(typeof(HttpDeleteAttribute), inherit: false)
+            .Cast<HttpDeleteAttribute>()
+            .Select(x => x.Template);
+
+        templates.Should().Contain("transfer/{transferId:guid}");
     }
 }

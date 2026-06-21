@@ -93,7 +93,7 @@ public sealed class CategoryRepository(ApplicationDbContext context) : EfReposit
         var normalizedName = name.Trim();
 
         var query = Context.Categories
-            .Where(x => x.UserId == userId && x.Name == normalizedName);
+            .Where(x => x.UserId == userId && !x.IsDeleted && x.Name == normalizedName);
 
         if (excludeId.HasValue)
             query = query.Where(x => x.Id != excludeId.Value);

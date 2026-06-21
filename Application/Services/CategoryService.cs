@@ -137,6 +137,9 @@ public sealed class CategoryService(
         if (category.UserId != userId)
             return Result<Guid>.Failure(CategoryDomainErrors.AccessDenied);
 
+        if (category.IsSystem)
+            return Result<Guid>.Failure(CategoryDomainErrors.SystemCategoryCannotBeModified);
+
         if (IsTransferCategoryType(request.Type))
             return Result<Guid>.Failure(CategoryDomainErrors.TransferCategoryTypeIsSystemOnly);
 
@@ -176,6 +179,9 @@ public sealed class CategoryService(
 
         if (category.UserId != userId)
             return Result<Guid>.Failure(CategoryDomainErrors.AccessDenied);
+
+        if (category.IsSystem)
+            return Result<Guid>.Failure(CategoryDomainErrors.SystemCategoryCannotBeDeleted);
 
         category.SoftDelete();
 
