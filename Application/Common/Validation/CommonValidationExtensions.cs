@@ -27,8 +27,8 @@ public static class CommonValidationExtensions
         return ruleBuilder
             .Must(x =>
                 string.IsNullOrWhiteSpace(x) ||
-                string.Equals(x, ListQueryDefaults.SortAscending, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(x, ListQueryDefaults.SortDescending, StringComparison.OrdinalIgnoreCase))
+                string.Equals(x.Trim(), ListQueryDefaults.SortAscending, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(x.Trim(), ListQueryDefaults.SortDescending, StringComparison.OrdinalIgnoreCase))
             .WithMessage(ListValidationMessages.InvalidSortDirection);
     }
 
@@ -39,14 +39,15 @@ public static class CommonValidationExtensions
         return ruleBuilder
             .Must(x =>
                 string.IsNullOrWhiteSpace(x) ||
-                allowedFields.Contains(x, StringComparer.OrdinalIgnoreCase))
+                allowedFields.Contains(x.Trim(), StringComparer.OrdinalIgnoreCase))
             .WithMessage(ListValidationMessages.InvalidSortField);
     }
 
     public static IRuleBuilderOptions<T, TModel> ValidDateRange<T, TModel>(
         this IRuleBuilder<T, TModel> ruleBuilder,
         Func<TModel, DateTime?> fromSelector,
-        Func<TModel, DateTime?> toSelector)
+        Func<TModel, DateTime?> toSelector,
+        string errorPropertyName)
     {
         return ruleBuilder
             .Must(model =>
@@ -54,8 +55,16 @@ public static class CommonValidationExtensions
                 var from = fromSelector(model);
                 var to = toSelector(model);
 
-                return !from.HasValue || !to.HasValue || from.Value <= to.Value;
+                if (!from.HasValue || !to.HasValue)
+                    return true;
+
+                var toInclusive = to.Value.TimeOfDay == TimeSpan.Zero
+                    ? to.Value.AddDays(1).AddTicks(-1)
+                    : to.Value;
+
+                return from.Value <= toInclusive;
             })
-            .WithMessage(ListValidationMessages.InvalidDateRange);
+            .WithMessage(ListValidationMessages.InvalidDateRange)
+            .OverridePropertyName(errorPropertyName);
     }
 }

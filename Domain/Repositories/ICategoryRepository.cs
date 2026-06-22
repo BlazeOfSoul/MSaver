@@ -37,6 +37,10 @@ public interface ICategoryRepository
         CancellationToken cancellationToken = default,
         Guid? excludeId = null);
 
+    Task<bool> HasTransactionsAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
+
     Task UpdateAsync(
         Category category,
         CancellationToken cancellationToken = default);

@@ -54,6 +54,34 @@ public sealed class CategoryRepositoryTests
         activeNameExists.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task HasTransactionsAsync_ShouldReturnTrueOnlyWhenCategoryIsUsedByTransaction()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new CategoryRepository(dbContext);
+        var userId = CategoryTestData.UserId;
+        var account = TransactionTestData.CreateAccount(userId);
+        var usedCategory = CategoryTestData.CreateCategory(userId, "Food", CategoryType.Debit);
+        var unusedCategory = CategoryTestData.CreateCategory(userId, "Salary", CategoryType.Credit);
+        var transaction = TransactionTestData.CreateTransaction(
+            userId,
+            account.Id,
+            usedCategory.Id,
+            account: account,
+            category: usedCategory);
+
+        dbContext.Accounts.Add(account);
+        dbContext.Categories.AddRange(usedCategory, unusedCategory);
+        dbContext.Transactions.Add(transaction);
+        await dbContext.SaveChangesAsync();
+
+        var usedCategoryHasTransactions = await repository.HasTransactionsAsync(usedCategory.Id);
+        var unusedCategoryHasTransactions = await repository.HasTransactionsAsync(unusedCategory.Id);
+
+        usedCategoryHasTransactions.Should().BeTrue();
+        unusedCategoryHasTransactions.Should().BeFalse();
+    }
+
     private static ApplicationDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()

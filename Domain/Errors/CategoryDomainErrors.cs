@@ -29,7 +29,13 @@ public static class CategoryDomainErrors
     public static readonly DomainError TransferCategoryTypeIsSystemOnly =
         DomainError.Validation(
             code: "Category.TransferCategoryTypeIsSystemOnly",
-            message: "Transfer category types are system-only and cannot be created manually.",
+            message: "Типы категорий переводов являются системными и не могут создаваться вручную.",
+            field: "type");
+
+    public static readonly DomainError TypeCannotBeChangedWithTransactions =
+        DomainError.Conflict(
+            code: "Category.TypeCannotBeChangedWithTransactions",
+            message: "Тип категории нельзя изменить, если по ней уже есть транзакции.",
             field: "type");
 
     public static readonly DomainError NotFound =

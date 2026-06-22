@@ -100,4 +100,13 @@ public sealed class CategoryRepository(ApplicationDbContext context) : EfReposit
 
         return await query.AnyAsync(cancellationToken);
     }
+
+    public Task<bool> HasTransactionsAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default)
+    {
+        return Context.Transactions.AnyAsync(
+            x => x.CategoryId == categoryId,
+            cancellationToken);
+    }
 }

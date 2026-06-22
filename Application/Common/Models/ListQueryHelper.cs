@@ -5,7 +5,7 @@ public static class ListQueryHelper
     public static string NormalizeSortDirection(string? value)
     {
         return string.Equals(
-            value,
+            value?.Trim(),
             ListQueryDefaults.SortAscending,
             StringComparison.OrdinalIgnoreCase)
                 ? ListQueryDefaults.SortAscending

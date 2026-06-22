@@ -31,6 +31,9 @@ public sealed class GetTransactionsRequestValidator : AbstractValidator<GetTrans
             .WithMessage(ValidationMessages.InvalidId);
 
         RuleFor(x => x)
-            .ValidDateRange(x => x.FromDate, x => x.ToDate);
+            .ValidDateRange(
+                x => x.FromDate,
+                x => x.ToDate,
+                nameof(GetTransactionsRequest.ToDate));
     }
 }

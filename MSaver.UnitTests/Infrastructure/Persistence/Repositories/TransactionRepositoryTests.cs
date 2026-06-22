@@ -117,9 +117,11 @@ public sealed class TransactionRepositoryTests
             periodEnd);
 
         breakdown.Income.Should().Be(300m);
-        breakdown.Expense.Should().Be(-25m);
+        breakdown.Expense.Should().Be(25m);
         breakdown.TransferIn.Should().Be(40m);
-        breakdown.TransferOut.Should().Be(-100m);
+        breakdown.TransferOut.Should().Be(100m);
+        breakdown.OperationsChange.Should().Be(275m);
+        breakdown.TransferChange.Should().Be(-60m);
     }
 
     [Fact]

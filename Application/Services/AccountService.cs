@@ -4,6 +4,7 @@ using MSaver.Application.Features.Accounts.Get;
 using MSaver.Application.Features.Accounts.GetById;
 using MSaver.Application.Features.Accounts.GetMonthBalance;
 using MSaver.Application.Features.Accounts.Update;
+using MSaver.Domain.Constants;
 
 namespace MSaver.Application.Services;
 
@@ -27,6 +28,16 @@ public sealed class AccountService(
         if (request.InitialBalance < 0)
             return Result<Guid>.Failure(AccountDomainErrors.InitialBalanceNegative);
 
+        if (string.IsNullOrWhiteSpace(request.CurrencyCode))
+            return Result<Guid>.Failure(AccountDomainErrors.CurrencyCodeRequired);
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<Guid>.Failure(AccountDomainErrors.NameRequired);
+
+        var currencyCode = request.CurrencyCode.Trim();
+        if (!CurrencyDefinitions.Exists(currencyCode))
+            return Result<Guid>.Failure(AccountDomainErrors.CurrencyNotFound);
+
         var existsByName = await _accountRepository.ExistsByNameAsync(
             userId,
             request.Name,
@@ -34,6 +45,10 @@ public sealed class AccountService(
 
         if (existsByName)
             return Result<Guid>.Failure(AccountDomainErrors.NameAlreadyExists);
+
+        var currency = CurrencyDefinitions.Get(currencyCode);
+        if (!MoneyPrecision.Fits(request.InitialBalance, currency.Precision))
+            return Result<Guid>.Failure(AccountDomainErrors.InitialBalancePrecisionInvalid);
 
         var hasAccounts = await _accountRepository.AnyAsync(userId, cancellationToken);
         var isPrimary = !hasAccounts;
@@ -56,7 +71,13 @@ public sealed class AccountService(
         UpdateAccountRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (request.Id == Guid.Empty)
+            return Result<Guid>.Failure(AccountDomainErrors.AccountIdRequired);
+
         var userId = _currentUserService.UserId;
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<Guid>.Failure(AccountDomainErrors.NameRequired);
 
         var account = await _accountRepository.GetByIdAsync(request.Id, cancellationToken);
         if (account is null || account.UserId != userId)
@@ -88,6 +109,9 @@ public sealed class AccountService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty)
+            return Result<Guid>.Failure(AccountDomainErrors.AccountIdRequired);
+
         var userId = _currentUserService.UserId;
 
         var account = await _accountRepository.GetByIdAsync(id, cancellationToken);
@@ -163,6 +187,9 @@ public sealed class AccountService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty)
+            return Result<GetAccountByIdResponse>.Failure(AccountDomainErrors.AccountIdRequired);
+
         var userId = _currentUserService.UserId;
 
         var account = await _accountRepository.GetByIdAsync(id, cancellationToken);
@@ -193,6 +220,9 @@ public sealed class AccountService(
         GetMonthBalanceRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (request.AccountId == Guid.Empty)
+            return Result<GetMonthBalanceResponse>.Failure(AccountDomainErrors.AccountIdRequired);
+
         var userId = _currentUserService.UserId;
 
         var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);

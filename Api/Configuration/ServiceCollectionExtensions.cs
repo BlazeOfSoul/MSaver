@@ -77,7 +77,7 @@ public static class ServiceCollectionExtensions
         });
 
         var frontendOrigin = configuration["Cors:FrontendOrigin"]
-            ?? throw new InvalidOperationException("Cors:FrontendOrigin configuration is missing.");
+            ?? throw new InvalidOperationException("Отсутствует конфигурация Cors:FrontendOrigin.");
 
         services.AddCors(options =>
         {
@@ -127,7 +127,7 @@ public static class ServiceCollectionExtensions
                             .GetRequiredService<ILoggerFactory>()
                             .CreateLogger("JwtBearer");
 
-                        logger.LogError(context.Exception, "JWT authentication failed");
+                        logger.LogError(context.Exception, "Ошибка JWT-аутентификации.");
                         return Task.CompletedTask;
                     },
 

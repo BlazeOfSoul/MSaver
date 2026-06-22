@@ -13,12 +13,14 @@ namespace MSaver.Api.Controllers;
 public sealed class TransactionsController(
     ITransactionService transactionService,
     IValidator<GetTransactionsRequest> getValidator,
+    IValidator<GetTransferRateRequest> getTransferRateValidator,
     IValidator<CreateTransactionRequest> createValidator,
     IValidator<CreateTransferRequest> transferValidator,
     IValidator<UpdateTransactionRequest> updateValidator) : ApiControllerBase
 {
     private readonly ITransactionService _transactionService = transactionService;
     private readonly IValidator<GetTransactionsRequest> _getValidator = getValidator;
+    private readonly IValidator<GetTransferRateRequest> _getTransferRateValidator = getTransferRateValidator;
     private readonly IValidator<CreateTransactionRequest> _createValidator = createValidator;
     private readonly IValidator<CreateTransferRequest> _transferValidator = transferValidator;
     private readonly IValidator<UpdateTransactionRequest> _updateValidator = updateValidator;
@@ -50,12 +52,16 @@ public sealed class TransactionsController(
         [FromQuery] Guid toAccountId,
         CancellationToken cancellationToken)
     {
-        var result = await _transactionService.GetTransferRateAsync(
-            fromAccountId,
-            toAccountId,
-            cancellationToken);
+        var request = new GetTransferRateRequest(fromAccountId, toAccountId);
 
-        return FromResult(result);
+        return await ValidateAndExecuteAsync(
+            request,
+            _getTransferRateValidator,
+            cancellationToken => _transactionService.GetTransferRateAsync(
+                request.FromAccountId,
+                request.ToAccountId,
+                cancellationToken),
+            cancellationToken);
     }
 
     [HttpPost]

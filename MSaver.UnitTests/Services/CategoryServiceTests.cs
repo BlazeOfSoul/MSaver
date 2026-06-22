@@ -349,6 +349,78 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
         result.Value!.IsSystem.Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task CreateAsync_ShouldReturnFailure_WhenNameIsEmpty(string? name)
+    {
+        var sut = CreateSut();
+        var userId = CategoryTestData.UserId;
+        var request = CategoryTestData.CreateCategoryRequest(name: name!);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.CreateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CategoryDomainErrors.NameRequired);
+
+        CategoryRepositoryMock.Verify(
+            x => x.ExistsByNameAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Guid?>()),
+            Times.Never);
+
+        CategoryRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task CreateAsync_ShouldReturnFailure_WhenColorIsEmpty(string? color)
+    {
+        var sut = CreateSut();
+        var userId = CategoryTestData.UserId;
+        var request = CategoryTestData.CreateCategoryRequest(color: color!);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.CreateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CategoryDomainErrors.ColorRequired);
+
+        CategoryRepositoryMock.Verify(
+            x => x.ExistsByNameAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Guid?>()),
+            Times.Never);
+
+        CategoryRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     [Fact]
     public async Task CreateAsync_ShouldReturnFailure_WhenCategoryNameAlreadyExists()
     {
@@ -473,6 +545,70 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
         UnitOfWorkMock.Verify(
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task UpdateAsync_ShouldReturnFailure_WhenNameIsEmpty(string? name)
+    {
+        var sut = CreateSut();
+        var userId = CategoryTestData.UserId;
+        var request = CategoryTestData.CreateUpdateCategoryRequest(name: name!);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.UpdateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CategoryDomainErrors.NameRequired);
+
+        CategoryRepositoryMock.Verify(
+            x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        CategoryRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task UpdateAsync_ShouldReturnFailure_WhenColorIsEmpty(string? color)
+    {
+        var sut = CreateSut();
+        var userId = CategoryTestData.UserId;
+        var request = CategoryTestData.CreateUpdateCategoryRequest(color: color!);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.UpdateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CategoryDomainErrors.ColorRequired);
+
+        CategoryRepositoryMock.Verify(
+            x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        CategoryRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -666,6 +802,57 @@ public sealed class CategoryServiceTests : CategoryServiceTestBase
         UnitOfWorkMock.Verify(
             x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldReturnFailure_WhenChangingTypeOfCategoryWithTransactions()
+    {
+        var sut = CreateSut();
+        var userId = CategoryTestData.UserId;
+        var category = CategoryTestData.CreateCategory(
+            userId: userId,
+            name: "Food",
+            type: CategoryType.Debit,
+            color: "#FF0000");
+        var request = CategoryTestData.CreateUpdateCategoryRequest(
+            id: category.Id,
+            name: "Food",
+            color: "#00FF00",
+            type: CategoryType.Credit);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        CategoryRepositoryMock
+            .Setup(x => x.GetByIdAsync(category.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(category);
+
+        CategoryRepositoryMock
+            .Setup(x => x.ExistsByNameAsync(
+                userId,
+                request.Name,
+                It.IsAny<CancellationToken>(),
+                request.Id))
+            .ReturnsAsync(false);
+
+        CategoryRepositoryMock
+            .Setup(x => x.HasTransactionsAsync(category.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var result = await sut.UpdateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Category.TypeCannotBeChangedWithTransactions");
+        category.Type.Should().Be(CategoryType.Debit);
+
+        CategoryRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Theory]

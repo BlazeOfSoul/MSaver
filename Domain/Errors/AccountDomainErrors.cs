@@ -8,6 +8,12 @@ public static class AccountDomainErrors
             message: "Идентификатор пользователя обязателен.",
             field: "userId");
 
+    public static readonly DomainError AccountIdRequired =
+        DomainError.Validation(
+            code: "Account.IdRequired",
+            message: "Идентификатор счёта обязателен.",
+            field: "id");
+
     public static readonly DomainError CurrencyCodeRequired =
         DomainError.Validation(
             code: "Account.CurrencyCodeRequired",
@@ -26,10 +32,17 @@ public static class AccountDomainErrors
             message: "Начальный баланс не может быть отрицательным.",
             field: "initialBalance");
 
+    public static readonly DomainError InitialBalancePrecisionInvalid =
+        DomainError.Validation(
+            code: "Account.InitialBalancePrecisionInvalid",
+            message: "Начальный баланс содержит больше знаков после запятой, чем поддерживает валюта счёта.",
+            field: "initialBalance");
+
     public static readonly DomainError CurrencyNotFound =
-        DomainError.NotFound(
+        DomainError.Validation(
             code: "Account.CurrencyNotFound",
-            message: "Валюта не найдена.");
+            message: "Валюта не найдена.",
+            field: "currencyCode");
 
     public static readonly DomainError NameAlreadyExists =
         DomainError.Conflict(

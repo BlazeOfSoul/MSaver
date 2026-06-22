@@ -97,6 +97,12 @@ public sealed class CategoryService(
     {
         var userId = _currentUserService.UserId;
 
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<Guid>.Failure(CategoryDomainErrors.NameRequired);
+
+        if (string.IsNullOrWhiteSpace(request.Color))
+            return Result<Guid>.Failure(CategoryDomainErrors.ColorRequired);
+
         if (IsTransferCategoryType(request.Type))
             return Result<Guid>.Failure(CategoryDomainErrors.TransferCategoryTypeIsSystemOnly);
 
@@ -126,6 +132,12 @@ public sealed class CategoryService(
     {
         var userId = _currentUserService.UserId;
 
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<Guid>.Failure(CategoryDomainErrors.NameRequired);
+
+        if (string.IsNullOrWhiteSpace(request.Color))
+            return Result<Guid>.Failure(CategoryDomainErrors.ColorRequired);
+
         var category = await _categoryRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (category is null)
@@ -151,6 +163,16 @@ public sealed class CategoryService(
 
         if (exists)
             return Result<Guid>.Failure(CategoryDomainErrors.NameAlreadyExists);
+
+        if (category.Type != request.Type)
+        {
+            var hasTransactions = await _categoryRepository.HasTransactionsAsync(
+                category.Id,
+                cancellationToken);
+
+            if (hasTransactions)
+                return Result<Guid>.Failure(CategoryDomainErrors.TypeCannotBeChangedWithTransactions);
+        }
 
         category.Update(
             request.Name,

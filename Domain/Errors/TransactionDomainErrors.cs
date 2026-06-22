@@ -8,6 +8,12 @@ public static class TransactionDomainErrors
             message: "Идентификатор пользователя обязателен.",
             field: "userId");
 
+    public static readonly DomainError TransactionIdRequired =
+        DomainError.Validation(
+            code: "Transaction.IdRequired",
+            message: "Идентификатор транзакции обязателен.",
+            field: "id");
+
     public static readonly DomainError AccountIdRequired =
         DomainError.Validation(
             code: "Transaction.AccountIdRequired",
@@ -32,22 +38,46 @@ public static class TransactionDomainErrors
             message: "Знак суммы не соответствует типу категории.",
             field: "amount");
 
+    public static readonly DomainError AmountPrecisionInvalid =
+        DomainError.Validation(
+            code: "Transaction.AmountPrecisionInvalid",
+            message: "Сумма содержит больше знаков после запятой, чем поддерживает валюта счёта.",
+            field: "amount");
+
+    public static readonly DomainError InvalidDate =
+        DomainError.Validation(
+            code: "Transaction.InvalidDate",
+            message: "Некорректная дата транзакции.",
+            field: "date");
+
     public static readonly DomainError TransferIdRequired =
         DomainError.Validation(
             code: "Transaction.TransferIdRequired",
             message: "Идентификатор перевода обязателен.",
             field: "transferId");
 
+    public static readonly DomainError TransferFromAccountIdRequired =
+        DomainError.Validation(
+            code: "Transaction.TransferFromAccountIdRequired",
+            message: "Идентификатор счёта списания обязателен.",
+            field: "fromAccountId");
+
+    public static readonly DomainError TransferToAccountIdRequired =
+        DomainError.Validation(
+            code: "Transaction.TransferToAccountIdRequired",
+            message: "Идентификатор счёта зачисления обязателен.",
+            field: "toAccountId");
+
     public static readonly DomainError TransferCategoryRequiresTransferEndpoint =
         DomainError.Validation(
             code: "Transaction.TransferCategoryRequiresTransferEndpoint",
-            message: "Transfer categories can be used only through the transfer endpoint.",
+            message: "Категории переводов можно использовать только через endpoint переводов.",
             field: "categoryId");
 
     public static readonly DomainError TransferTransactionRequiresTransferEndpoint =
         DomainError.Validation(
             code: "Transaction.TransferTransactionRequiresTransferEndpoint",
-            message: "Transfer transactions can be changed only through the transfer endpoint.",
+            message: "Транзакции переводов можно изменять только через endpoint переводов.",
             field: "transferId");
 
     public static readonly DomainError TransferRateMustBePositive =
@@ -59,7 +89,7 @@ public static class TransactionDomainErrors
     public static readonly DomainError TransferRateMustBeOneForSameCurrency =
         DomainError.Validation(
             code: "Transaction.TransferRateMustBeOneForSameCurrency",
-            message: "Transfer rate must be 1 when accounts use the same currency.",
+            message: "Курс перевода должен быть равен 1, если счета в одной валюте.",
             field: "rate");
 
     public static readonly DomainError TransferAccountsMustBeDifferent =
@@ -107,10 +137,10 @@ public static class TransactionDomainErrors
     public static readonly DomainError TransferNotFound =
         DomainError.NotFound(
             code: "Transaction.TransferNotFound",
-            message: "Transfer was not found.");
+            message: "Перевод не найден.");
 
     public static readonly DomainError TransferPairInvalid =
         DomainError.Conflict(
             code: "Transaction.TransferPairInvalid",
-            message: "Transfer must consist of exactly one withdrawal and one deposit transaction.");
+            message: "Перевод должен состоять ровно из одной транзакции списания и одной транзакции зачисления.");
 }

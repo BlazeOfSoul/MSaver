@@ -95,6 +95,10 @@ public sealed class TransactionService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty)
+            return Result<GetTransactionByIdResponse>.Failure(
+                TransactionDomainErrors.TransactionIdRequired);
+
         var userId = _currentUserService.UserId;
 
         var transaction = await _transactionRepository.GetByIdWithDetailsAsync(id, cancellationToken);
@@ -137,6 +141,15 @@ public sealed class TransactionService(
     {
         var userId = _currentUserService.UserId;
 
+        if (request.AccountId == Guid.Empty)
+            return Result<Guid>.Failure(TransactionDomainErrors.AccountIdRequired);
+
+        if (request.CategoryId == Guid.Empty)
+            return Result<Guid>.Failure(TransactionDomainErrors.CategoryIdRequired);
+
+        if (!IsValidTransactionDate(request.Date))
+            return Result<Guid>.Failure(TransactionDomainErrors.InvalidDate);
+
         var validation = await ValidateTransactionRequestAsync(
             userId,
             request.CategoryId,
@@ -149,6 +162,9 @@ public sealed class TransactionService(
         var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
         if (account is null || account.UserId != userId || account.IsArchived)
             return Result<Guid>.Failure(AccountDomainErrors.NotFound);
+
+        if (!HasValidCurrencyPrecision(request.Amount, account.CurrencyCode))
+            return Result<Guid>.Failure(TransactionDomainErrors.AmountPrecisionInvalid);
 
         Transaction transaction = Transaction.Create(
             userId: userId,
@@ -170,6 +186,15 @@ public sealed class TransactionService(
     {
         var userId = _currentUserService.UserId;
 
+        if (request.Id == Guid.Empty)
+            return Result<Guid>.Failure(TransactionDomainErrors.TransactionIdRequired);
+
+        if (request.CategoryId == Guid.Empty)
+            return Result<Guid>.Failure(TransactionDomainErrors.CategoryIdRequired);
+
+        if (!IsValidTransactionDate(request.Date))
+            return Result<Guid>.Failure(TransactionDomainErrors.InvalidDate);
+
         var transaction = await _transactionRepository.GetByIdWithCategoryAsync(request.Id, cancellationToken);
         if (transaction is null || transaction.UserId != userId)
             return Result<Guid>.Failure(TransactionDomainErrors.TransactionNotFound);
@@ -189,6 +214,12 @@ public sealed class TransactionService(
         if (validation.IsFailure)
             return Result<Guid>.Failure(validation.Error);
 
+        if (transaction.Account is null)
+            return Result<Guid>.Failure(AccountDomainErrors.NotFound);
+
+        if (!HasValidCurrencyPrecision(request.Amount, transaction.Account.CurrencyCode))
+            return Result<Guid>.Failure(TransactionDomainErrors.AmountPrecisionInvalid);
+
         transaction.Update(
             categoryId: request.CategoryId,
             amount: request.Amount,
@@ -205,6 +236,9 @@ public sealed class TransactionService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty)
+            return Result<Guid>.Failure(TransactionDomainErrors.TransactionIdRequired);
+
         var userId = _currentUserService.UserId;
 
         var transaction = await _transactionRepository.GetByIdAsync(id, cancellationToken);
@@ -227,22 +261,29 @@ public sealed class TransactionService(
         Guid transferId,
         CancellationToken cancellationToken = default)
     {
+        if (transferId == Guid.Empty)
+            return Result<Guid>.Failure(TransactionDomainErrors.TransferIdRequired);
+
         var userId = _currentUserService.UserId;
 
         var transactions = await _transactionRepository.GetByTransferIdAsync(
             transferId,
             cancellationToken);
 
-        if (transactions.Count == 0 || transactions.Any(x => x.UserId != userId))
+        var userTransactions = transactions
+            .Where(x => x.UserId == userId)
+            .ToArray();
+
+        if (userTransactions.Length == 0)
             return Result<Guid>.Failure(TransactionDomainErrors.TransferNotFound);
 
-        if (!IsValidTransferPair(transactions))
+        if (!IsValidTransferPair(userTransactions))
             return Result<Guid>.Failure(TransactionDomainErrors.TransferPairInvalid);
 
-        if (transactions.Any(x => x.Account?.IsArchived == true))
+        if (userTransactions.Any(x => x.Account?.IsArchived == true))
             return Result<Guid>.Failure(AccountDomainErrors.NotFound);
 
-        foreach (var transaction in transactions)
+        foreach (var transaction in userTransactions)
         {
             await _transactionRepository.RemoveAsync(transaction, cancellationToken);
         }
@@ -259,6 +300,18 @@ public sealed class TransactionService(
     {
         var userId = _currentUserService.UserId;
 
+        if (fromAccountId == Guid.Empty)
+            return Result<GetTransferRateResponse>.Failure(
+                TransactionDomainErrors.TransferFromAccountIdRequired);
+
+        if (toAccountId == Guid.Empty)
+            return Result<GetTransferRateResponse>.Failure(
+                TransactionDomainErrors.TransferToAccountIdRequired);
+
+        if (fromAccountId == toAccountId)
+            return Result<GetTransferRateResponse>.Failure(
+                TransactionDomainErrors.TransferAccountsMustBeDifferent);
+
         var fromAccount = await _accountRepository.GetByIdAsync(fromAccountId, cancellationToken);
         if (fromAccount is null || fromAccount.UserId != userId || fromAccount.IsArchived)
             return Result<GetTransferRateResponse>.Failure(AccountDomainErrors.NotFound);
@@ -266,9 +319,6 @@ public sealed class TransactionService(
         var toAccount = await _accountRepository.GetByIdAsync(toAccountId, cancellationToken);
         if (toAccount is null || toAccount.UserId != userId || toAccount.IsArchived)
             return Result<GetTransferRateResponse>.Failure(AccountDomainErrors.NotFound);
-
-        if (fromAccount.Id == toAccount.Id)
-            return Result<GetTransferRateResponse>.Failure(TransactionDomainErrors.TransferAccountsMustBeDifferent);
 
         var rate = fromAccount.CurrencyCode == toAccount.CurrencyCode
             ? 1m
@@ -294,6 +344,21 @@ public sealed class TransactionService(
     {
         var userId = _currentUserService.UserId;
 
+        if (request.FromAccountId == Guid.Empty)
+            return Result<CreateTransferResponse>.Failure(
+                TransactionDomainErrors.TransferFromAccountIdRequired);
+
+        if (request.ToAccountId == Guid.Empty)
+            return Result<CreateTransferResponse>.Failure(
+                TransactionDomainErrors.TransferToAccountIdRequired);
+
+        if (request.FromAccountId == request.ToAccountId)
+            return Result<CreateTransferResponse>.Failure(
+                TransactionDomainErrors.TransferAccountsMustBeDifferent);
+
+        if (!IsValidTransactionDate(request.Date))
+            return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.InvalidDate);
+
         var fromAccount = await _accountRepository.GetByIdAsync(request.FromAccountId, cancellationToken);
         if (fromAccount is null || fromAccount.UserId != userId || fromAccount.IsArchived)
             return Result<CreateTransferResponse>.Failure(AccountDomainErrors.NotFound);
@@ -302,9 +367,6 @@ public sealed class TransactionService(
         if (toAccount is null || toAccount.UserId != userId || toAccount.IsArchived)
             return Result<CreateTransferResponse>.Failure(AccountDomainErrors.NotFound);
 
-        if (fromAccount.Id == toAccount.Id)
-            return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferAccountsMustBeDifferent);
-
         if (request.Amount <= 0)
             return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferAmountMustBeGreaterThanZero);
 
@@ -312,6 +374,9 @@ public sealed class TransactionService(
         {
             return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.TransferRateMustBePositive);
         }
+
+        if (!HasValidCurrencyPrecision(request.Amount, fromAccount.CurrencyCode))
+            return Result<CreateTransferResponse>.Failure(TransactionDomainErrors.AmountPrecisionInvalid);
 
         var isSameCurrency = fromAccount.CurrencyCode == toAccount.CurrencyCode;
         decimal rate;
@@ -440,6 +505,17 @@ public sealed class TransactionService(
                    x.Category?.Type == CategoryType.TransferIncome) == 1;
     }
 
+    private static bool HasValidCurrencyPrecision(decimal amount, string currencyCode)
+    {
+        var precision = CurrencyDefinitions.Get(currencyCode).Precision;
+        return MoneyPrecision.Fits(amount, precision);
+    }
+
+    private static bool IsValidTransactionDate(DateTime date)
+    {
+        return date != default;
+    }
+
     private static DateTime? NormalizeToDateExclusive(DateTime? toDate)
     {
         if (!toDate.HasValue)
@@ -483,12 +559,14 @@ public sealed class TransactionService(
             transaction.TransferId.Value,
             cancellationToken);
 
-        if (!IsValidTransferPair(transferTransactions))
+        var userTransferTransactions = transferTransactions
+            .Where(x => x.UserId == transaction.UserId)
+            .ToArray();
+
+        if (!IsValidTransferPair(userTransferTransactions))
             return null;
 
-        var peer = transferTransactions.FirstOrDefault(x =>
-            x.Id != transaction.Id &&
-            x.UserId == transaction.UserId);
+        var peer = userTransferTransactions.FirstOrDefault(x => x.Id != transaction.Id);
         return MapTransferCounterparty(peer);
     }
 
@@ -508,12 +586,14 @@ public sealed class TransactionService(
             if (!byTransferId.TryGetValue(transaction.TransferId!.Value, out var transferPair))
                 continue;
 
-            if (!IsValidTransferPair(transferPair))
+            var userTransferPair = transferPair
+                .Where(x => x.UserId == transaction.UserId)
+                .ToArray();
+
+            if (!IsValidTransferPair(userTransferPair))
                 continue;
 
-            var peer = transferPair.FirstOrDefault(x =>
-                x.Id != transaction.Id &&
-                x.UserId == transaction.UserId);
+            var peer = userTransferPair.FirstOrDefault(x => x.Id != transaction.Id);
             var counterparty = MapTransferCounterparty(peer);
 
             if (counterparty is not null)

@@ -137,6 +137,152 @@ public sealed class AccountServiceTests : AccountServiceTestBase
     }
 
     [Fact]
+    public async Task CreateAsync_ShouldReturnFailure_WhenCurrencyCodeIsMissing()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var request = RequestFactory.CreateAccountRequest(currencyCode: null!);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.CreateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.CurrencyCodeRequired);
+
+        AccountRepositoryMock.Verify(
+            x => x.ExistsByNameAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Guid?>()),
+            Times.Never);
+
+        AccountRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnFailure_WhenNameIsMissing()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var request = RequestFactory.CreateAccountRequest(name: null!);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.CreateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.NameRequired);
+
+        AccountRepositoryMock.Verify(
+            x => x.ExistsByNameAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Guid?>()),
+            Times.Never);
+
+        AccountRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnFailure_WhenInitialBalanceHasMoreFractionDigitsThanCurrency()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var request = RequestFactory.CreateAccountRequest(
+            currencyCode: "JPY",
+            initialBalance: 10.5m);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        AccountRepositoryMock
+            .Setup(x => x.ExistsByNameAsync(
+                userId,
+                request.Name,
+                It.IsAny<CancellationToken>(),
+                null))
+            .ReturnsAsync(false);
+
+        AccountRepositoryMock
+            .Setup(x => x.AnyAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var result = await sut.CreateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Account.InitialBalancePrecisionInvalid");
+        result.Error.Details.Should().ContainSingle()
+            .Which.Field.Should().Be("initialBalance");
+
+        AccountRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnFailure_WhenCurrencyDoesNotExist()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var request = RequestFactory.CreateAccountRequest(currencyCode: "XXX");
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        AccountRepositoryMock
+            .Setup(x => x.ExistsByNameAsync(
+                userId,
+                request.Name,
+                It.IsAny<CancellationToken>(),
+                null))
+            .ReturnsAsync(false);
+
+        var result = await sut.CreateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.CurrencyNotFound);
+        result.Error!.Details.Should().ContainSingle()
+            .Which.Field.Should().Be("currencyCode");
+
+        AccountRepositoryMock.Verify(
+            x => x.AnyAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        AccountRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task CreateAsync_ShouldCreateNonPrimaryAccount_WhenUserAlreadyHasAccounts()
     {
         var sut = CreateSut();
@@ -224,6 +370,38 @@ public sealed class AccountServiceTests : AccountServiceTestBase
     }
 
     [Fact]
+    public async Task UpdateAsync_ShouldReturnFailure_WhenAccountIdIsEmpty()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var request = RequestFactory.UpdateAccountRequest(
+            id: Guid.Empty,
+            name: "Updated name",
+            color: "#ABC123");
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.UpdateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.AccountIdRequired);
+
+        AccountRepositoryMock.Verify(
+            x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        AccountRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task UpdateAsync_ShouldReturnFailure_WhenAccountBelongsToAnotherUser()
     {
         var sut = CreateSut();
@@ -294,6 +472,45 @@ public sealed class AccountServiceTests : AccountServiceTestBase
 
         account.Name.Should().Be("Archived account");
         account.Color.Should().Be("#000000");
+
+        AccountRepositoryMock.Verify(
+            x => x.ExistsByNameAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Guid?>()),
+            Times.Never);
+
+        AccountRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldReturnFailure_WhenNameIsMissing()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var request = RequestFactory.UpdateAccountRequest(name: "   ");
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.UpdateAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.NameRequired);
+
+        AccountRepositoryMock.Verify(
+            x => x.GetByIdAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
 
         AccountRepositoryMock.Verify(
             x => x.ExistsByNameAsync(
@@ -427,6 +644,34 @@ public sealed class AccountServiceTests : AccountServiceTestBase
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(AccountDomainErrors.NotFound);
+
+        AccountRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        UnitOfWorkMock.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldReturnFailure_WhenAccountIdIsEmpty()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.DeleteAsync(Guid.Empty);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.AccountIdRequired);
+
+        AccountRepositoryMock.Verify(
+            x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
 
         AccountRepositoryMock.Verify(
             x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
@@ -794,6 +1039,32 @@ public sealed class AccountServiceTests : AccountServiceTestBase
     }
 
     [Fact]
+    public async Task GetByIdAsync_ShouldReturnFailure_WhenAccountIdIsEmpty()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.GetByIdAsync(Guid.Empty);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.AccountIdRequired);
+
+        AccountRepositoryMock.Verify(
+            x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        TransactionRepositoryMock.Verify(
+            x => x.SumByAccountIdsAsync(
+                It.IsAny<IReadOnlyCollection<Guid>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task GetByIdAsync_ShouldReturnFailure_WhenAccountBelongsToAnotherUser()
     {
         var sut = CreateSut();
@@ -909,6 +1180,50 @@ public sealed class AccountServiceTests : AccountServiceTestBase
     }
 
     [Fact]
+    public async Task GetMonthBalanceAsync_ShouldReturnFailure_WhenAccountIdIsEmpty()
+    {
+        var sut = CreateSut();
+        var userId = AccountTestData.UserId;
+        var request = RequestFactory.GetMonthBalanceRequest(Guid.Empty, 2026, 5);
+
+        CurrentUserServiceMock
+            .Setup(x => x.UserId)
+            .Returns(userId);
+
+        var result = await sut.GetMonthBalanceAsync(request);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(AccountDomainErrors.AccountIdRequired);
+
+        AccountRepositoryMock.Verify(
+            x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        TransactionRepositoryMock.Verify(
+            x => x.GetBalanceBeforeAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        TransactionRepositoryMock.Verify(
+            x => x.GetBalanceInPeriodAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        TransactionRepositoryMock.Verify(
+            x => x.GetBreakdownInPeriodAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task GetMonthBalanceAsync_ShouldReturnFailure_WhenAccountBelongsToAnotherUser()
     {
         var sut = CreateSut();
@@ -993,9 +1308,9 @@ public sealed class AccountServiceTests : AccountServiceTestBase
         result.Value.MonthChange.Should().Be(25m);
         result.Value.ClosingBalance.Should().Be(1125m);
         result.Value.Income.Should().Be(300m);
-        result.Value.Expense.Should().Be(-120m);
+        result.Value.Expense.Should().Be(120m);
         result.Value.TransferIn.Should().Be(50m);
-        result.Value.TransferOut.Should().Be(-205m);
+        result.Value.TransferOut.Should().Be(205m);
         result.Value.OperationsChange.Should().Be(180m);
         result.Value.TransferChange.Should().Be(-155m);
         result.Value.Year.Should().Be(2026);
