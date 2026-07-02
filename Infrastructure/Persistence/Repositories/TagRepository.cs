@@ -16,7 +16,11 @@ public sealed class TagRepository(ApplicationDbContext context) : EfRepositoryBa
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return FirstOrDefaultAsync(new TagByIdSpecification(id), cancellationToken);
+        return Context.Tags
+            .AsNoTracking()
+            .Include(x => x.TagCategories)
+            .ThenInclude(x => x.Category)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     public async Task<PagedResult<Tag>> GetPagedAsync(
