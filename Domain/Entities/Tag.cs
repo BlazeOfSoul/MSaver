@@ -56,9 +56,18 @@ public sealed class Tag : AuditableEntity
         if (IsDeleted)
             throw new DomainException(TagDomainErrors.TagDeleted);
 
-        _tagCategories.Clear();
+        var nextCategoryIds = categoryIds.Distinct().ToHashSet();
 
-        foreach (var categoryId in categoryIds.Distinct())
+        foreach (var categoryId in nextCategoryIds)
+            _ = TagCategory.Create(Id, categoryId);
+
+        _tagCategories.RemoveAll(x => !nextCategoryIds.Contains(x.CategoryId));
+
+        var existingCategoryIds = _tagCategories
+            .Select(x => x.CategoryId)
+            .ToHashSet();
+
+        foreach (var categoryId in nextCategoryIds.Except(existingCategoryIds))
         {
             _tagCategories.Add(TagCategory.Create(Id, categoryId));
         }

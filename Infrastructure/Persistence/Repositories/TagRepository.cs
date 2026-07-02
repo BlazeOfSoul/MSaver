@@ -17,7 +17,6 @@ public sealed class TagRepository(ApplicationDbContext context) : EfRepositoryBa
         CancellationToken cancellationToken = default)
     {
         return Context.Tags
-            .AsNoTracking()
             .Include(x => x.TagCategories)
             .ThenInclude(x => x.Category)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

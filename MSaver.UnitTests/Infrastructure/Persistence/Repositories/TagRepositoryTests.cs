@@ -41,6 +41,71 @@ public sealed class TagRepositoryTests
     }
 
     [Fact]
+    public async Task GetByIdWithCategoriesAsync_ShouldTrackTagAndCategoryLinks()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var userId = TagTestData.UserId;
+        var tag = TagTestData.CreateTag(userId, "Essentials", "#23c78b");
+        var category = CategoryTestData.CreateCategory(
+            userId,
+            "Food",
+            CategoryType.Debit,
+            "#ff6f91");
+
+        tag.ReplaceCategories([category.Id]);
+
+        await using (var dbContext = CreateDbContext(databaseName))
+        {
+            dbContext.Tags.Add(tag);
+            dbContext.Categories.Add(category);
+            await dbContext.SaveChangesAsync();
+        }
+
+        await using var readDbContext = CreateDbContext(databaseName);
+        var repository = new TagRepository(readDbContext);
+
+        var result = await repository.GetByIdWithCategoriesAsync(tag.Id);
+
+        result.Should().NotBeNull();
+        readDbContext.Entry(result!).State.Should().Be(EntityState.Unchanged);
+        var tagCategory = result.TagCategories.Should().ContainSingle().Subject;
+        readDbContext.Entry(tagCategory).State.Should().Be(EntityState.Unchanged);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldPreserveTrackedCategoryLinkStates()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var userId = TagTestData.UserId;
+        var tag = TagTestData.CreateTag(userId, "Essentials", "#23c78b");
+        var category = CategoryTestData.CreateCategory(
+            userId,
+            "Food",
+            CategoryType.Debit,
+            "#ff6f91");
+
+        await using (var dbContext = CreateDbContext(databaseName))
+        {
+            dbContext.Tags.Add(tag);
+            dbContext.Categories.Add(category);
+            await dbContext.SaveChangesAsync();
+        }
+
+        await using var updateDbContext = CreateDbContext(databaseName);
+        var repository = new TagRepository(updateDbContext);
+        var trackedTag = await updateDbContext.Tags
+            .Include(x => x.TagCategories)
+            .SingleAsync(x => x.Id == tag.Id);
+
+        trackedTag.ReplaceCategories([category.Id]);
+        await repository.UpdateAsync(trackedTag);
+        updateDbContext.ChangeTracker.DetectChanges();
+
+        var tagCategory = trackedTag.TagCategories.Should().ContainSingle().Subject;
+        updateDbContext.Entry(tagCategory).State.Should().Be(EntityState.Added);
+    }
+
+    [Fact]
     public async Task ExistsByNameAsync_ShouldIgnoreDeletedTags()
     {
         await using var dbContext = CreateDbContext();
